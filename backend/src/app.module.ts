@@ -4,6 +4,7 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { validateEnv } from './config/env.validation.js';
 import { DatabaseModule } from './database/database.module.js';
+import { UsersModule } from './modules/users/users.module.js';
 
 // The root module: the app starts here and everything else plugs into it.
 @Module({
@@ -14,6 +15,8 @@ import { DatabaseModule } from './database/database.module.js';
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     // Opens the connection to Postgres.
     DatabaseModule,
+    // Feature modules.
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
