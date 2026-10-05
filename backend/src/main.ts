@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor.js';
@@ -25,6 +26,20 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // Interactive API page at /api/docs, to try routes by hand from the
+  // browser. Built from the controllers and DTOs, so it never goes stale.
+  // Off in production: it should not be public on a real server.
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Connect Four API')
+      .setVersion('0.1')
+      .build();
+    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config), {
+      // Puts the page under the global prefix: /api/docs, not /docs.
+      useGlobalPrefix: true,
+    });
+  }
 
   await app.listen(process.env.PORT ?? 3000);
 }
