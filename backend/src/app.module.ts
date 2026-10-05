@@ -4,6 +4,7 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { validateEnv } from './config/env.validation.js';
 import { DatabaseModule } from './database/database.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 
 // The root module: the app starts here and everything else plugs into it.
@@ -17,6 +18,7 @@ import { UsersModule } from './modules/users/users.module.js';
     DatabaseModule,
     // Feature modules.
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

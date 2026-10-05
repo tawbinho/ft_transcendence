@@ -3,10 +3,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { OAuthAccount } from './entities/oauth-account.entity.js';
 import { TwoFactor } from './entities/two-factor.entity.js';
 import { User } from './entities/user.entity.js';
+import { UsersService } from './users.service.js';
 
-// The users module. For now it only registers its three entities, which lets
-// services in this module (added later) inject a repository for each table.
+// The users module: registers its three entities and exposes UsersService to
+// the other modules. Nothing outside this module touches the user tables.
 @Module({
   imports: [TypeOrmModule.forFeature([User, OAuthAccount, TwoFactor])],
+  providers: [UsersService],
+  // Without `exports`, other modules could not inject UsersService.
+  exports: [UsersService],
 })
 export class UsersModule {}
