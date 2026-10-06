@@ -31,4 +31,11 @@ export class TwoFactor {
   // valid code. Login only asks for a code when this is true.
   @Column({ type: 'boolean', default: false })
   enabled: boolean;
+
+  // Replay protection. A TOTP code is valid for a 30-second slot; this stores
+  // the number of the last slot whose code was accepted. A code from that
+  // slot or an earlier one is rejected, so a code someone saw cannot be
+  // reused. null until the first successful verification.
+  @Column({ name: 'last_used_step', type: 'integer', nullable: true })
+  lastUsedStep: number | null;
 }

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { validateEnv } from './config/env.validation.js';
@@ -14,6 +16,9 @@ import { UsersModule } from './modules/users/users.module.js';
     // startup. `isGlobal: true` makes the settings available in every module
     // without importing ConfigModule again.
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    // Rate limiting: by default 100 requests per minute per IP address.
+    // Sensitive routes (login, signup, 2FA) tighten this with @Throttle.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     // Opens the connection to Postgres.
     DatabaseModule,
     // Feature modules.
@@ -21,6 +26,10 @@ import { UsersModule } from './modules/users/users.module.js';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Applies the rate limit to every route of the app.
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

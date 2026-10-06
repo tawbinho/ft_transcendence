@@ -17,6 +17,7 @@ export interface Env {
   JWT_SECRET: string; // signs the login tokens; anyone who knows it can forge them
   JWT_ACCESS_TTL_SECONDS: number; // lifetime of the short access token
   JWT_REFRESH_TTL_DAYS: number; // lifetime of the long refresh token
+  TWO_FACTOR_KEY: string; // 64 hex chars: AES-256 key that encrypts 2FA secrets in the database
 }
 
 // Returns the variable if it is a non-empty string, otherwise stops the app.
@@ -66,6 +67,15 @@ export function validateEnv(config: Record<string, unknown>): Env {
     throw new Error('JWT_SECRET must be at least 32 characters long');
   }
 
+  // AES-256 needs a key of exactly 32 bytes, written as 64 hex characters.
+  // Losing or changing this key makes every stored 2FA secret unreadable.
+  const twoFactorKey = requiredString(config, 'TWO_FACTOR_KEY');
+  if (!/^[0-9a-fA-F]{64}$/.test(twoFactorKey)) {
+    throw new Error(
+      'TWO_FACTOR_KEY must be 64 hex characters (generate with: openssl rand -hex 32)',
+    );
+  }
+
   return {
     PORT: port(config, 'PORT', 3000), // optional, defaults to 3000
     DB_HOST: requiredString(config, 'DB_HOST'),
@@ -76,5 +86,6 @@ export function validateEnv(config: Record<string, unknown>): Env {
     JWT_SECRET: jwtSecret,
     JWT_ACCESS_TTL_SECONDS: positiveInt(config, 'JWT_ACCESS_TTL_SECONDS', 900), // 15 minutes
     JWT_REFRESH_TTL_DAYS: positiveInt(config, 'JWT_REFRESH_TTL_DAYS', 7),
+    TWO_FACTOR_KEY: twoFactorKey,
   };
 }

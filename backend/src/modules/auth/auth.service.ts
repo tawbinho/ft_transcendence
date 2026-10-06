@@ -8,12 +8,21 @@ import { UsersService } from '../users/users.service.js';
 import type { LoginDto } from './dto/login.dto.js';
 import type { SignupDto } from './dto/signup.dto.js';
 import { TokensService, type IssuedTokens } from './tokens.service.js';
+import { TwoFactorService } from './two-factor/two-factor.service.js';
 
 // What signup, login and refresh return: the user plus the tokens the
 // controller puts in cookies.
 export interface AuthResult {
   user: PublicUser;
   tokens: IssuedTokens;
+}
+
+// Login for a user with 2FA: the password was right, but no session yet.
+// `pendingToken` goes in a short-lived cookie and is only good for the 2FA
+// verification route.
+export interface TwoFactorRequired {
+  twoFactorRequired: true;
+  pendingToken: string;
 }
 
 // WHY THIS FILE EXISTS
@@ -28,6 +37,7 @@ export class AuthService {
   constructor(
     private readonly users: UsersService,
     private readonly tokens: TokensService,
+    private readonly twoFactor: TwoFactorService,
   ) {}
 
   async signup(dto: SignupDto): Promise<AuthResult> {
@@ -66,7 +76,7 @@ export class AuthService {
     return { user: toPublicUser(user), tokens: await this.tokens.issue(user.id) };
   }
 
-  async login(dto: LoginDto): Promise<AuthResult> {
+  async login(dto: LoginDto): Promise<AuthResult | TwoFactorRequired> {
     const user = await this.users.findByEmail(dto.email);
 
     // Unknown email and wrong password must be indistinguishable: same error
@@ -80,7 +90,42 @@ export class AuthService {
       throw new AppError('INVALID_CREDENTIALS', 'Email or password is incorrect', 401);
     }
 
+    // Password correct. With 2FA on, that is NOT enough to log in: hand back
+    // a short-lived pending token and wait for the code (verifyTwoFactor).
+    if (await this.twoFactor.isEnabled(user.id)) {
+      return {
+        twoFactorRequired: true,
+        pendingToken: await this.tokens.issuePending(user.id),
+      };
+    }
+
     return { user: toPublicUser(user), tokens: await this.tokens.issue(user.id) };
+  }
+
+  // Second stage of a 2FA login: the pending token proves the password was
+  // right, the code proves the user has their authenticator app.
+  async verifyTwoFactor(pendingToken: string, code: string): Promise<AuthResult> {
+    const userId = await this.tokens.verifyPending(pendingToken);
+    await this.twoFactor.verifyLoginCode(userId, code);
+
+    const user = await this.users.findById(userId);
+    if (!user) throw new AppError('UNAUTHORIZED', 'Please log in again', 401);
+    return { user: toPublicUser(user), tokens: await this.tokens.issue(user.id) };
+  }
+
+  // Start turning 2FA on: returns the QR code to scan.
+  async setupTwoFactor(userId: string): Promise<{ qr: string; secret: string }> {
+    const user = await this.users.findById(userId);
+    if (!user) throw new AppError('UNAUTHORIZED', 'Please log in', 401);
+    return this.twoFactor.setup(userId, user.email);
+  }
+
+  enableTwoFactor(userId: string, code: string): Promise<void> {
+    return this.twoFactor.enable(userId, code);
+  }
+
+  disableTwoFactor(userId: string, code: string): Promise<void> {
+    return this.twoFactor.disable(userId, code);
   }
 
   // Exchanges the refresh token for a new pair (the old one is consumed).

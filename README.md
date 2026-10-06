@@ -15,7 +15,8 @@ Requirements: Docker with the Compose plugin.
 ```bash
 # 1. create your local env file
 cp .env.example .env
-# then set JWT_SECRET in .env to a long random value:
+# then set JWT_SECRET and TWO_FACTOR_KEY in .env, each to a different value
+# generated with:
 #   openssl rand -hex 32
 
 # 2. build and start the database and the backend
@@ -28,8 +29,9 @@ docker compose exec backend npm run migration:run
 curl localhost:3000/api    # {"data":"Hello World!"}
 ```
 
-The backend refuses to start if a required variable is missing or if
-`JWT_SECRET` is shorter than 32 characters, and says which one.
+The backend refuses to start if a required variable is missing, if
+`JWT_SECRET` is shorter than 32 characters, or if `TWO_FACTOR_KEY` is not
+64 hex characters, and says which one.
 
 The backend runs in dev mode: the `backend/` folder is mounted into the
 container, so saving a file reloads the server.
@@ -74,10 +76,13 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 | `DB_PASSWORD`            | `connect4` | database password                                       |
 | `DB_NAME`                | `connect4` | database name                                           |
 | `JWT_SECRET`             | none       | **required**, at least 32 chars, signs the login tokens |
+| `TWO_FACTOR_KEY`         | none       | **required**, 64 hex chars, encrypts the 2FA secrets    |
 | `JWT_ACCESS_TTL_SECONDS` | `900`      | access token lifetime (15 minutes), optional            |
 | `JWT_REFRESH_TTL_DAYS`   | `7`        | refresh token lifetime, optional                        |
 
 If a port is already used on your machine, change it in `.env`.
+Do not change `TWO_FACTOR_KEY` once users have enabled 2FA: their stored
+secrets can no longer be decrypted.
 The two `JWT_*_TTL` variables are optional and are not passed to the container
 by `docker-compose.yml` yet; add them there to change the defaults.
 
@@ -105,14 +110,30 @@ Swagger at http://localhost:3000/api/docs.
 | Route                    | Description                                        |
 | ------------------------ | -------------------------------------------------- |
 | `POST /api/auth/signup`  | create an account and log in                       |
-| `POST /api/auth/login`   | log in with email and password                     |
+| `POST /api/auth/login`   | log in with email and password (see 2FA below)     |
 | `POST /api/auth/refresh` | new tokens from the refresh cookie                 |
 | `POST /api/auth/logout`  | revoke the refresh token and clear the cookies     |
 | `GET  /api/auth/me`      | the logged-in user (401 if not logged in)          |
+| `POST /api/auth/2fa/setup`   | start 2FA setup, returns a QR code (logged in) |
+| `POST /api/auth/2fa/enable`  | turn 2FA on with a code from the app (logged in) |
+| `POST /api/auth/2fa/disable` | turn 2FA off, needs a valid code (logged in)   |
+| `POST /api/auth/2fa/verify`  | finish a 2FA login with the 6-digit code       |
 
 Login uses two httpOnly cookies: a short access token (JWT, 15 minutes) and a
 refresh token (7 days, stored hashed in the database, single use, rotated on
 every refresh).
+
+**Two-factor authentication** uses an authenticator app (TOTP). When a user
+has 2FA enabled, `login` does not log them in: it answers
+`{ "user": null, "twoFactorRequired": true }` and sets a 5-minute `pending_2fa`
+cookie, and the user must then call `/api/auth/2fa/verify` with the 6-digit
+code. A code cannot be used twice. The TOTP secret is stored encrypted
+(AES-256-GCM) with `TWO_FACTOR_KEY`.
+
+**Rate limits** (per IP, per minute): 100 requests overall; login 10; signup 5;
+2FA verify, enable and disable 5. Beyond that the API answers `429` with the
+code `RATE_LIMITED`. The counters are kept in memory and reset when the
+backend restarts.
 
 ## Backend without Docker
 

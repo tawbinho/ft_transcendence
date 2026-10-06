@@ -29,6 +29,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       JWT_SECRET: ${JWT_SECRET}
+      TWO_FACTOR_KEY: ${TWO_FACTOR_KEY}
     ports:
       - '${BACKEND_PORT}:3000'
     depends_on:

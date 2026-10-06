@@ -8,10 +8,16 @@ import { AppError } from '../../common/errors/app-error.js';
 import type { Env } from '../../config/env.validation.js';
 import { RefreshToken } from './entities/refresh-token.entity.js';
 
-// What is inside the access JWT. `sub` ("subject") is the user id.
+// What is inside a JWT. `sub` ("subject") is the user id. `purpose` is only
+// present on the short-lived "2FA pending" token, never on an access token.
 export interface AccessTokenPayload {
   sub: string;
+  purpose?: string;
 }
+
+// The pending token only has to survive until the user types their code.
+const PENDING_TTL_SECONDS = 5 * 60;
+const PENDING_PURPOSE = '2fa';
 
 export interface IssuedTokens {
   accessToken: string;
@@ -61,11 +67,41 @@ export class TokensService {
   // Checks an access token and returns who it belongs to. The signature and
   // expiry are verified; a forged, altered or expired token throws.
   async verifyAccessToken(token: string): Promise<AccessTokenPayload> {
+    let payload: AccessTokenPayload;
     try {
-      return await this.jwt.verifyAsync<AccessTokenPayload>(token);
+      payload = await this.jwt.verifyAsync<AccessTokenPayload>(token);
     } catch {
       throw new AppError('UNAUTHORIZED', 'Invalid or expired access token', 401);
     }
+    // A "2FA pending" token is signed with the same secret. It must never
+    // work as a real session, or the password alone would be enough to log in.
+    if (payload.purpose !== undefined) {
+      throw new AppError('UNAUTHORIZED', 'Invalid or expired access token', 401);
+    }
+    return payload;
+  }
+
+  // Issued after a correct password when the user has 2FA enabled. It proves
+  // "the password was right" for 5 minutes and is accepted ONLY by the 2FA
+  // verification route.
+  issuePending(userId: string): Promise<string> {
+    const payload: AccessTokenPayload = { sub: userId, purpose: PENDING_PURPOSE };
+    return this.jwt.signAsync(payload, { expiresIn: PENDING_TTL_SECONDS });
+  }
+
+  // Returns the user id behind a valid pending token.
+  async verifyPending(token: string): Promise<string> {
+    try {
+      const payload = await this.jwt.verifyAsync<AccessTokenPayload>(token);
+      if (payload.purpose === PENDING_PURPOSE) return payload.sub;
+    } catch {
+      // fall through to the error below
+    }
+    throw new AppError(
+      'UNAUTHORIZED',
+      'Your login session expired, please log in again',
+      401,
+    );
   }
 
   // Exchanges a refresh token for a brand new pair. Every refresh token is

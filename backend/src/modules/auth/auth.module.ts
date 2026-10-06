@@ -7,15 +7,20 @@ import { UsersModule } from '../users/users.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { RefreshToken } from './entities/refresh-token.entity.js';
+import { TwoFactor } from '../users/entities/two-factor.entity.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { TokensService } from './tokens.service.js';
+import { SecretCipher } from './two-factor/secret-cipher.js';
+import { TwoFactorService } from './two-factor/two-factor.service.js';
 
 // The auth module: signup, login, refresh, logout and "me", plus the guard
 // other modules use to protect their routes.
 @Module({
   imports: [
     UsersModule, // for UsersService
-    TypeOrmModule.forFeature([RefreshToken]),
+    // RefreshToken belongs to auth; TwoFactor is owned by the users module
+    // but its setup/verify logic lives here.
+    TypeOrmModule.forFeature([RefreshToken, TwoFactor]),
     // Configures how access tokens are signed and checked. The secret and
     // lifetime come from the validated environment. Pinning the algorithm
     // stops an attacker from choosing a weaker one in a forged token.
@@ -32,7 +37,13 @@ import { TokensService } from './tokens.service.js';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, TokensService, JwtAuthGuard],
+  providers: [
+    AuthService,
+    TokensService,
+    TwoFactorService,
+    SecretCipher,
+    JwtAuthGuard,
+  ],
   // Other modules import AuthModule to use @UseGuards(JwtAuthGuard).
   exports: [JwtAuthGuard, TokensService],
 })

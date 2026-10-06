@@ -22,6 +22,7 @@ const CODE_BY_STATUS: Record<number, string> = {
   403: 'FORBIDDEN',
   404: 'NOT_FOUND',
   409: 'CONFLICT',
+  429: 'RATE_LIMITED',
 };
 
 @Catch()
@@ -50,9 +51,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
           ? (body as { message: unknown }).message
           : exception.message;
       const isValidation = status === 400 && Array.isArray(rawMessage);
-      const message = Array.isArray(rawMessage)
-        ? rawMessage.join('; ')
-        : String(rawMessage);
+      // The rate limiter's own text ("ThrottlerException: ...") is not
+      // meant for users, so it gets a plain message.
+      const message =
+        status === 429
+          ? 'Too many attempts, please try again in a minute'
+          : Array.isArray(rawMessage)
+            ? rawMessage.join('; ')
+            : String(rawMessage);
 
       response.status(status).json({
         error: {
