@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor.js';
@@ -10,6 +11,10 @@ async function bootstrap() {
 
   // Every route lives under /api (the frontend and its dev proxy expect it).
   app.setGlobalPrefix('api');
+
+  // Reads the Cookie header into `request.cookies`, where the auth guard
+  // finds the access token.
+  app.use(cookieParser());
 
   // Every failure leaves as { error: { code, message } }.
   app.useGlobalFilters(new AllExceptionsFilter());

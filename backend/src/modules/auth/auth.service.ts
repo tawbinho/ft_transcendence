@@ -1,19 +1,36 @@
+import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { QueryFailedError } from 'typeorm';
 import { AppError } from '../../common/errors/app-error.js';
 import { toPublicUser, type PublicUser } from '../users/public-user.js';
 import { UsersService } from '../users/users.service.js';
+import type { LoginDto } from './dto/login.dto.js';
 import type { SignupDto } from './dto/signup.dto.js';
+import { TokensService, type IssuedTokens } from './tokens.service.js';
+
+// What signup, login and refresh return: the user plus the tokens the
+// controller puts in cookies.
+export interface AuthResult {
+  user: PublicUser;
+  tokens: IssuedTokens;
+}
 
 // WHY THIS FILE EXISTS
-// The business rules of authentication live here, not in the controller.
-// For now: signup. Login and sessions come next.
+// The business rules of authentication live here, not in the controller:
+// signup, login, token refresh, logout, and "who am I".
 @Injectable()
 export class AuthService {
-  constructor(private readonly users: UsersService) {}
+  // A hash of a random password nobody knows. Used to spend the same time
+  // verifying when the email does not exist (see login).
+  private readonly dummyHash = argon2.hash(randomBytes(16).toString('hex'));
 
-  async signup(dto: SignupDto): Promise<PublicUser> {
+  constructor(
+    private readonly users: UsersService,
+    private readonly tokens: TokensService,
+  ) {}
+
+  async signup(dto: SignupDto): Promise<AuthResult> {
     // 1. Friendly early check. The email was already trimmed and lowercased
     //    by the DTO, so "A@x.com" and "a@x.com" are the same account.
     if (await this.users.findByEmail(dto.email)) {
@@ -34,16 +51,57 @@ export class AuthService {
     // 3. Save. The checks above are not atomic: two simultaneous signups can
     //    both pass them. The database unique constraints are the real
     //    guarantee, so a violation is turned into the same friendly error.
+    let user;
     try {
-      const user = await this.users.create({
+      user = await this.users.create({
         email: dto.email,
         displayName: dto.displayName,
         passwordHash,
       });
-      return toPublicUser(user);
     } catch (error) {
       throw this.translateUniqueViolation(error) ?? error;
     }
+
+    // 4. Signing up also logs the user in.
+    return { user: toPublicUser(user), tokens: await this.tokens.issue(user.id) };
+  }
+
+  async login(dto: LoginDto): Promise<AuthResult> {
+    const user = await this.users.findByEmail(dto.email);
+
+    // Unknown email and wrong password must be indistinguishable: same error
+    // AND same duration. So when there is no user (or an OAuth-only user with
+    // no password), we still verify against the dummy hash, which can never
+    // match. Otherwise the response time would reveal which emails exist.
+    const hash = user?.passwordHash ?? (await this.dummyHash);
+    const passwordOk = await argon2.verify(hash, dto.password);
+
+    if (!user || !user.passwordHash || !passwordOk) {
+      throw new AppError('INVALID_CREDENTIALS', 'Email or password is incorrect', 401);
+    }
+
+    return { user: toPublicUser(user), tokens: await this.tokens.issue(user.id) };
+  }
+
+  // Exchanges the refresh token for a new pair (the old one is consumed).
+  async refresh(refreshToken: string): Promise<AuthResult> {
+    const { userId, ...tokens } = await this.tokens.rotate(refreshToken);
+    const user = await this.users.findById(userId);
+    if (!user) {
+      throw new AppError('INVALID_REFRESH_TOKEN', 'Please log in again', 401);
+    }
+    return { user: toPublicUser(user), tokens };
+  }
+
+  async logout(refreshToken: string | undefined): Promise<void> {
+    if (refreshToken) await this.tokens.revoke(refreshToken);
+  }
+
+  // "Who am I": the user behind a verified access token.
+  async me(userId: string): Promise<PublicUser> {
+    const user = await this.users.findById(userId);
+    if (!user) throw new AppError('UNAUTHORIZED', 'Please log in', 401);
+    return toPublicUser(user);
   }
 
   // Postgres error code 23505 = unique_violation. Its `detail` names the
