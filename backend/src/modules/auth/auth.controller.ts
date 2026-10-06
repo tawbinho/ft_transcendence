@@ -8,7 +8,6 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   ApiCookieAuth,
   ApiCreatedResponse,
@@ -23,17 +22,12 @@ import {
   type AuthenticatedUser,
 } from '../../common/decorators/current-user.decorator.js';
 import { AppError } from '../../common/errors/app-error.js';
-import type { Env } from '../../config/env.validation.js';
 import { PublicUserResponse } from '../users/dto/public-user.response.js';
 import type { PublicUser } from '../users/public-user.js';
 import {
-  ACCESS_COOKIE,
-  PENDING_COOKIE,
-  REFRESH_COOKIE,
-  clearAuthCookies,
-  clearPendingCookie,
-  setAuthCookies,
-  setPendingCookie,
+  SESSION_COOKIE,
+  clearSessionCookie,
+  setSessionCookie,
 } from './auth-cookies.js';
 import { AuthService, type AuthResult } from './auth.service.js';
 import {
@@ -44,7 +38,7 @@ import {
 import { LoginDto } from './dto/login.dto.js';
 import { SignupDto } from './dto/signup.dto.js';
 import { TwoFactorCodeDto } from './dto/two-factor-code.dto.js';
-import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { SessionGuard } from './session.guard.js';
 
 // Rate limits are per IP address. A 6-digit code has only a million
 // possibilities and passwords can be guessed, so the sensitive routes allow
@@ -53,28 +47,24 @@ const strict = (limit: number) => ({ default: { limit, ttl: 60_000 } });
 
 // WHY THIS FILE EXISTS
 // The controller is only the doorway: it declares the routes, receives the
-// already-validated body, calls the service, and puts the tokens in cookies.
-// No business logic here. All routes below are served under /api/auth.
+// already-validated body, calls the service, and puts the session in the
+// cookie. No business logic here. All routes are served under /api/auth.
 //
 // `@Res({ passthrough: true })` gives access to the response (to set
 // cookies) while still letting Nest send the returned value as usual.
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly auth: AuthService,
-    private readonly config: ConfigService<Env, true>,
-  ) {}
+  constructor(private readonly auth: AuthService) {}
 
   // POST /api/auth/signup: creates the account AND logs the user in.
-  // The frontend reads `{ user }`; the global interceptor wraps it as
-  // { data: { user } }.
+  // The global interceptor wraps the answer as { data: { user } }.
   @Post('signup')
   @Throttle(strict(5))
   @ApiOperation({ summary: 'Create an account and log in' })
   @ApiCreatedResponse({
     type: SessionResponse,
-    description: 'Account created. Sets the access_token and refresh_token cookies.',
+    description: 'Account created. Sets the `session` cookie.',
   })
   async signup(
     @Body() dto: SignupDto,
@@ -84,8 +74,8 @@ export class AuthController {
   }
 
   // POST /api/auth/login: checks the password.
-  //  - 2FA off: sets the session cookies and returns the user.
-  //  - 2FA on: sets only the short-lived pending cookie and answers
+  //  - 2FA off: sets the session cookie and returns the user.
+  //  - 2FA on: sets a short-lived PENDING session cookie and answers
   //    { user: null, twoFactorRequired: true }. The user must then call
   //    POST /api/auth/2fa/verify with their code.
   @Post('login')
@@ -95,7 +85,7 @@ export class AuthController {
   @ApiOkResponse({
     type: LoginResponse,
     description:
-      'Logged in (cookies set), or twoFactorRequired when a 2FA code is still needed.',
+      'Logged in (`session` cookie set), or twoFactorRequired when a 2FA code is still needed (the cookie then only works for /auth/2fa/verify, for 5 minutes).',
   })
   async login(
     @Body() dto: LoginDto,
@@ -103,34 +93,36 @@ export class AuthController {
   ): Promise<LoginResponse> {
     const result = await this.auth.login(dto);
     if ('twoFactorRequired' in result) {
-      setPendingCookie(res, result.pendingToken);
+      setSessionCookie(res, result.session);
       return { user: null, twoFactorRequired: true };
     }
     return this.respondWithSession(res, result);
   }
 
-  // POST /api/auth/2fa/verify: second stage of a 2FA login. Public (the user
-  // is not logged in yet): it is authenticated by the pending cookie.
+  // POST /api/auth/2fa/verify: second stage of a 2FA login. The user is not
+  // fully logged in yet: the pending session in the cookie authenticates this
+  // one route. On success the cookie is replaced by a brand-new real session.
   @Post('2fa/verify')
   @Throttle(strict(5))
   @HttpCode(200)
   @ApiOperation({ summary: 'Finish a 2FA login with the 6-digit code' })
   @ApiOkResponse({
     type: SessionResponse,
-    description: 'Logged in. Sets the access_token and refresh_token cookies.',
+    description: 'Logged in. The `session` cookie is replaced by a full session.',
   })
   async verifyTwoFactor(
     @Body() dto: TwoFactorCodeDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ user: PublicUser }> {
-    const pendingToken = req.cookies?.[PENDING_COOKIE] as string | undefined;
+    const pendingToken = req.cookies?.[SESSION_COOKIE] as string | undefined;
     if (!pendingToken) {
       throw new AppError('UNAUTHORIZED', 'Please log in with your password first', 401);
     }
-    const result = await this.auth.verifyTwoFactor(pendingToken, dto.code);
-    clearPendingCookie(res); // it has done its job
-    return this.respondWithSession(res, result);
+    return this.respondWithSession(
+      res,
+      await this.auth.verifyTwoFactor(pendingToken, dto.code),
+    );
   }
 
   // POST /api/auth/2fa/setup: step 1 of turning 2FA on. Returns the QR code
@@ -138,9 +130,9 @@ export class AuthController {
   @Post('2fa/setup')
   @Throttle(strict(10))
   @HttpCode(200)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard)
   @ApiOperation({ summary: 'Start 2FA setup, returns a QR code' })
-  @ApiCookieAuth('access_token')
+  @ApiCookieAuth('session')
   @ApiOkResponse({ type: TwoFactorSetupResponse })
   setupTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
@@ -152,9 +144,9 @@ export class AuthController {
   @Post('2fa/enable')
   @Throttle(strict(5))
   @HttpCode(200)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard)
   @ApiOperation({ summary: 'Turn 2FA on with a code from the app' })
-  @ApiCookieAuth('access_token')
+  @ApiCookieAuth('session')
   @ApiOkResponse({ description: '2FA is now on. `data` is null.' })
   async enableTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
@@ -168,9 +160,9 @@ export class AuthController {
   @Post('2fa/disable')
   @Throttle(strict(5))
   @HttpCode(200)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard)
   @ApiOperation({ summary: 'Turn 2FA off (needs a valid code)' })
-  @ApiCookieAuth('access_token')
+  @ApiCookieAuth('session')
   @ApiOkResponse({ description: '2FA is now off. `data` is null.' })
   async disableTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
@@ -179,40 +171,18 @@ export class AuthController {
     await this.auth.disableTwoFactor(user.id, dto.code);
   }
 
-  // POST /api/auth/refresh: swaps the refresh cookie for a new pair of
-  // tokens. The browser sends the refresh cookie automatically (its path is
-  // /api/auth). The old refresh token stops working.
-  @Post('refresh')
-  @HttpCode(200)
-  @ApiOperation({ summary: 'Get new tokens using the refresh cookie' })
-  @ApiOkResponse({
-    type: SessionResponse,
-    description: 'New cookies set. The previous refresh token no longer works.',
-  })
-  async refresh(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<{ user: PublicUser }> {
-    const refreshToken = req.cookies?.[REFRESH_COOKIE] as string | undefined;
-    if (!refreshToken) {
-      throw new AppError('INVALID_REFRESH_TOKEN', 'Please log in again', 401);
-    }
-    return this.respondWithSession(res, await this.auth.refresh(refreshToken));
-  }
-
-  // POST /api/auth/logout: revokes the refresh token and clears the cookies.
-  // Works even if nobody is logged in.
+  // POST /api/auth/logout: ends the login immediately (the session row is
+  // deleted) and clears the cookie. Works even if nobody is logged in.
   @Post('logout')
   @HttpCode(200)
   @ApiOperation({ summary: 'Log out' })
-  @ApiOkResponse({ description: 'Cookies cleared. `data` is null.' })
+  @ApiOkResponse({ description: 'Session ended, cookie cleared. `data` is null.' })
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
-    await this.auth.logout(req.cookies?.[REFRESH_COOKIE] as string | undefined);
-    clearAuthCookies(res);
-    clearPendingCookie(res);
+    await this.auth.logout(req.cookies?.[SESSION_COOKIE] as string | undefined);
+    clearSessionCookie(res);
   }
 
   // GET /api/auth/me: the logged-in user, or null when nobody is logged in.
@@ -222,24 +192,19 @@ export class AuthController {
   @ApiOperation({ summary: 'The logged-in user, or null if not logged in' })
   @ApiOkResponse({
     type: PublicUserResponse,
-    description:
-      'The user, or `data: null` when not logged in (including an expired access token: then call POST /auth/refresh).',
+    description: 'The user, or `data: null` when not logged in.',
   })
   me(@Req() req: Request): Promise<PublicUser | null> {
-    return this.auth.currentUser(req.cookies?.[ACCESS_COOKIE] as string | undefined);
+    return this.auth.currentUser(req.cookies?.[SESSION_COOKIE] as string | undefined);
   }
 
-  // Shared by signup, login, 2FA verify and refresh: put the tokens in
-  // cookies and return only the user in the body.
+  // Shared by signup, login and 2FA verify: put the session in the cookie and
+  // return only the user in the body.
   private respondWithSession(
     res: Response,
-    { user, tokens }: AuthResult,
+    { user, session }: AuthResult,
   ): { user: PublicUser } {
-    setAuthCookies(
-      res,
-      tokens,
-      this.config.get('JWT_ACCESS_TTL_SECONDS', { infer: true }),
-    );
+    setSessionCookie(res, session);
     return { user };
   }
 }

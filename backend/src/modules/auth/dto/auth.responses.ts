@@ -6,15 +6,15 @@ import { PublicUserResponse } from '../../users/dto/public-user.response.js';
 // auth routes put inside `data` in their responses. They do not change what
 // the API returns. Keep them in sync with the controller's return types.
 
-// signup, 2fa/verify and refresh
+// signup and 2fa/verify
 export class SessionResponse {
   @ApiProperty({ type: PublicUserResponse })
   user: PublicUserResponse;
 }
 
 // login: `user` is null and `twoFactorRequired` is true when the account has
-// 2FA on. Only a short-lived `pending_2fa` cookie is set in that case; the
-// client must then call POST /auth/2fa/verify with the 6-digit code.
+// 2FA on. The `session` cookie is then only a short-lived (5 minutes) pending
+// session; the client must call POST /auth/2fa/verify with the 6-digit code.
 export class LoginResponse {
   @ApiProperty({ type: PublicUserResponse, nullable: true })
   user: PublicUserResponse | null;

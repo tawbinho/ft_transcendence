@@ -1,50 +1,35 @@
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import type { Env } from '../../config/env.validation.js';
+import { TwoFactor } from '../users/entities/two-factor.entity.js';
 import { UsersModule } from '../users/users.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
-import { RefreshToken } from './entities/refresh-token.entity.js';
-import { TwoFactor } from '../users/entities/two-factor.entity.js';
-import { JwtAuthGuard } from './jwt-auth.guard.js';
-import { TokensService } from './tokens.service.js';
+import { Session } from './entities/session.entity.js';
+import { SessionGuard } from './session.guard.js';
+import { SessionsService } from './sessions.service.js';
 import { SecretCipher } from './two-factor/secret-cipher.js';
 import { TwoFactorService } from './two-factor/two-factor.service.js';
 
-// The auth module: signup, login, refresh, logout and "me", plus the guard
-// other modules use to protect their routes.
+// The auth module: signup, login (with the optional 2FA step), logout and
+// "me", plus the guard and the sessions service other modules use to know who
+// is logged in (HTTP routes now, WebSockets later).
 @Module({
   imports: [
     UsersModule, // for UsersService
-    // RefreshToken belongs to auth; TwoFactor is owned by the users module
-    // but its setup/verify logic lives here.
-    TypeOrmModule.forFeature([RefreshToken, TwoFactor]),
-    // Configures how access tokens are signed and checked. The secret and
-    // lifetime come from the validated environment. Pinning the algorithm
-    // stops an attacker from choosing a weaker one in a forged token.
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService<Env, true>) => ({
-        secret: config.get('JWT_SECRET', { infer: true }),
-        signOptions: {
-          algorithm: 'HS256',
-          expiresIn: config.get('JWT_ACCESS_TTL_SECONDS', { infer: true }),
-        },
-        verifyOptions: { algorithms: ['HS256'] },
-      }),
-    }),
+    // Session belongs to auth; TwoFactor is owned by the users module but its
+    // setup/verify logic lives here.
+    TypeOrmModule.forFeature([Session, TwoFactor]),
   ],
   controllers: [AuthController],
   providers: [
     AuthService,
-    TokensService,
+    SessionsService,
     TwoFactorService,
     SecretCipher,
-    JwtAuthGuard,
+    SessionGuard,
   ],
-  // Other modules import AuthModule to use @UseGuards(JwtAuthGuard).
-  exports: [JwtAuthGuard, TokensService],
+  // Other modules import AuthModule to use @UseGuards(SessionGuard), and the
+  // WebSocket gateway will use SessionsService to authenticate a connection.
+  exports: [SessionGuard, SessionsService],
 })
 export class AuthModule {}

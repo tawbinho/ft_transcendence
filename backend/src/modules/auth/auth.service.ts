@@ -7,27 +7,27 @@ import { toPublicUser, type PublicUser } from '../users/public-user.js';
 import { UsersService } from '../users/users.service.js';
 import type { LoginDto } from './dto/login.dto.js';
 import type { SignupDto } from './dto/signup.dto.js';
-import { TokensService, type IssuedTokens } from './tokens.service.js';
+import { SessionsService, type IssuedSession } from './sessions.service.js';
 import { TwoFactorService } from './two-factor/two-factor.service.js';
 
-// What signup, login and refresh return: the user plus the tokens the
-// controller puts in cookies.
+// What signup, login and 2FA verification return: the user plus the session
+// whose token the controller puts in the cookie.
 export interface AuthResult {
   user: PublicUser;
-  tokens: IssuedTokens;
+  session: IssuedSession;
 }
 
-// Login for a user with 2FA: the password was right, but no session yet.
-// `pendingToken` goes in a short-lived cookie and is only good for the 2FA
-// verification route.
+// Login for a user with 2FA: the password was right, but this is NOT a login
+// yet. `session` is a short-lived PENDING session: its cookie is only good for
+// the 2FA verification route.
 export interface TwoFactorRequired {
   twoFactorRequired: true;
-  pendingToken: string;
+  session: IssuedSession;
 }
 
 // WHY THIS FILE EXISTS
 // The business rules of authentication live here, not in the controller:
-// signup, login, token refresh, logout, and "who am I".
+// signup, login (with the optional 2FA step), logout, and "who am I".
 @Injectable()
 export class AuthService {
   // A hash of a random password nobody knows. Used to spend the same time
@@ -36,7 +36,7 @@ export class AuthService {
 
   constructor(
     private readonly users: UsersService,
-    private readonly tokens: TokensService,
+    private readonly sessions: SessionsService,
     private readonly twoFactor: TwoFactorService,
   ) {}
 
@@ -73,7 +73,7 @@ export class AuthService {
     }
 
     // 4. Signing up also logs the user in.
-    return { user: toPublicUser(user), tokens: await this.tokens.issue(user.id) };
+    return { user: toPublicUser(user), session: await this.sessions.create(user.id) };
   }
 
   async login(dto: LoginDto): Promise<AuthResult | TwoFactorRequired> {
@@ -90,27 +90,36 @@ export class AuthService {
       throw new AppError('INVALID_CREDENTIALS', 'Email or password is incorrect', 401);
     }
 
-    // Password correct. With 2FA on, that is NOT enough to log in: hand back
-    // a short-lived pending token and wait for the code (verifyTwoFactor).
+    // Password correct. With 2FA on, that is NOT enough to log in: create a
+    // short-lived PENDING session and wait for the code (verifyTwoFactor).
     if (await this.twoFactor.isEnabled(user.id)) {
       return {
         twoFactorRequired: true,
-        pendingToken: await this.tokens.issuePending(user.id),
+        session: await this.sessions.create(user.id, { pendingTwoFactor: true }),
       };
     }
 
-    return { user: toPublicUser(user), tokens: await this.tokens.issue(user.id) };
+    return { user: toPublicUser(user), session: await this.sessions.create(user.id) };
   }
 
-  // Second stage of a 2FA login: the pending token proves the password was
-  // right, the code proves the user has their authenticator app.
+  // Second stage of a 2FA login. The pending session (from the cookie) proves
+  // the password was right, the code proves the user has their app.
   async verifyTwoFactor(pendingToken: string, code: string): Promise<AuthResult> {
-    const userId = await this.tokens.verifyPending(pendingToken);
-    await this.twoFactor.verifyLoginCode(userId, code);
+    const pending = await this.sessions.findPending(pendingToken);
+    if (!pending) {
+      throw new AppError(
+        'UNAUTHORIZED',
+        'Your login session expired, please log in again',
+        401,
+      );
+    }
+    await this.twoFactor.verifyLoginCode(pending.userId, code);
 
+    // Replaces the pending session by a real one with a NEW token.
+    const { userId, ...session } = await this.sessions.promote(pendingToken);
     const user = await this.users.findById(userId);
     if (!user) throw new AppError('UNAUTHORIZED', 'Please log in again', 401);
-    return { user: toPublicUser(user), tokens: await this.tokens.issue(user.id) };
+    return { user: toPublicUser(user), session };
   }
 
   // Start turning 2FA on: returns the QR code to scan.
@@ -128,36 +137,22 @@ export class AuthService {
     return this.twoFactor.disable(userId, code);
   }
 
-  // Exchanges the refresh token for a new pair (the old one is consumed).
-  async refresh(refreshToken: string): Promise<AuthResult> {
-    const { userId, ...tokens } = await this.tokens.rotate(refreshToken);
-    const user = await this.users.findById(userId);
-    if (!user) {
-      throw new AppError('INVALID_REFRESH_TOKEN', 'Please log in again', 401);
-    }
-    return { user: toPublicUser(user), tokens };
+  // Ends the login behind this cookie, immediately. Works with no cookie too.
+  async logout(sessionToken: string | undefined): Promise<void> {
+    if (sessionToken) await this.sessions.revoke(sessionToken);
   }
 
-  async logout(refreshToken: string | undefined): Promise<void> {
-    if (refreshToken) await this.tokens.revoke(refreshToken);
-  }
-
-  // "Who am I": the user behind the access token, or null when nobody is
-  // logged in (no cookie, a forged or an expired token, a deleted account).
-  // Not being logged in is a NORMAL answer here, not an error: answering 401
-  // would make the browser print an error in its console on every visit by
-  // a logged-out user. The frontend calls POST /auth/refresh when it gets
-  // null but still holds a refresh cookie.
-  async currentUser(accessToken: string | undefined): Promise<PublicUser | null> {
-    if (!accessToken) return null;
-    try {
-      const { sub } = await this.tokens.verifyAccessToken(accessToken);
-      const user = await this.users.findById(sub);
-      return user ? toPublicUser(user) : null;
-    } catch (error) {
-      if (error instanceof AppError) return null; // invalid or expired token
-      throw error;
-    }
+  // "Who am I": the user behind the session cookie, or null when nobody is
+  // logged in (no cookie, an unknown or expired session, a pending 2FA
+  // session, a deleted account). Not being logged in is a NORMAL answer here,
+  // not an error: answering 401 would make the browser print an error in its
+  // console on every visit by a logged-out user.
+  async currentUser(sessionToken: string | undefined): Promise<PublicUser | null> {
+    if (!sessionToken) return null;
+    const session = await this.sessions.findActive(sessionToken);
+    if (!session) return null;
+    const user = await this.users.findById(session.userId);
+    return user ? toPublicUser(user) : null;
   }
 
   // Postgres error code 23505 = unique_violation. Its `detail` names the

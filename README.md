@@ -4,7 +4,7 @@ Connect Four web app.
 
 | Part     | Stack                         | Status                                      |
 | -------- | ----------------------------- | ------------------------------------------- |
-| backend  | NestJS, TypeORM, MVC          | auth done (signup, login, JWT), in Docker   |
+| backend  | NestJS, TypeORM, MVC          | auth done (signup, login, sessions, 2FA), in Docker   |
 | database | PostgreSQL 17                 | running in Docker                           |
 | frontend | React, Vite                   | skeleton, not in Docker yet (see below)     |
 
@@ -15,8 +15,7 @@ Requirements: Docker with the Compose plugin.
 ```bash
 # 1. create your local env file
 cp .env.example .env
-# then set JWT_SECRET and TWO_FACTOR_KEY in .env, each to a different value
-# generated with:
+# then set TWO_FACTOR_KEY in .env to a value generated with:
 #   openssl rand -hex 32
 
 # 2. build and start the database and the backend
@@ -26,9 +25,8 @@ docker compose up --build -d
 curl localhost:3000/api    # {"data":"Hello World!"}
 ```
 
-The backend refuses to start if a required variable is missing, if
-`JWT_SECRET` is shorter than 32 characters, or if `TWO_FACTOR_KEY` is not
-64 hex characters, and says which one.
+The backend refuses to start if a required variable is missing or if
+`TWO_FACTOR_KEY` is not 64 hex characters, and says which one.
 
 The backend runs in dev mode: the `backend/` folder is mounted into the
 container, so saving a file reloads the server.
@@ -72,16 +70,14 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 | `DB_USER`                | `connect4` | database user                                           |
 | `DB_PASSWORD`            | `connect4` | database password                                       |
 | `DB_NAME`                | `connect4` | database name                                           |
-| `JWT_SECRET`             | none       | **required**, at least 32 chars, signs the login tokens |
 | `TWO_FACTOR_KEY`         | none       | **required**, 64 hex chars, encrypts the 2FA secrets    |
-| `JWT_ACCESS_TTL_SECONDS` | `900`      | access token lifetime (15 minutes), optional            |
-| `JWT_REFRESH_TTL_DAYS`   | `7`        | refresh token lifetime, optional                        |
+| `SESSION_TTL_DAYS`       | `7`        | how long a login lasts, optional                        |
 
 If a port is already used on your machine, change it in `.env`.
 Do not change `TWO_FACTOR_KEY` once users have enabled 2FA: their stored
 secrets can no longer be decrypted.
-The two `JWT_*_TTL` variables are optional and are not passed to the container
-by `docker-compose.yml` yet; add them there to change the defaults.
+`SESSION_TTL_DAYS` is optional and is not passed to the container by
+`docker-compose.yml` yet; add it there to change the default.
 
 ## Database migrations
 
@@ -98,7 +94,11 @@ docker compose exec backend npm run migration:generate -- src/database/migration
 ```
 
 Review a generated migration before running it, and never edit one that has
-already run.
+already run. Careful: in dev mode the backend restarts when files change and
+applies pending migrations at once, so a freshly generated migration may run
+before you have read it. If you need to edit it, revert it first. The
+generator also does not notice tables whose entity you deleted: add the
+`DROP TABLE` by hand.
 
 ## API
 
@@ -112,27 +112,28 @@ including the `data` / `error` wrapper. The browser must send requests with
 | ------------------------ | -------------------------------------------------- |
 | `POST /api/auth/signup`  | create an account and log in                       |
 | `POST /api/auth/login`   | log in with email and password (see 2FA below)     |
-| `POST /api/auth/refresh` | new tokens from the refresh cookie                 |
-| `POST /api/auth/logout`  | revoke the refresh token and clear the cookies     |
+| `POST /api/auth/logout`  | end the session on the server and clear the cookie |
 | `GET  /api/auth/me`      | the logged-in user, or `data: null` if not logged in (status 200, never 401) |
 | `POST /api/auth/2fa/setup`   | start 2FA setup, returns a QR code (logged in) |
 | `POST /api/auth/2fa/enable`  | turn 2FA on with a code from the app (logged in) |
 | `POST /api/auth/2fa/disable` | turn 2FA off, needs a valid code (logged in)   |
 | `POST /api/auth/2fa/verify`  | finish a 2FA login with the 6-digit code       |
 
-Login uses two httpOnly cookies: a short access token (JWT, 15 minutes) and a
-refresh token (7 days, stored hashed in the database, single use, rotated on
-every refresh).
-
-Because the access token lasts only 15 minutes, a frontend should call
-`POST /api/auth/refresh` when `GET /api/auth/me` answers `data: null` and the
-user may still hold a refresh cookie, and retry once.
+**Login uses database sessions.** Signup and login set one httpOnly cookie,
+`session`, holding a random token (valid `SESSION_TTL_DAYS`, 7 by default).
+The `sessions` table stores only the SHA-256 hash of that token, so a leaked
+database cannot be used to hijack a login. Logout deletes the row, so it takes
+effect immediately. A frontend only has to send requests with
+`credentials: "include"` and call `GET /api/auth/me` to know who is logged in:
+there is no token refresh to handle.
 
 **Two-factor authentication** uses an authenticator app (TOTP). When a user
 has 2FA enabled, `login` does not log them in: it answers
-`{ "user": null, "twoFactorRequired": true }` and sets a 5-minute `pending_2fa`
-cookie, and the user must then call `/api/auth/2fa/verify` with the 6-digit
-code. A code cannot be used twice. The TOTP secret is stored encrypted
+`{ "user": null, "twoFactorRequired": true }`. The `session` cookie it sets is
+only a *pending* session that lasts 5 minutes and is refused by every route
+except `/api/auth/2fa/verify`; the user must call that route with the 6-digit
+code, which replaces the cookie with a full session. A code cannot be used
+twice. The TOTP secret is stored encrypted
 (AES-256-GCM) with `TWO_FACTOR_KEY`.
 
 **Rate limits** (per IP, per minute): 100 requests overall; login 10; signup 5;

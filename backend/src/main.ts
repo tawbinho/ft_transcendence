@@ -14,7 +14,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // Reads the Cookie header into `request.cookies`, where the auth guard
-  // finds the access token.
+  // finds the session token.
   app.use(cookieParser());
 
   // Every failure leaves as { error: { code, message } }.
@@ -45,17 +45,21 @@ async function bootstrap() {
           'Every success answers `{ "data": ... }`; every failure answers',
           '`{ "error": { "code", "message" } }`.',
           '',
-          'Authentication uses httpOnly cookies set by signup, login and refresh:',
-          '`access_token` (15 minutes) and `refresh_token` (7 days, sent only to',
-          '`/api/auth`). The browser sends them automatically, so frontend requests',
-          'need `credentials: "include"`.',
+          'Authentication uses one httpOnly cookie, `session`, set by signup and',
+          'login and valid for 7 days. The browser sends it automatically, so',
+          'frontend requests need `credentials: "include"`. Logging out ends the',
+          'session immediately on the server.',
         ].join('\n'),
       )
-      .addCookieAuth('access_token', {
-        type: 'apiKey',
-        in: 'cookie',
-        name: 'access_token',
-      })
+      // The third argument is the scheme's name in the document. It must match
+      // what @ApiCookieAuth('session') refers to on the routes; by default it
+      // would be called "cookie" and the routes' lock icons would point at a
+      // scheme that does not exist.
+      .addCookieAuth(
+        'session',
+        { type: 'apiKey', in: 'cookie', name: 'session' },
+        'session',
+      )
       .build();
     // Rewrites the document so every route shows the real { data } / { error }
     // shapes (see common/swagger/response-envelope.ts).
