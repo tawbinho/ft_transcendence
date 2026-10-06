@@ -20,12 +20,21 @@ import type { Env } from '../config/env.validation.js';
       // The `as TypeOrmModuleOptions` cast is only for TypeScript: the Nest
       // wrapper type and TypeORM's own type are structurally the same here.
       useFactory: (config: ConfigService<Env, true>) =>
-        buildDatabaseOptions({
-          DB_HOST: config.get('DB_HOST', { infer: true }),
-          DB_PORT: config.get('DB_PORT', { infer: true }),
-          DB_USER: config.get('DB_USER', { infer: true }),
-          DB_PASSWORD: config.get('DB_PASSWORD', { infer: true }),
-          DB_NAME: config.get('DB_NAME', { infer: true }),
+        ({
+          ...buildDatabaseOptions({
+            DB_HOST: config.get('DB_HOST', { infer: true }),
+            DB_PORT: config.get('DB_PORT', { infer: true }),
+            DB_USER: config.get('DB_USER', { infer: true }),
+            DB_PASSWORD: config.get('DB_PASSWORD', { infer: true }),
+            DB_NAME: config.get('DB_NAME', { infer: true }),
+          }),
+          // Apply pending migrations every time the app starts, so a fresh
+          // clone works with just `docker compose up` (the subject requires
+          // one-command deployment). Set here and NOT in the shared config
+          // on purpose: the migration CLI also loads that config, and with
+          // this flag `migration:revert` would first run all pending
+          // migrations and then revert, which is dangerous.
+          migrationsRun: true,
         }) as TypeOrmModuleOptions,
     }),
   ],

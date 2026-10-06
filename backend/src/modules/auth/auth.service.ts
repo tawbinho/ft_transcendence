@@ -142,11 +142,22 @@ export class AuthService {
     if (refreshToken) await this.tokens.revoke(refreshToken);
   }
 
-  // "Who am I": the user behind a verified access token.
-  async me(userId: string): Promise<PublicUser> {
-    const user = await this.users.findById(userId);
-    if (!user) throw new AppError('UNAUTHORIZED', 'Please log in', 401);
-    return toPublicUser(user);
+  // "Who am I": the user behind the access token, or null when nobody is
+  // logged in (no cookie, a forged or an expired token, a deleted account).
+  // Not being logged in is a NORMAL answer here, not an error: answering 401
+  // would make the browser print an error in its console on every visit by
+  // a logged-out user. The frontend calls POST /auth/refresh when it gets
+  // null but still holds a refresh cookie.
+  async currentUser(accessToken: string | undefined): Promise<PublicUser | null> {
+    if (!accessToken) return null;
+    try {
+      const { sub } = await this.tokens.verifyAccessToken(accessToken);
+      const user = await this.users.findById(sub);
+      return user ? toPublicUser(user) : null;
+    } catch (error) {
+      if (error instanceof AppError) return null; // invalid or expired token
+      throw error;
+    }
   }
 
   // Postgres error code 23505 = unique_violation. Its `detail` names the

@@ -22,10 +22,7 @@ cp .env.example .env
 # 2. build and start the database and the backend
 docker compose up --build -d
 
-# 3. create the database tables (first time, and after pulling new migrations)
-docker compose exec backend npm run migration:run
-
-# 4. check it works
+# 3. check it works (the database tables are created automatically at startup)
 curl localhost:3000/api    # {"data":"Hello World!"}
 ```
 
@@ -88,11 +85,13 @@ by `docker-compose.yml` yet; add them there to change the defaults.
 
 ## Database migrations
 
-The schema changes only through migrations (`synchronize` is off). Run these
-inside the backend container:
+The schema changes only through migrations (`synchronize` is off). Pending
+migrations are applied **automatically every time the backend starts**, so
+`docker compose up` is enough. The commands below, run inside the backend
+container, are for working on the schema:
 
 ```bash
-docker compose exec backend npm run migration:run       # apply pending migrations
+docker compose exec backend npm run migration:run       # apply pending migrations now
 docker compose exec backend npm run migration:revert    # undo the last one
 # after changing an entity, generate a new migration:
 docker compose exec backend npm run migration:generate -- src/database/migrations/Name
@@ -105,7 +104,9 @@ already run.
 
 All routes are under `/api` and answer `{ "data": ... }` on success or
 `{ "error": { "code": "...", "message": "..." } }` on failure. Try them in
-Swagger at http://localhost:3000/api/docs.
+Swagger at http://localhost:3000/api/docs, which shows the exact shapes,
+including the `data` / `error` wrapper. The browser must send requests with
+`credentials: "include"` so the cookies travel.
 
 | Route                    | Description                                        |
 | ------------------------ | -------------------------------------------------- |
@@ -113,7 +114,7 @@ Swagger at http://localhost:3000/api/docs.
 | `POST /api/auth/login`   | log in with email and password (see 2FA below)     |
 | `POST /api/auth/refresh` | new tokens from the refresh cookie                 |
 | `POST /api/auth/logout`  | revoke the refresh token and clear the cookies     |
-| `GET  /api/auth/me`      | the logged-in user (401 if not logged in)          |
+| `GET  /api/auth/me`      | the logged-in user, or `data: null` if not logged in (status 200, never 401) |
 | `POST /api/auth/2fa/setup`   | start 2FA setup, returns a QR code (logged in) |
 | `POST /api/auth/2fa/enable`  | turn 2FA on with a code from the app (logged in) |
 | `POST /api/auth/2fa/disable` | turn 2FA off, needs a valid code (logged in)   |
@@ -122,6 +123,10 @@ Swagger at http://localhost:3000/api/docs.
 Login uses two httpOnly cookies: a short access token (JWT, 15 minutes) and a
 refresh token (7 days, stored hashed in the database, single use, rotated on
 every refresh).
+
+Because the access token lasts only 15 minutes, a frontend should call
+`POST /api/auth/refresh` when `GET /api/auth/me` answers `data: null` and the
+user may still hold a refresh cookie, and retry once.
 
 **Two-factor authentication** uses an authenticator app (TOTP). When a user
 has 2FA enabled, `login` does not log them in: it answers

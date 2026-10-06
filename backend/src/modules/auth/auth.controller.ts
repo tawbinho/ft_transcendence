@@ -9,7 +9,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCookieAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import {
@@ -18,8 +24,10 @@ import {
 } from '../../common/decorators/current-user.decorator.js';
 import { AppError } from '../../common/errors/app-error.js';
 import type { Env } from '../../config/env.validation.js';
+import { PublicUserResponse } from '../users/dto/public-user.response.js';
 import type { PublicUser } from '../users/public-user.js';
 import {
+  ACCESS_COOKIE,
   PENDING_COOKIE,
   REFRESH_COOKIE,
   clearAuthCookies,
@@ -28,17 +36,15 @@ import {
   setPendingCookie,
 } from './auth-cookies.js';
 import { AuthService, type AuthResult } from './auth.service.js';
+import {
+  LoginResponse,
+  SessionResponse,
+  TwoFactorSetupResponse,
+} from './dto/auth.responses.js';
 import { LoginDto } from './dto/login.dto.js';
 import { SignupDto } from './dto/signup.dto.js';
 import { TwoFactorCodeDto } from './dto/two-factor-code.dto.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
-
-// What login answers. With 2FA on, `user` is null and `twoFactorRequired`
-// tells the frontend to show the code form.
-interface LoginResponse {
-  user: PublicUser | null;
-  twoFactorRequired?: true;
-}
 
 // Rate limits are per IP address. A 6-digit code has only a million
 // possibilities and passwords can be guessed, so the sensitive routes allow
@@ -66,6 +72,10 @@ export class AuthController {
   @Post('signup')
   @Throttle(strict(5))
   @ApiOperation({ summary: 'Create an account and log in' })
+  @ApiCreatedResponse({
+    type: SessionResponse,
+    description: 'Account created. Sets the access_token and refresh_token cookies.',
+  })
   async signup(
     @Body() dto: SignupDto,
     @Res({ passthrough: true }) res: Response,
@@ -82,6 +92,11 @@ export class AuthController {
   @Throttle(strict(10))
   @HttpCode(200)
   @ApiOperation({ summary: 'Log in with email and password' })
+  @ApiOkResponse({
+    type: LoginResponse,
+    description:
+      'Logged in (cookies set), or twoFactorRequired when a 2FA code is still needed.',
+  })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -100,6 +115,10 @@ export class AuthController {
   @Throttle(strict(5))
   @HttpCode(200)
   @ApiOperation({ summary: 'Finish a 2FA login with the 6-digit code' })
+  @ApiOkResponse({
+    type: SessionResponse,
+    description: 'Logged in. Sets the access_token and refresh_token cookies.',
+  })
   async verifyTwoFactor(
     @Body() dto: TwoFactorCodeDto,
     @Req() req: Request,
@@ -121,6 +140,8 @@ export class AuthController {
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Start 2FA setup, returns a QR code' })
+  @ApiCookieAuth('access_token')
+  @ApiOkResponse({ type: TwoFactorSetupResponse })
   setupTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<{ qr: string; secret: string }> {
@@ -133,6 +154,8 @@ export class AuthController {
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Turn 2FA on with a code from the app' })
+  @ApiCookieAuth('access_token')
+  @ApiOkResponse({ description: '2FA is now on. `data` is null.' })
   async enableTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: TwoFactorCodeDto,
@@ -147,6 +170,8 @@ export class AuthController {
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Turn 2FA off (needs a valid code)' })
+  @ApiCookieAuth('access_token')
+  @ApiOkResponse({ description: '2FA is now off. `data` is null.' })
   async disableTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: TwoFactorCodeDto,
@@ -160,6 +185,10 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(200)
   @ApiOperation({ summary: 'Get new tokens using the refresh cookie' })
+  @ApiOkResponse({
+    type: SessionResponse,
+    description: 'New cookies set. The previous refresh token no longer works.',
+  })
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -176,6 +205,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(200)
   @ApiOperation({ summary: 'Log out' })
+  @ApiOkResponse({ description: 'Cookies cleared. `data` is null.' })
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -185,13 +215,18 @@ export class AuthController {
     clearPendingCookie(res);
   }
 
-  // GET /api/auth/me: the logged-in user. The guard answers 401 for anyone
-  // without a valid access cookie, so this method only runs when logged in.
+  // GET /api/auth/me: the logged-in user, or null when nobody is logged in.
+  // Deliberately NOT behind the guard: "am I logged in?" is a question whose
+  // answer can be "no" without being an error (see AuthService.currentUser).
   @Get('me')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'The currently logged-in user' })
-  me(@CurrentUser() user: AuthenticatedUser): Promise<PublicUser> {
-    return this.auth.me(user.id);
+  @ApiOperation({ summary: 'The logged-in user, or null if not logged in' })
+  @ApiOkResponse({
+    type: PublicUserResponse,
+    description:
+      'The user, or `data: null` when not logged in (including an expired access token: then call POST /auth/refresh).',
+  })
+  me(@Req() req: Request): Promise<PublicUser | null> {
+    return this.auth.currentUser(req.cookies?.[ACCESS_COOKIE] as string | undefined);
   }
 
   // Shared by signup, login, 2FA verify and refresh: put the tokens in

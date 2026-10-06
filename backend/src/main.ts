@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
+import { applyResponseEnvelope } from './common/swagger/response-envelope.js';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor.js';
 
 async function bootstrap() {
@@ -39,8 +40,29 @@ async function bootstrap() {
     const config = new DocumentBuilder()
       .setTitle('Connect Four API')
       .setVersion('0.1')
+      .setDescription(
+        [
+          'Every success answers `{ "data": ... }`; every failure answers',
+          '`{ "error": { "code", "message" } }`.',
+          '',
+          'Authentication uses httpOnly cookies set by signup, login and refresh:',
+          '`access_token` (15 minutes) and `refresh_token` (7 days, sent only to',
+          '`/api/auth`). The browser sends them automatically, so frontend requests',
+          'need `credentials: "include"`.',
+        ].join('\n'),
+      )
+      .addCookieAuth('access_token', {
+        type: 'apiKey',
+        in: 'cookie',
+        name: 'access_token',
+      })
       .build();
-    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config), {
+    // Rewrites the document so every route shows the real { data } / { error }
+    // shapes (see common/swagger/response-envelope.ts).
+    const document = applyResponseEnvelope(
+      SwaggerModule.createDocument(app, config),
+    );
+    SwaggerModule.setup('docs', app, document, {
       // Puts the page under the global prefix: /api/docs, not /docs.
       useGlobalPrefix: true,
     });
