@@ -129,6 +129,14 @@ including the `data` / `error` wrapper. The browser must send requests with
 | `POST /api/auth/2fa/enable`  | turn 2FA on with a code from the app (logged in) |
 | `POST /api/auth/2fa/disable` | turn 2FA off, needs a valid code (logged in)   |
 | `POST /api/auth/2fa/verify`  | finish a 2FA login with the 6-digit code       |
+| `POST /api/matches`           | create a match (optional settings, optional invited player) |
+| `GET  /api/matches/mine`      | my matches, newest first (`status`, `limit`, `offset`) |
+| `GET  /api/matches/:id`       | the full state of a match (players only)       |
+| `POST /api/matches/:id/join`  | join a waiting match, the match starts         |
+| `POST /api/matches/:id/moves` | play a column, body `{ "col": 3 }`             |
+| `POST /api/matches/:id/resign`| give up, or cancel a match still waiting       |
+
+All `/api/matches` routes need a logged-in user.
 
 **Login uses database sessions.** Signup and login set one httpOnly cookie,
 `session`, holding a random token (valid `SESSION_TTL_DAYS`, 7 by default).
@@ -147,8 +155,28 @@ code, which replaces the cookie with a full session. A code cannot be used
 twice. The TOTP secret is stored encrypted
 (AES-256-GCM) with `TWO_FACTOR_KEY`.
 
+**Matches.** The Connect Four rules live in a pure engine
+(`backend/src/modules/matches/engine`, with its own tests); the server judges
+every move, so a browser can never decide an outcome. A match starts as
+`waiting`; the second player joins and it becomes `in_progress`; it ends as
+`finished` (win, draw or resignation) or `abandoned` (cancelled while
+waiting). The board is never stored: it is rebuilt from the saved moves
+(`match_moves`) with the engine. The creator gets seat 1 or 2 at random.
+Settings you can choose: 5 to 10 columns, 5 to 9 rows, 3 to 5 in a row to win
+(never more than the smaller side), and a theme (`classic`, `ocean`,
+`sunset`, `midnight`). A match can be reserved for one player with
+`opponentDisplayName`. A user can have at most 3 matches waiting at once, and
+someone who is not a player in a match gets `MATCH_NOT_FOUND`.
+
+Concurrent actions are safe: every change to a match runs in a database
+transaction that first locks the match row, so two players cannot take the
+same seat and a move cannot be stored twice. Common error codes:
+`NOT_YOUR_TURN`, `COLUMN_FULL`, `INVALID_COLUMN`, `MATCH_NOT_ACTIVE`,
+`MATCH_NOT_JOINABLE`, `ALREADY_IN_MATCH`, `NOT_INVITED`, `USER_NOT_FOUND`,
+`TOO_MANY_WAITING_MATCHES`.
+
 **Rate limits** (per IP, per minute): 100 requests overall; login 10; signup 5;
-2FA verify, enable and disable 5. Beyond that the API answers `429` with the
+2FA verify, enable and disable 5; creating a match 20. Beyond that the API answers `429` with the
 code `RATE_LIMITED`. The counters are kept in memory and reset when the
 backend restarts.
 
