@@ -29,8 +29,12 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       TWO_FACTOR_KEY: ${TWO_FACTOR_KEY}
-    ports:
-      - '${BACKEND_PORT}:3000'
+    # Not published to the host on purpose: the only way in from outside is
+    # the HTTPS proxy below (the subject requires HTTPS for every connection
+    # to the backend). `expose` only makes the port visible to other
+    # containers of this compose network.
+    expose:
+      - '3000'
     depends_on:
       db:
         condition: service_healthy
@@ -38,5 +42,20 @@ services:
       - ./backend:/app
       - /app/node_modules
 
+  # HTTPS entry point: decrypts HTTPS and forwards to the backend over plain
+  # HTTP inside the network. See proxy/nginx.conf.
+  proxy:
+    build: ./proxy
+    restart: unless-stopped
+    ports:
+      # Port 8443 and not 443: rootless Docker cannot bind ports below 1024.
+      - '${HTTPS_PORT}:443'
+    depends_on:
+      - backend
+    volumes:
+      # Keeps the self-signed certificate between restarts.
+      - proxy-certs:/etc/nginx/certs
+
 volumes:
   db-data:
+  proxy-certs:

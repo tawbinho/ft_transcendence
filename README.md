@@ -22,8 +22,14 @@ cp .env.example .env
 docker compose up --build -d
 
 # 3. check it works (the database tables are created automatically at startup)
-curl localhost:3000/api    # {"data":"Hello World!"}
+curl -k https://localhost:8443/api    # {"data":"Hello World!"}
 ```
+
+Everything is served over **HTTPS** at `https://localhost:8443`. The
+certificate is self-signed and created automatically at the first start, so the
+browser shows a "connection not private" warning: click *Advanced*, then
+*Proceed to localhost*. `curl` needs `-k` for the same reason. The certificate
+is kept in a Docker volume, so the warning choice stays valid across restarts.
 
 The backend refuses to start if a required variable is missing or if
 `TWO_FACTOR_KEY` is not 64 hex characters, and says which one.
@@ -31,13 +37,18 @@ The backend refuses to start if a required variable is missing or if
 The backend runs in dev mode: the `backend/` folder is mounted into the
 container, so saving a file reloads the server.
 
-| Service  | URL / port                                  |
-| -------- | ------------------------------------------- |
-| backend  | http://localhost:3000/api (`BACKEND_PORT`)  |
-| API docs | http://localhost:3000/api/docs (Swagger)    |
-| database | `localhost:5433` (`DB_PORT`), from the host |
+| Service  | URL / port                                          |
+| -------- | --------------------------------------------------- |
+| backend  | https://localhost:8443/api (`HTTPS_PORT`)           |
+| API docs | https://localhost:8443/api/docs (Swagger)           |
+| database | `localhost:5433` (`DB_PORT`), from the host         |
 
-Inside Docker the backend reaches the database at `db:5432`.
+The only way in from outside is the **proxy** container (nginx): it decrypts
+HTTPS (TLS 1.2 and 1.3 only) and forwards to the backend over plain HTTP inside
+the Docker network. The backend's own port 3000 is not published, so there is
+no plain-HTTP door. WebSockets (`wss://`) go through the same proxy. Port
+8443 is used instead of 443 because rootless Docker cannot bind ports below
+1024. Inside Docker the backend reaches the database at `db:5432`.
 
 ### Everyday commands
 
@@ -65,7 +76,7 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 
 | Variable                 | Default    | Meaning                                                 |
 | ------------------------ | ---------- | ------------------------------------------------------- |
-| `BACKEND_PORT`           | `3000`     | host port of the backend                                |
+| `HTTPS_PORT`             | `8443`     | host port of the HTTPS entry point                      |
 | `DB_PORT`                | `5433`     | host port of PostgreSQL                                 |
 | `DB_USER`                | `connect4` | database user                                           |
 | `DB_PASSWORD`            | `connect4` | database password                                       |
@@ -104,7 +115,7 @@ generator also does not notice tables whose entity you deleted: add the
 
 All routes are under `/api` and answer `{ "data": ... }` on success or
 `{ "error": { "code": "...", "message": "..." } }` on failure. Try them in
-Swagger at http://localhost:3000/api/docs, which shows the exact shapes,
+Swagger at https://localhost:8443/api/docs, which shows the exact shapes,
 including the `data` / `error` wrapper. The browser must send requests with
 `credentials: "include"` so the cookies travel.
 

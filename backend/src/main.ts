@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
@@ -8,7 +9,14 @@ import { applyResponseEnvelope } from './common/swagger/response-envelope.js';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // The backend sits behind the HTTPS proxy (see proxy/nginx.conf). Trust ONE
+  // proxy hop, so `request.ip` is the real client address taken from the
+  // X-Forwarded-For header the proxy sets. Without this, every request would
+  // look like it comes from the proxy and all users would share one rate
+  // limit. The proxy overwrites that header, so clients cannot spoof it.
+  app.set('trust proxy', 1);
 
   // Every route lives under /api (the frontend and its dev proxy expect it).
   app.setGlobalPrefix('api');

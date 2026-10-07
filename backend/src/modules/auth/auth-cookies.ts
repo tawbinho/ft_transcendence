@@ -14,8 +14,9 @@ const baseOptions = (): CookieOptions => ({
   // The browser does not send the cookie on cross-site requests: blocks most
   // CSRF attacks while still working for normal navigation.
   sameSite: 'lax',
-  // In production the cookie is only sent over HTTPS.
-  secure: process.env.NODE_ENV === 'production',
+  // The cookie is only ever sent over HTTPS. Every connection to the backend
+  // goes through the HTTPS proxy, in development too.
+  secure: true,
   path: '/',
 });
 
