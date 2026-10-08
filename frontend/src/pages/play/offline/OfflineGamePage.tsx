@@ -4,14 +4,16 @@ import { RefreshIcon, SlidersIcon, UndoIcon } from '@/components/icons';
 import { PageHeader } from '@/components/PageHeader';
 import { Button, Card, OptionGroup, TextField } from '@/components/ui';
 import { DIFFICULTIES, type Difficulty } from '@/features/game/bot';
-import { Board } from '@/features/game/components/Board';
 import { BoardSettingsFields } from '@/features/game/components/BoardSettingsFields';
+import { GameBoard } from '@/features/game/components/GameBoard';
+import { GameLayout } from '@/features/game/components/GameLayout';
+import { GameStatus, type GameStatusTone } from '@/features/game/components/GameStatus';
 import { GameSummary } from '@/features/game/components/GameSummary';
-import { PlayerTag } from '@/features/game/components/PlayerTag';
+import { MoveAnnouncer } from '@/features/game/components/MoveAnnouncer';
+import { PlayersBar } from '@/features/game/components/PlayersBar';
 import { createGame, type GameState, type Seat } from '@/features/game/engine';
 import { DEFAULT_BOARD_SETTINGS, type BoardSettings } from '@/features/game/settings';
 import { useOfflineGame, type Opponent } from '@/features/game/useOfflineGame';
-import { cn } from '@/lib/cn';
 
 export type Mode = 'local' | 'computer';
 type FirstPlayer = 'you' | 'computer' | 'random';
@@ -114,7 +116,7 @@ export function OfflineGamePage({ mode }: { mode: Mode }) {
           </form>
         </Card>
         <div className="lg:sticky lg:top-24">
-          <Board
+          <GameBoard
             theme={settings.theme}
             model={{ ...preview.settings, board: preview.board, lastMove: null, winningLine: null }}
           />
@@ -161,69 +163,47 @@ function OfflineGameView({
   const over = game.status !== 'playing';
   const humanWon = computerSeat !== null && game.status === 'won' && game.winner !== computerSeat;
   const humanLost = computerSeat !== null && game.status === 'won' && game.winner === computerSeat;
+  const tone: GameStatusTone = humanWon ? 'win' : humanLost ? 'loss' : over ? 'over' : 'none';
 
   return (
     <>
       <PageHeader title={title} />
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3">
-            {([1, 2] as const).map((seat) => (
-              <PlayerTag
-                key={seat}
-                seat={seat}
-                theme={settings.theme}
-                name={nameOf(seat)}
-                note={t(`themes.${settings.theme}.seat${seat}`)}
-                active={!over && game.current === seat}
-                align={seat === 2 ? 'end' : 'start'}
-              />
-            ))}
-          </div>
-          <p
-            className={cn(
-              'rounded-xl px-4 py-2 text-center text-lg font-bold',
-              humanWon && 'bg-success-soft text-success',
-              humanLost && 'bg-danger-soft text-danger',
-              over && !humanWon && !humanLost && 'bg-surface-2',
-            )}
-          >
-            {status}
-          </p>
-          <Board
-            theme={settings.theme}
-            model={{ ...settings, board: game.board, lastMove: game.lastMove, winningLine: game.winningLine }}
-            onPlay={play}
-            disabled={over || computerThinking}
-            previewSeat={over || computerThinking ? null : game.current}
-          />
-        </div>
-
-        <aside className="flex flex-col gap-4">
-          <Card className="flex flex-col gap-2 p-4 sm:p-4">
-            <Button variant={over ? 'primary' : 'secondary'} onClick={restart} disabled={moves.length === 0}>
-              <RefreshIcon />
-              {t('offline.restart')}
-            </Button>
-            <Button variant="secondary" onClick={undo} disabled={!canUndo}>
-              <UndoIcon />
-              {t('offline.undo')}
-            </Button>
-            <Button variant="ghost" onClick={onChangeSettings}>
-              <SlidersIcon />
-              {t('offline.changeSettings')}
-            </Button>
-          </Card>
-          <GameSummary
-            settings={settings}
-            moveCount={game.moveCount}
-            difficulty={opponent.kind === 'computer' ? opponent.difficulty : undefined}
-          />
-        </aside>
-      </div>
-      <p className="sr-only" aria-live="polite">
-        {announcement}
-      </p>
+      <GameLayout
+        aside={
+          <>
+            <Card className="flex flex-col gap-2 p-4 sm:p-4">
+              <Button variant={over ? 'primary' : 'secondary'} onClick={restart} disabled={moves.length === 0}>
+                <RefreshIcon />
+                {t('offline.restart')}
+              </Button>
+              <Button variant="secondary" onClick={undo} disabled={!canUndo}>
+                <UndoIcon />
+                {t('offline.undo')}
+              </Button>
+              <Button variant="ghost" onClick={onChangeSettings}>
+                <SlidersIcon />
+                {t('offline.changeSettings')}
+              </Button>
+            </Card>
+            <GameSummary
+              settings={settings}
+              moveCount={game.moveCount}
+              difficulty={opponent.kind === 'computer' ? opponent.difficulty : undefined}
+            />
+          </>
+        }
+      >
+        <PlayersBar theme={settings.theme} names={[nameOf(1), nameOf(2)]} activeSeat={over ? null : game.current} />
+        <GameStatus tone={tone}>{status}</GameStatus>
+        <GameBoard
+          theme={settings.theme}
+          model={{ ...settings, board: game.board, lastMove: game.lastMove, winningLine: game.winningLine }}
+          onPlay={play}
+          disabled={over || computerThinking}
+          previewSeat={over || computerThinking ? null : game.current}
+        />
+      </GameLayout>
+      <MoveAnnouncer text={announcement} />
     </>
   );
 }

@@ -6,9 +6,12 @@ import { paths } from '@/app/paths';
 import { FlagIcon } from '@/components/icons';
 import { PageHeader } from '@/components/PageHeader';
 import { Alert, Button, buttonClass, Card, ConfirmDialog, PageSpinner, Spinner } from '@/components/ui';
-import { Board } from '@/features/game/components/Board';
+import { GameBoard } from '@/features/game/components/GameBoard';
+import { GameLayout } from '@/features/game/components/GameLayout';
+import { GameStatus, type GameStatusTone } from '@/features/game/components/GameStatus';
 import { GameSummary } from '@/features/game/components/GameSummary';
-import { PlayerTag } from '@/features/game/components/PlayerTag';
+import { MoveAnnouncer } from '@/features/game/components/MoveAnnouncer';
+import { PlayersBar } from '@/features/game/components/PlayersBar';
 import { normalizeSettings, toBoardTheme } from '@/features/game/settings';
 import { ShareLink } from '@/features/matches/components/ShareLink';
 import {
@@ -22,7 +25,6 @@ import {
 import { isMatchId, isMyTurn, opponentOf, outcomeOf, toBoardModel, viewerOf } from '@/features/matches/model';
 import type { Match } from '@/features/matches/types';
 import { isApiError } from '@/lib/api/errors';
-import { cn } from '@/lib/cn';
 import { useErrorMessage } from '@/lib/errorMessage';
 
 export function MatchPage() {
@@ -181,6 +183,11 @@ function MatchBoard({ match, syncFailed }: { match: Match; syncFailed: boolean }
         ? t('online.byDisconnect', { name: loser.displayName })
         : null;
 
+  // Your own tag says "(you)".
+  const playerName = (seat: 1 | 2) => (seat === me?.seat ? `${nameOf(seat)} (${t('online.you')})` : nameOf(seat));
+  const tone: GameStatusTone =
+    outcome === 'won' ? 'win' : outcome === 'lost' ? 'loss' : outcome === 'draw' ? 'draw' : playing ? 'none' : 'over';
+
   const lastMove = match.game.lastMove;
   const lastSeat = match.game.moves.length % 2 === 1 ? 1 : 2;
   const announcement = [
@@ -213,78 +220,59 @@ function MatchBoard({ match, syncFailed }: { match: Match; syncFailed: boolean }
           )
         }
       />
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3">
-            {([1, 2] as const).map((seat) => (
-              <PlayerTag
-                key={seat}
-                seat={seat}
-                theme={theme}
-                name={seat === me?.seat ? `${nameOf(seat)} (${t('online.you')})` : nameOf(seat)}
-                note={t(`themes.${theme}.seat${seat}`)}
-                active={playing && match.game.current === seat}
-                align={seat === 2 ? 'end' : 'start'}
-              />
-            ))}
-          </div>
-
-          <div
-            className={cn(
-              'rounded-xl px-4 py-2 text-center',
-              outcome === 'won' && 'bg-success-soft text-success',
-              outcome === 'lost' && 'bg-danger-soft text-danger',
-              (outcome === 'draw' || outcome === 'cancelled') && 'bg-surface-2',
+      <GameLayout
+        aside={
+          <>
+            {!playing && (
+              <Card className="flex flex-col gap-2 p-4 sm:p-4">
+                {rematch.error && <Alert tone="danger">{errorMessage(rematch.error)}</Alert>}
+                {opponent && (
+                  <Button loading={rematch.isPending} onClick={startRematch}>
+                    {t('online.rematch')}
+                  </Button>
+                )}
+                <Link to="/play/online" className={buttonClass({ variant: 'secondary' })}>
+                  {t('online.newMatch')}
+                </Link>
+                <Link to="/matches" className={buttonClass({ variant: 'ghost' })}>
+                  {t('online.allMatches')}
+                </Link>
+              </Card>
             )}
-          >
-            <p className="text-lg font-bold">{status}</p>
-            {reason && <p className="text-sm">{reason}</p>}
-          </div>
+            <GameSummary settings={match.settings} moveCount={match.game.moveCount} />
+          </>
+        }
+      >
+        <PlayersBar
+          theme={theme}
+          names={[playerName(1), playerName(2)]}
+          activeSeat={playing ? match.game.current : null}
+        />
+        <GameStatus tone={tone} detail={reason}>
+          {status}
+        </GameStatus>
 
-          {move.error && <Alert tone="danger">{errorMessage(move.error)}</Alert>}
-          {resign.error && <Alert tone="danger">{errorMessage(resign.error)}</Alert>}
-          {syncFailed && <Alert tone="warning">{t('online.syncError')}</Alert>}
+        {move.error && <Alert tone="danger">{errorMessage(move.error)}</Alert>}
+        {resign.error && <Alert tone="danger">{errorMessage(resign.error)}</Alert>}
+        {syncFailed && <Alert tone="warning">{t('online.syncError')}</Alert>}
 
-          <Board
-            theme={theme}
-            model={toBoardModel(match)}
-            onPlay={
-              playing
-                ? (col) => {
-                    move.reset();
-                    move.mutate(col);
-                  }
-                : undefined
-            }
-            disabled={!myTurn || move.isPending}
-            previewSeat={myTurn ? match.yourSeat : null}
-          />
-        </div>
+        <GameBoard
+          theme={theme}
+          model={toBoardModel(match)}
+          onPlay={
+            playing
+              ? (col) => {
+                  move.reset();
+                  move.mutate(col);
+                }
+              : undefined
+          }
+          disabled={!myTurn || move.isPending}
+          previewSeat={myTurn ? match.yourSeat : null}
+        />
+      </GameLayout>
 
-        <aside className="flex flex-col gap-4">
-          {!playing && (
-            <Card className="flex flex-col gap-2 p-4 sm:p-4">
-              {rematch.error && <Alert tone="danger">{errorMessage(rematch.error)}</Alert>}
-              {opponent && (
-                <Button loading={rematch.isPending} onClick={startRematch}>
-                  {t('online.rematch')}
-                </Button>
-              )}
-              <Link to="/play/online" className={buttonClass({ variant: 'secondary' })}>
-                {t('online.newMatch')}
-              </Link>
-              <Link to="/matches" className={buttonClass({ variant: 'ghost' })}>
-                {t('online.allMatches')}
-              </Link>
-            </Card>
-          )}
-          <GameSummary settings={match.settings} moveCount={match.game.moveCount} />
-        </aside>
-      </div>
-
-      <p className="sr-only" aria-live="polite">
-        {announcement}
-      </p>
+      <MoveAnnouncer text={announcement} />
 
       <ConfirmDialog
         open={confirmingResign}

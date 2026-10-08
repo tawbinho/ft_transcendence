@@ -5,9 +5,12 @@ import { BackIcon, EyeIcon } from '@/components/icons';
 import { LoadError } from '@/components/LoadError';
 import { PageHeader } from '@/components/PageHeader';
 import { Badge, buttonClass, Card, PageSpinner } from '@/components/ui';
-import { Board } from '@/features/game/components/Board';
+import { GameBoard } from '@/features/game/components/GameBoard';
+import { GameLayout } from '@/features/game/components/GameLayout';
+import { GameStatus } from '@/features/game/components/GameStatus';
 import { GameSummary } from '@/features/game/components/GameSummary';
-import { PlayerTag } from '@/features/game/components/PlayerTag';
+import { MoveAnnouncer } from '@/features/game/components/MoveAnnouncer';
+import { PlayersBar } from '@/features/game/components/PlayersBar';
 import { toBoardTheme } from '@/features/game/settings';
 import { useMatch } from '@/features/matches/hooks';
 import { isMatchId, isOver, playerInSeat, toBoardModel } from '@/features/matches/model';
@@ -93,39 +96,25 @@ function SpectatorView({ match }: { match: Match }) {
           </Link>
         }
       />
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3">
-            {([1, 2] as const).map((seat) => (
-              <PlayerTag
-                key={seat}
-                seat={seat}
-                theme={theme}
-                name={nameOf(seat)}
-                note={t(`themes.${theme}.seat${seat}`)}
-                active={playing && match.game.current === seat}
-                align={seat === 2 ? 'end' : 'start'}
-              />
-            ))}
-          </div>
-          <div className={isOver(match) ? 'rounded-xl bg-surface-2 px-4 py-2 text-center' : 'px-4 py-2 text-center'}>
-            <p className="text-lg font-bold">{status}</p>
-            {reason && <p className="text-sm">{reason}</p>}
-          </div>
-          <Board theme={theme} model={toBoardModel(match)} />
-        </div>
-        <aside className="flex flex-col gap-4">
-          <p className="flex items-center gap-2 text-muted">
-            <EyeIcon />
-            {playing ? <Badge tone="danger">{t('watch.live')}</Badge> : <Badge>{t('watch.ended')}</Badge>}
-            {t('watch.spectating')}
-          </p>
-          <GameSummary settings={match.settings} moveCount={match.game.moveCount} />
-        </aside>
-      </div>
-      <p className="sr-only" aria-live="polite">
-        {announcement}
-      </p>
+      <GameLayout
+        aside={
+          <>
+            <p className="flex items-center gap-2 text-muted">
+              <EyeIcon />
+              {playing ? <Badge tone="danger">{t('watch.live')}</Badge> : <Badge>{t('watch.ended')}</Badge>}
+              {t('watch.spectating')}
+            </p>
+            <GameSummary settings={match.settings} moveCount={match.game.moveCount} />
+          </>
+        }
+      >
+        <PlayersBar theme={theme} names={[nameOf(1), nameOf(2)]} activeSeat={playing ? match.game.current : null} />
+        <GameStatus tone={isOver(match) ? 'over' : 'none'} detail={reason}>
+          {status}
+        </GameStatus>
+        <GameBoard theme={theme} model={toBoardModel(match)} />
+      </GameLayout>
+      <MoveAnnouncer text={announcement} />
     </>
   );
 }

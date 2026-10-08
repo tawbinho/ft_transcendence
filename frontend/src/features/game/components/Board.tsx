@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import type { Position, Seat } from '../engine';
@@ -14,7 +14,7 @@ export interface BoardModel {
   winningLine: readonly Position[] | null;
 }
 
-interface BoardProps {
+export interface BoardProps {
   model: BoardModel;
   theme: BoardTheme;
   /** Called with the chosen column. Without it the board is a picture. */
@@ -23,12 +23,22 @@ interface BoardProps {
   disabled?: boolean;
   /** Whose disc to preview above the hovered column. */
   previewSeat?: Seat | null;
+  /** Moves keyboard focus to the board when it appears, so a new game can be played without the mouse. */
+  autoFocus?: boolean;
   className?: string;
 }
 
 const key = (col: number, row: number) => `${col}:${row}`;
 
-export function Board({ model, theme, onPlay, disabled = false, previewSeat = null, className }: BoardProps) {
+export function Board({
+  model,
+  theme,
+  onPlay,
+  disabled = false,
+  previewSeat = null,
+  autoFocus = false,
+  className,
+}: BoardProps) {
   const { t } = useTranslation();
   const { cols, rows, board, lastMove, winningLine } = model;
   const interactive = Boolean(onPlay);
@@ -42,6 +52,11 @@ export function Board({ model, theme, onPlay, disabled = false, previewSeat = nu
   const [hoverCol, setHoverCol] = useState<number | null>(null);
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const activeCol = Math.min(focusCol, cols - 1);
+
+  // Only on mount: later renders must not pull focus back from wherever the player went.
+  useEffect(() => {
+    if (autoFocus) buttons.current[activeCol]?.focus();
+  }, []);
 
   function moveFocus(col: number) {
     const next = Math.max(0, Math.min(cols - 1, col));
