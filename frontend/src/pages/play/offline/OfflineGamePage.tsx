@@ -13,7 +13,7 @@ import { DEFAULT_BOARD_SETTINGS, type BoardSettings } from '@/features/game/sett
 import { useOfflineGame, type Opponent } from '@/features/game/useOfflineGame';
 import { cn } from '@/lib/cn';
 
-type Mode = 'local' | 'computer';
+export type Mode = 'local' | 'computer';
 type FirstPlayer = 'you' | 'computer' | 'random';
 
 interface Session {
@@ -24,15 +24,7 @@ interface Session {
   names: [string, string];
 }
 
-export function LocalGamePage() {
-  return <OfflineGamePage mode="local" />;
-}
-
-export function ComputerGamePage() {
-  return <OfflineGamePage mode="computer" />;
-}
-
-function OfflineGamePage({ mode }: { mode: Mode }) {
+export function OfflineGamePage({ mode }: { mode: Mode }) {
   const { t } = useTranslation();
   const title = mode === 'local' ? t('offline.localTitle') : t('offline.computerTitle');
 

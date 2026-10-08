@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router';
 import { buttonClass } from '@/components/ui';
-import { NotFoundPage } from '@/pages/NotFoundPage';
+import { NotFoundPage } from '@/pages/info/NotFoundPage';
 
 /** Shown instead of a page that failed to load or crashed while rendering. */
 export function RouteError() {

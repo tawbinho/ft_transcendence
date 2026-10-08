@@ -8,7 +8,7 @@ import { ColorSchemeSelect } from '@/layout/ColorSchemeSelect';
 import { LanguageSelect } from '@/layout/LanguageSelect';
 import { useErrorMessage } from '@/lib/errorMessage';
 
-export function AccountPage() {
+export function SettingsPage() {
   const { t } = useTranslation();
   const errorMessage = useErrorMessage();
   const user = useUser();
