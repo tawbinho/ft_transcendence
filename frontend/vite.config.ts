@@ -38,6 +38,8 @@ export default defineConfig(({ mode }) => {
     build: {
       target: 'es2022',
       sourcemap: true,
+      // The main chunk holds React and the texts of all three languages (about 500 kB); pages are loaded on demand.
+      chunkSizeWarningLimit: 700,
     },
     test: {
       environment: 'jsdom',
