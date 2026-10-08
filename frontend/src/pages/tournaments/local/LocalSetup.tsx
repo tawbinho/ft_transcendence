@@ -43,7 +43,7 @@ export function LocalSetup({ onStart }: { onStart: (names: string[], settings: B
                 <li key={index} className="flex items-start gap-2">
                   <TextField
                     className="min-w-0 flex-1"
-                    label={t('offline.playerName', { n: index + 1 })}
+                    label={t('localTournament.playerName', { n: index + 1 })}
                     value={name}
                     maxLength={ALIAS_MAX}
                     autoComplete="off"

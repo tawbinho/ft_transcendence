@@ -64,6 +64,7 @@ export const tournamentsMessages = {
     resume: 'Continue the tournament',
     players: 'Players',
     playersHint: '{{min}} to {{max}} players, each with a different name.',
+    playerName: 'Name of player {{n}}',
     addPlayer: 'Add a player',
     removePlayer: 'Remove player {{n}}',
     start: 'Draw the bracket',

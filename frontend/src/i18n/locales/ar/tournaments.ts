@@ -66,6 +66,7 @@ export const tournamentsMessages: TournamentsMessages = {
     resume: 'متابعة البطولة',
     players: 'اللاعبون',
     playersHint: 'من {{min}} إلى {{max}} لاعبين، لكل منهم اسم مختلف.',
+    playerName: 'اسم اللاعب {{n}}',
     addPlayer: 'إضافة لاعب',
     removePlayer: 'إزالة اللاعب {{n}}',
     start: 'إجراء القرعة',

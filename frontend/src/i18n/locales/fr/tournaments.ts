@@ -68,6 +68,7 @@ export const tournamentsMessages: TournamentsMessages = {
     resume: 'Reprendre le tournoi',
     players: 'Joueurs',
     playersHint: 'De {{min}} à {{max}} joueurs, chacun avec un nom différent.',
+    playerName: 'Nom du joueur {{n}}',
     addPlayer: 'Ajouter un joueur',
     removePlayer: 'Retirer le joueur {{n}}',
     start: 'Tirer le tableau',

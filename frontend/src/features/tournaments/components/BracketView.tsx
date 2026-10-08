@@ -47,7 +47,7 @@ export function BracketView({
   return (
     // The box can scroll, so it must be reachable with the keyboard.
     <div
-      role="region"
+      role="group"
       aria-label={label}
       tabIndex={0}
       className="max-w-full overflow-x-auto rounded-2xl border border-border bg-surface-2/50 p-4"
