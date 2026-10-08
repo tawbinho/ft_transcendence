@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Play Connect Four on the same screen, against the computer, or online." />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Connect Four</title>
+    <script>
+      // Apply the saved light or dark mode before the first paint (see src/lib/colorScheme.ts).
+      (function () {
+        var scheme = 'system';
+        try {
+          scheme = localStorage.getItem('color-scheme') || 'system';
+        } catch (error) {}
+        var dark =
+          scheme === 'dark' || (scheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
