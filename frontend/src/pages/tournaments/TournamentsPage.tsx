@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { paths } from '@/app/paths';
 import { CrownIcon, GlobeIcon, PlusIcon, UsersIcon } from '@/components/icons';
 import { LoadError } from '@/components/LoadError';
+import { ModeCard } from '@/components/ModeCard';
 import { PageHeader } from '@/components/PageHeader';
 import { Badge, buttonClass, EmptyState, OptionGroup, PageSpinner, Pagination } from '@/components/ui';
 import { useCurrentUser } from '@/features/auth/hooks';
@@ -53,29 +53,6 @@ export function TournamentsPage() {
       </div>
       {user && <OnlineTournaments />}
     </>
-  );
-}
-
-function ModeCard({
-  icon,
-  title,
-  body,
-  children,
-}: {
-  icon: ReactNode;
-  title: string;
-  body: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 shadow-sm">
-      <span className="grid size-12 place-items-center rounded-xl bg-primary/12 text-2xl text-primary">{icon}</span>
-      <div className="flex-1">
-        <h2 className="text-xl font-bold">{title}</h2>
-        <p className="mt-1 text-muted">{body}</p>
-      </div>
-      {children}
-    </section>
   );
 }
 

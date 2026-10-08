@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { ModeCard } from '@/components/ModeCard';
 import { ChipIcon, GlobeIcon, SlidersIcon, UsersIcon } from '@/components/icons';
 import { buttonClass } from '@/components/ui';
 import { useCurrentUser } from '@/features/auth/hooks';
@@ -10,19 +10,6 @@ import { useDocumentTitle } from '@/lib/useDocumentTitle';
 
 // A finished game for the hero picture: seat 1 wins on a diagonal.
 const SHOWCASE = replay({}, [0, 1, 1, 2, 3, 2, 2, 3, 6, 3, 3]);
-
-function ModeCard({ to, icon, title, body }: { to: string; icon: ReactNode; title: string; body: string }) {
-  return (
-    <Link
-      to={to}
-      className="group flex flex-col gap-3 rounded-2xl border border-border bg-surface p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
-    >
-      <span className="grid size-11 place-items-center rounded-xl bg-primary/12 text-2xl text-primary">{icon}</span>
-      <h3 className="text-lg font-bold group-hover:text-primary">{title}</h3>
-      <p className="text-muted">{body}</p>
-    </Link>
-  );
-}
 
 export function HomePage() {
   const { t } = useTranslation();
