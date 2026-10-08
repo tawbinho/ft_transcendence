@@ -42,6 +42,15 @@ services:
       - ./backend:/app
       - /app/node_modules
 
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_DEMO_FEATURES: users,friends,chat,spectate,tournaments
+    restart: unless-stopped
+    expose:
+      - '80'
+
   # HTTPS entry point: decrypts HTTPS and forwards to the backend over plain
   # HTTP inside the network. See proxy/nginx.conf.
   proxy:
@@ -52,6 +61,7 @@ services:
       - '${HTTPS_PORT}:443'
     depends_on:
       - backend
+      - frontend
     volumes:
       # Keeps the self-signed certificate between restarts.
       - proxy-certs:/etc/nginx/certs
