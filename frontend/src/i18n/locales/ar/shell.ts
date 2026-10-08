@@ -1,0 +1,50 @@
+import type { ShellMessages } from '../en/shell';
+
+export const shellMessages: ShellMessages = {
+  nav: {
+    main: 'التنقل الرئيسي',
+    skipToContent: 'انتقل إلى المحتوى',
+    openMenu: 'فتح القائمة',
+    closeMenu: 'إغلاق القائمة',
+    play: 'العب',
+    matches: 'مبارياتي',
+    account: 'الحساب',
+    login: 'تسجيل الدخول',
+    signup: 'إنشاء حساب',
+    logout: 'تسجيل الخروج',
+    tournaments: 'البطولات',
+    watch: 'مشاهدة',
+    players: 'اللاعبون',
+    friends: 'الأصدقاء',
+    chat: 'الرسائل',
+    profile: 'ملفي الشخصي',
+    accountMenu: 'قائمة الحساب',
+    newCount: 'جديد: {{count}}',
+  },
+  preferences: {
+    language: 'اللغة',
+    appearance: 'المظهر',
+    system: 'حسب النظام',
+    light: 'فاتح',
+    dark: 'داكن',
+  },
+  demo: {
+    title: 'بيانات تجريبية.',
+    body: 'تعمل هذه الأجزاء بلاعبين وهميين محفوظين في هذا المتصفح، إلى أن يدعمها الخادم: {{features}}.',
+    features: {
+      users: 'اللاعبون والملفات الشخصية',
+      friends: 'الأصدقاء',
+      chat: 'الرسائل',
+      spectate: 'مشاهدة المباريات',
+      tournaments: 'البطولات عبر الإنترنت',
+    },
+    reset: 'إعادة ضبط العرض التجريبي',
+    resetTitle: 'إعادة ضبط البيانات التجريبية؟',
+    resetBody: 'سيبدأ اللاعبون الوهميون والرسائل والبطولات من جديد. لن يتأثر حسابك ولا مبارياتك الحقيقية.',
+  },
+  footer: {
+    privacy: 'سياسة الخصوصية',
+    terms: 'شروط الاستخدام',
+    project: 'مشروع ft_transcendence من 42.',
+  },
+};

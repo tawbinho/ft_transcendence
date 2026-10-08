@@ -1,0 +1,37 @@
+export const settingsMessages = {
+  account: {
+    title: 'Account',
+    profile: 'Profile',
+    displayName: 'Display name',
+    email: 'Email',
+    preferences: 'Preferences',
+    session: 'Session',
+    logoutBody: 'Log out of this browser.',
+    viewProfile: 'View my profile',
+    addPicture: 'Add a picture',
+    changePicture: 'Change picture',
+    removePicture: 'Remove picture',
+    pictureHint: 'PNG, JPEG or WebP. It is cropped to a square.',
+    displayNameHint: '3 to 20 letters, numbers, _ or -. Other players find you by this name.',
+    saveName: 'Save name',
+    nameSaved: 'Display name saved.',
+  },
+  twoFactor: {
+    title: 'Two-factor authentication',
+    body: 'Ask for a code from an authenticator app, on top of your password, every time you log in.',
+    on: 'On',
+    off: 'Off',
+    turnOn: 'Turn on',
+    turnOff: 'Turn off',
+    scan: 'Scan this QR code with your authenticator app, then enter the code it shows.',
+    qrAlt: 'QR code for your authenticator app',
+    manualKey: 'Can’t scan it? Enter this key instead:',
+    confirmOn: 'Confirm and turn on',
+    offBody: 'Enter a code from your authenticator app to turn two-factor authentication off.',
+    confirmOff: 'Turn off',
+    enabled: 'Two-factor authentication is on.',
+    disabled: 'Two-factor authentication is off.',
+  },
+};
+
+export type SettingsMessages = typeof settingsMessages;

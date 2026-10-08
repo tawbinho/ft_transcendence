@@ -1,0 +1,50 @@
+export const shellMessages = {
+  nav: {
+    main: 'Main navigation',
+    skipToContent: 'Skip to content',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
+    play: 'Play',
+    matches: 'My matches',
+    account: 'Account',
+    login: 'Log in',
+    signup: 'Sign up',
+    logout: 'Log out',
+    tournaments: 'Tournaments',
+    watch: 'Watch',
+    players: 'Players',
+    friends: 'Friends',
+    chat: 'Chat',
+    profile: 'My profile',
+    accountMenu: 'Account menu',
+    newCount: 'new: {{count}}',
+  },
+  preferences: {
+    language: 'Language',
+    appearance: 'Appearance',
+    system: 'System',
+    light: 'Light',
+    dark: 'Dark',
+  },
+  demo: {
+    title: 'Demo data.',
+    body: 'These parts run on made-up players kept in this browser until the server supports them: {{features}}.',
+    features: {
+      users: 'players and profiles',
+      friends: 'friends',
+      chat: 'chat',
+      spectate: 'watching matches',
+      tournaments: 'online tournaments',
+    },
+    reset: 'Reset demo',
+    resetTitle: 'Reset the demo data?',
+    resetBody: 'Made-up players, messages and tournaments start over. Your account and real matches are not affected.',
+  },
+  footer: {
+    privacy: 'Privacy policy',
+    terms: 'Terms of service',
+    project: 'A 42 ft_transcendence project.',
+  },
+};
+
+export type ShellMessages = typeof shellMessages;

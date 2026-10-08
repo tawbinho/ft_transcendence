@@ -1,0 +1,37 @@
+import type { SettingsMessages } from '../en/settings';
+
+export const settingsMessages: SettingsMessages = {
+  account: {
+    title: 'الحساب',
+    profile: 'الملف الشخصي',
+    displayName: 'الاسم الظاهر',
+    email: 'البريد الإلكتروني',
+    preferences: 'التفضيلات',
+    session: 'الجلسة',
+    logoutBody: 'تسجيل الخروج من هذا المتصفح.',
+    viewProfile: 'عرض ملفي الشخصي',
+    addPicture: 'إضافة صورة',
+    changePicture: 'تغيير الصورة',
+    removePicture: 'حذف الصورة',
+    pictureHint: 'بصيغة PNG أو JPEG أو WebP. تُقصّ على شكل مربع.',
+    displayNameHint: 'من 3 إلى 20 حرفًا أو رقمًا أو _ أو -. يجدك اللاعبون الآخرون بهذا الاسم.',
+    saveName: 'حفظ الاسم',
+    nameSaved: 'تم حفظ الاسم الظاهر.',
+  },
+  twoFactor: {
+    title: 'المصادقة الثنائية',
+    body: 'اطلب رمزًا من تطبيق مصادقة، إضافةً إلى كلمة المرور، في كل مرة تسجّل فيها الدخول.',
+    on: 'مفعّلة',
+    off: 'معطّلة',
+    turnOn: 'تفعيل',
+    turnOff: 'تعطيل',
+    scan: 'امسح رمز QR هذا بتطبيق المصادقة، ثم أدخل الرمز الذي يظهر فيه.',
+    qrAlt: 'رمز QR لتطبيق المصادقة',
+    manualKey: 'تعذّر المسح؟ أدخل هذا المفتاح بدلًا من ذلك:',
+    confirmOn: 'أكّد وفعّل',
+    offBody: 'أدخل رمزًا من تطبيق المصادقة لتعطيل المصادقة الثنائية.',
+    confirmOff: 'تعطيل',
+    enabled: 'المصادقة الثنائية مفعّلة.',
+    disabled: 'المصادقة الثنائية معطّلة.',
+  },
+};

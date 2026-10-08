@@ -1,0 +1,25 @@
+import type { AuthMessages } from '../en/auth';
+
+export const authMessages: AuthMessages = {
+  auth: {
+    loginTitle: 'مرحبًا بعودتك',
+    loginSubtitle: 'سجّل الدخول لتلعب عبر الإنترنت وتحتفظ بسجل مبارياتك.',
+    signupTitle: 'أنشئ حسابك',
+    signupSubtitle: 'اختر اسمًا ظاهرًا: به يجدك اللاعبون الآخرون.',
+    email: 'البريد الإلكتروني',
+    password: 'كلمة المرور',
+    confirmPassword: 'تأكيد كلمة المرور',
+    displayName: 'الاسم الظاهر',
+    displayNameHint: 'من 3 إلى 20 حرفًا أو رقمًا أو _ أو -.',
+    passwordHint: '8 أحرف على الأقل.',
+    loginAction: 'تسجيل الدخول',
+    signupAction: 'إنشاء الحساب',
+    noAccount: 'ليس لديك حساب بعد؟',
+    haveAccount: 'لديك حساب بالفعل؟',
+    twoFactorTitle: 'المصادقة الثنائية',
+    twoFactorBody: 'أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة.',
+    code: 'رمز المصادقة',
+    verify: 'تحقّق',
+    backToLogin: 'استخدم حسابًا آخر',
+  },
+};
