@@ -3,7 +3,7 @@ import { cn } from '@/lib/cn';
 
 // Small stroke icons (24x24 grid). Decorative by default: give the parent an
 // accessible name when an icon is the only content of a control.
-function Icon(props: SVGProps<SVGSVGElement>) {
+export function Icon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -230,3 +230,116 @@ export function LogoMark(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+// ---- More icons, drawn the same way ---------------------------------------------
+
+export const HomeIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M3 11l9-8 9 8" />
+    <path d="M5 10v10h14V10" />
+    <path d="M10 20v-6h4v6" />
+  </Icon>
+);
+
+export const ShieldIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z" />
+  </Icon>
+);
+
+export const PaletteIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-.6-.3-1-.6-1.4-.3-.4-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z" />
+    <path d="M7.5 11h.01M10 7h.01M15 7h.01" />
+  </Icon>
+);
+
+export const SunIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+  </Icon>
+);
+
+export const MoonIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z" />
+  </Icon>
+);
+
+export const CubeIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M12 2.5l8.5 4.5v10L12 21.5 3.5 17V7L12 2.5z" />
+    <path d="M3.5 7L12 11.5 20.5 7M12 11.5v10" />
+  </Icon>
+);
+
+export const GridIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <rect x="4" y="4" width="7" height="7" rx="1.5" />
+    <rect x="13" y="4" width="7" height="7" rx="1.5" />
+    <rect x="4" y="13" width="7" height="7" rx="1.5" />
+    <rect x="13" y="13" width="7" height="7" rx="1.5" />
+  </Icon>
+);
+
+export const KeyboardIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <rect x="2.5" y="6" width="19" height="12" rx="2" />
+    <path d="M6.5 10h.01M10 10h.01M14 10h.01M17.5 10h.01M7.5 14h9" />
+  </Icon>
+);
+
+export const InfoIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5M12 7.5h.01" />
+  </Icon>
+);
+
+export const StarIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z" />
+  </Icon>
+);
+
+export const ChartIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M3 20h18" />
+    <path d="M7 20v-7M12 20V5M17 20v-10" />
+  </Icon>
+);
+
+export const MedalIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <circle cx="12" cy="15" r="5.5" />
+    <path d="M8.5 10.5L6 3h4l2 4.5M15.5 10.5L18 3h-4l-2 4.5" />
+  </Icon>
+);
+
+export const SparklesIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M10 4l1.8 4.7 4.7 1.8-4.7 1.8L10 17l-1.8-4.7L3.5 10.5l4.7-1.8L10 4z" />
+    <path d="M18 3v4M16 5h4M18 15v4M16 17h4" />
+  </Icon>
+);
+
+export const ChevronRightIcon = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
+  <Icon className={cn('rtl:-scale-x-100', className)} {...props}>
+    <path d="M9 5l7 7-7 7" />
+  </Icon>
+);
+
+export const BellIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7z" />
+    <path d="M10 20a2 2 0 0 0 4 0" />
+  </Icon>
+);
+
+export const LockIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <rect x="5" y="11" width="14" height="10" rx="2" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </Icon>
+);
