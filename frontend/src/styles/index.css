@@ -1,0 +1,345 @@
+@import 'tailwindcss';
+
+/* Dark mode follows data-theme on <html> (set from the user's choice or the system). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens: every color the UI uses, for light and dark mode.
+   Components use them through Tailwind classes such as bg-surface or text-muted.
+   --------------------------------------------------------------------------- */
+:root {
+  --c-bg: #f4f6fb;
+  --c-surface: #ffffff;
+  --c-surface-2: #eceff6;
+  --c-border: #d9deea;
+  --c-fg: #151a29;
+  --c-muted: #586078;
+  --c-primary: #2d55d6;
+  --c-primary-hover: #2246b8;
+  --c-primary-fg: #ffffff;
+  --c-ring: #2d55d6;
+  --c-danger: #c22b3c;
+  --c-danger-soft: #fdecef;
+  --c-success: #157a4c;
+  --c-success-soft: #e3f5ec;
+  --c-warning: #9a5800;
+  --c-warning-soft: #fff3dd;
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --c-bg: #0c1018;
+  --c-surface: #141a26;
+  --c-surface-2: #1b2232;
+  --c-border: #2a3246;
+  --c-fg: #e7eaf3;
+  --c-muted: #9aa3ba;
+  --c-primary: #7896ff;
+  --c-primary-hover: #91aaff;
+  --c-primary-fg: #0a0d14;
+  --c-ring: #91aaff;
+  --c-danger: #ff6b7d;
+  --c-danger-soft: #3b1820;
+  --c-success: #4fcb8d;
+  --c-success-soft: #12291e;
+  --c-warning: #f2a93f;
+  --c-warning-soft: #33240e;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Arabic', Tahoma, sans-serif;
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-border: var(--c-border);
+  --color-fg: var(--c-fg);
+  --color-muted: var(--c-muted);
+  --color-primary: var(--c-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-primary-fg: var(--c-primary-fg);
+  --color-ring: var(--c-ring);
+  --color-danger: var(--c-danger);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-success: var(--c-success);
+  --color-success-soft: var(--c-success-soft);
+  --color-warning: var(--c-warning);
+  --color-warning-soft: var(--c-warning-soft);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--c-bg);
+    color: var(--c-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--c-ring);
+    outline-offset: 2px;
+  }
+
+  input:focus-visible {
+    outline: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Board themes. These match the backend's MATCH_THEMES. The holes are a dark
+   shade of the board, so discs of any color stand out in light and dark mode.
+   --------------------------------------------------------------------------- */
+[data-board-theme='classic'] {
+  --board: #2350d2;
+  --board-edge: #183c9f;
+  --hole: #102a70;
+  --disc-1: #e5383b;
+  --disc-1-hi: #ff8587;
+  --disc-2: #f9c623;
+  --disc-2-hi: #ffe58a;
+}
+
+[data-board-theme='ocean'] {
+  --board: #0f7c74;
+  --board-edge: #0b5d57;
+  --hole: #073f3b;
+  --disc-1: #ff7a4d;
+  --disc-1-hi: #ffb497;
+  --disc-2: #e9eef3;
+  --disc-2-hi: #ffffff;
+}
+
+[data-board-theme='sunset'] {
+  --board: #7a3486;
+  --board-edge: #5b2464;
+  --hole: #3c1443;
+  --disc-1: #ff8a3d;
+  --disc-1-hi: #ffc08f;
+  --disc-2: #4cc3f0;
+  --disc-2-hi: #a6e4fb;
+}
+
+[data-board-theme='midnight'] {
+  --board: #232850;
+  --board-edge: #171a38;
+  --hole: #0a0c1d;
+  --disc-1: #28e0cf;
+  --disc-1-hi: #9ff5ec;
+  --disc-2: #ff4fa3;
+  --disc-2-hi: #ffa3cf;
+}
+
+/* ---------------------------------------------------------------------------
+   Board
+   --------------------------------------------------------------------------- */
+.board-frame {
+  --gap: clamp(0.25rem, 1.4vw, 0.6rem);
+  width: 100%;
+  /* As wide as possible while the whole board stays on screen. */
+  max-width: min(100%, calc((100svh - 15rem) * var(--cols) / var(--rows)), 44rem);
+  min-width: min(100%, 16rem);
+  margin-inline: auto;
+}
+
+.board-preview {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: var(--gap);
+  padding-inline: calc(var(--gap) * 1.5);
+  margin-bottom: 0.35rem;
+}
+
+.board-preview-slot {
+  position: relative;
+  aspect-ratio: 1;
+}
+
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: var(--gap);
+  padding: calc(var(--gap) * 1.5);
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, var(--board), var(--board-edge));
+  box-shadow:
+    inset 0 2px 0 rgb(255 255 255 / 0.15),
+    0 10px 30px -12px rgb(0 0 0 / 0.55);
+}
+
+.board-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+}
+
+button.board-column {
+  cursor: not-allowed;
+}
+
+button.board-column-playable {
+  cursor: pointer;
+}
+
+button.board-column-playable:hover,
+button.board-column:focus-visible {
+  background: rgb(255 255 255 / 0.14);
+}
+
+button.board-column:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+.board-cell {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: var(--hole);
+  box-shadow: inset 0 3px 6px rgb(0 0 0 / 0.5);
+}
+
+/* ---------------------------------------------------------------------------
+   Discs. Seat 2 also carries an inner ring, so the two players differ by
+   shape as well as by color.
+   --------------------------------------------------------------------------- */
+.disc {
+  --disc: var(--disc-1);
+  --disc-hi: var(--disc-1-hi);
+  position: absolute;
+  inset: 4%;
+  border-radius: 999px;
+  background: radial-gradient(circle at 34% 30%, var(--disc-hi), var(--disc) 62%);
+  box-shadow:
+    inset 0 -3px 0 rgb(0 0 0 / 0.2),
+    0 1px 2px rgb(0 0 0 / 0.35);
+}
+
+.disc-2 {
+  --disc: var(--disc-2);
+  --disc-hi: var(--disc-2-hi);
+}
+
+.disc-2::after {
+  content: '';
+  position: absolute;
+  inset: 26%;
+  border-radius: 999px;
+  border: 2px solid rgb(0 0 0 / 0.22);
+}
+
+.disc-ghost {
+  opacity: 0.55;
+}
+
+.disc-icon {
+  position: relative;
+  display: inline-block;
+  inset: auto;
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+  vertical-align: -0.15em;
+}
+
+.disc-drop {
+  animation: disc-drop calc(170ms + var(--fall, 1) * 40ms) cubic-bezier(0.5, 0, 1, 0.6) both;
+}
+
+@keyframes disc-drop {
+  0% {
+    transform: translateY(calc(var(--fall, 1) * -118%));
+  }
+  80% {
+    transform: translateY(0);
+  }
+  90% {
+    transform: translateY(-7%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.disc-win {
+  animation: disc-win 0.9s ease-in-out infinite alternate;
+  box-shadow:
+    0 0 0 3px #fff,
+    0 0 16px 4px rgb(255 255 255 / 0.55);
+}
+
+/* The winning disc first falls, then pulses with the rest of the line. */
+.disc-drop.disc-win {
+  animation:
+    disc-drop calc(170ms + var(--fall, 1) * 40ms) cubic-bezier(0.5, 0, 1, 0.6) both,
+    disc-win 0.9s ease-in-out 0.5s infinite alternate;
+}
+
+@keyframes disc-win {
+  to {
+    transform: scale(0.88);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Chat: the three bouncing dots of "… is typing".
+   --------------------------------------------------------------------------- */
+.typing-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  animation: typing-dot 1.2s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typing-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-dots span {
+    animation: none;
+  }
+}
