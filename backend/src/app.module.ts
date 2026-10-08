@@ -8,6 +8,7 @@ import { validateEnv } from './config/env.validation.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { MatchesModule } from './modules/matches/matches.module.js';
+import { TournamentsModule } from './modules/tournaments/tournaments.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 
 // The root module: the app starts here and everything else plugs into it.
@@ -26,6 +27,7 @@ import { UsersModule } from './modules/users/users.module.js';
     UsersModule,
     AuthModule,
     MatchesModule,
+    TournamentsModule,
   ],
   controllers: [AppController],
   providers: [
