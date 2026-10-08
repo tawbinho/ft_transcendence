@@ -29,7 +29,7 @@ export function ModeCard({
     return (
       <Link
         to={to}
-        className="group flex flex-col gap-3 rounded-2xl border border-border bg-surface p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
+        className="group flex flex-col gap-3 rounded-card border border-border bg-surface p-6 shadow-card transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-pop"
       >
         <span className="grid size-11 place-items-center rounded-xl bg-primary/12 text-2xl text-primary">{icon}</span>
         <Heading className="text-lg font-bold group-hover:text-primary">{title}</Heading>
@@ -39,7 +39,7 @@ export function ModeCard({
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 shadow-sm">
+    <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-6 shadow-card">
       <span className="grid size-12 place-items-center rounded-xl bg-primary/12 text-2xl text-primary">{icon}</span>
       <div className="flex-1">
         <Heading className="text-xl font-bold">{title}</Heading>
