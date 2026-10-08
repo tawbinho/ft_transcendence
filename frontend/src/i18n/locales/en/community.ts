@@ -80,6 +80,10 @@ export const communityMessages = {
     seeBracket: 'See the bracket',
     unreadCount: 'Unread: {{count}}',
   },
+  leaderboard: {
+    title: 'Leaderboard',
+    soon: 'The ranking of the best players is coming soon.',
+  },
 };
 
 export type CommunityMessages = typeof communityMessages;

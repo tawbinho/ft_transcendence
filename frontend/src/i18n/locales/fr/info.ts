@@ -11,4 +11,8 @@ export const infoMessages: InfoMessages = {
     body: 'La page que vous cherchez n’existe pas ou a été déplacée.',
     home: 'Retour à l’accueil',
   },
+  design: {
+    title: 'Charte graphique',
+    soon: 'Les couleurs, la typographie et les composants de l’application seront présentés ici bientôt.',
+  },
 };

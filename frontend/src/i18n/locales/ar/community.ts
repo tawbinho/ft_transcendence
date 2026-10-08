@@ -81,4 +81,8 @@ export const communityMessages: CommunityMessages = {
     seeBracket: 'عرض الجدول',
     unreadCount: 'غير مقروءة: {{count}}',
   },
+  leaderboard: {
+    title: 'لوحة المتصدرين',
+    soon: 'ترتيب أفضل اللاعبين قادم قريباً.',
+  },
 };

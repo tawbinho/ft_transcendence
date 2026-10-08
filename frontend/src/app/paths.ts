@@ -9,6 +9,8 @@ export const paths = {
   match: (id: string) => `/matches/${segment(id)}`,
   watch: (id: string) => `/watch/${segment(id)}`,
   tournament: (id: string) => `/tournaments/${segment(id)}`,
+  /** The settings page, optionally opened on one section: profile, security, preferences or blocked. */
+  settings: (section?: string) => (section ? `/settings/${segment(section)}` : '/settings'),
   /** The online match form, with the opponent already filled in. */
   challenge: (displayName: string) => `/play/online?opponent=${segment(displayName)}`,
 };

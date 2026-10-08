@@ -83,4 +83,8 @@ export const communityMessages: CommunityMessages = {
     seeBracket: 'Voir le tableau',
     unreadCount: 'Non lus : {{count}}',
   },
+  leaderboard: {
+    title: 'Classement',
+    soon: 'Le classement des meilleurs joueurs arrive bientôt.',
+  },
 };
