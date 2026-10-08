@@ -1,45 +1,41 @@
 import { useTranslation } from 'react-i18next';
+import { Navigate, useParams } from 'react-router';
+import { paths } from '@/app/paths';
 import { PageHeader } from '@/components/PageHeader';
-import { Alert, Button, Card, PageSpinner } from '@/components/ui';
-import { ProfileEditor } from '@/features/account/ProfileEditor';
-import { TwoFactorPanel } from '@/features/account/TwoFactorPanel';
-import { useLogout, useUser } from '@/features/auth/hooks';
-import { ColorSchemeSelect } from '@/layout/ColorSchemeSelect';
-import { LanguageSelect } from '@/layout/LanguageSelect';
-import { useErrorMessage } from '@/lib/errorMessage';
+import { PageSpinner, TabLinks, type TabLink } from '@/components/ui';
+import { useUser } from '@/features/auth/hooks';
+import { BlockedSection } from './sections/BlockedSection';
+import { PreferencesSection } from './sections/PreferencesSection';
+import { ProfileSection } from './sections/ProfileSection';
+import { SecuritySection } from './sections/SecuritySection';
+import { resolveSection } from './sections';
 
+/** /settings/:section?. A row of tabs, then the section the address names. */
 export function SettingsPage() {
   const { t } = useTranslation();
-  const errorMessage = useErrorMessage();
+  const { section: param } = useParams();
   const user = useUser();
-  const logout = useLogout();
+  const { section, canonical } = resolveSection(param);
 
+  if (!canonical) return <Navigate to={paths.settings()} replace />;
   if (!user) return <PageSpinner />;
+
+  const tabs: TabLink[] = [
+    // The profile section is the start of the others' address, so only an exact match marks it.
+    { to: paths.settings(), label: t('account.tabProfile'), end: true },
+    { to: paths.settings('security'), label: t('account.tabSecurity') },
+    { to: paths.settings('preferences'), label: t('account.tabPreferences') },
+    { to: paths.settings('blocked'), label: t('account.tabBlocked') },
+  ];
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <PageHeader title={t('account.title')} className="mb-2" />
-
-      <ProfileEditor user={user} />
-
-      <Card className="flex flex-col gap-4">
-        <h2 className="text-lg font-bold">{t('account.preferences')}</h2>
-        <div className="flex flex-wrap gap-6">
-          <LanguageSelect showLabel />
-          <ColorSchemeSelect showLabel />
-        </div>
-      </Card>
-
-      <TwoFactorPanel user={user} />
-
-      <Card className="flex flex-col items-start gap-3">
-        <h2 className="text-lg font-bold">{t('account.session')}</h2>
-        <p className="text-muted">{t('account.logoutBody')}</p>
-        {logout.error && <Alert tone="danger">{errorMessage(logout.error)}</Alert>}
-        <Button variant="secondary" loading={logout.isPending} onClick={() => logout.mutate()}>
-          {t('nav.logout')}
-        </Button>
-      </Card>
+      <PageHeader title={t('account.title')} subtitle={t('account.subtitle')} className="mb-0" />
+      <TabLinks label={t('account.sections')} tabs={tabs} />
+      {section === 'profile' && <ProfileSection user={user} />}
+      {section === 'security' && <SecuritySection user={user} />}
+      {section === 'preferences' && <PreferencesSection />}
+      {section === 'blocked' && <BlockedSection />}
     </div>
   );
 }

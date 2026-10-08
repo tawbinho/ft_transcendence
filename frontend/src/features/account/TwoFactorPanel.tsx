@@ -11,8 +11,9 @@ type Step = { kind: 'idle' } | { kind: 'setup'; setup: TwoFactorSetup } | { kind
 
 /**
  * Turns two-factor authentication on (QR code, then a first code) or off
- * (a code). The backend does not say whether it is on yet; until it does, both
- * actions are offered and the server's answer settles it.
+ * (a code). When the user says whether it is on, only the fitting action is
+ * shown. The backend does not say yet: until it does, both actions are offered
+ * with a hint, and what the server answers is remembered for this visit.
  */
 export function TwoFactorPanel({ user }: { user: User }) {
   const { t } = useTranslation();
@@ -26,7 +27,8 @@ export function TwoFactorPanel({ user }: { user: User }) {
   const [submitted, setSubmitted] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const status = user.twoFactorEnabled;
+  const [learned, setLearned] = useState<boolean>();
+  const status = user.twoFactorEnabled ?? learned;
   const codeError = submitted ? validateCode(code) : null;
 
   function reset(next: Step = { kind: 'idle' }) {
@@ -42,7 +44,10 @@ export function TwoFactorPanel({ user }: { user: User }) {
     setup.mutate(undefined, {
       onSuccess: (data) => reset({ kind: 'setup', setup: data }),
       onError: (error) => {
-        if (isApiError(error, 'TWO_FACTOR_ALREADY_ENABLED')) setNotice(t('twoFactor.enabled'));
+        if (isApiError(error, 'TWO_FACTOR_ALREADY_ENABLED')) {
+          setLearned(true);
+          setNotice(t('twoFactor.enabled'));
+        }
       },
     });
   }
@@ -54,11 +59,13 @@ export function TwoFactorPanel({ user }: { user: User }) {
     const mutation = step.kind === 'setup' ? enable : disable;
     mutation.mutate(normalizeCode(code), {
       onSuccess: () => {
+        setLearned(step.kind === 'setup');
         setNotice(step.kind === 'setup' ? t('twoFactor.enabled') : t('twoFactor.disabled'));
         reset();
       },
       onError: (error) => {
         if (isApiError(error, 'TWO_FACTOR_NOT_ENABLED')) {
+          setLearned(false);
           setNotice(t('twoFactor.disabled'));
           reset();
         }
@@ -78,6 +85,9 @@ export function TwoFactorPanel({ user }: { user: User }) {
         )}
       </div>
       <p className="text-muted">{t('twoFactor.body')}</p>
+      {status === undefined && step.kind === 'idle' && (
+        <p className="text-sm text-muted">{t('twoFactor.unknownHint')}</p>
+      )}
 
       {notice && <Alert tone="success">{notice}</Alert>}
       {setupError && <Alert tone="danger">{errorMessage(setupError)}</Alert>}
