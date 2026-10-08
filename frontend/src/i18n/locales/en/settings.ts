@@ -15,6 +15,20 @@ export const settingsMessages = {
     displayNameHint: '3 to 20 letters, numbers, _ or -. Other players find you by this name.',
     saveName: 'Save name',
     nameSaved: 'Display name saved.',
+    subtitle: 'Manage how you appear to other players, how you log in and how the app looks.',
+    sections: 'Account sections',
+    tabProfile: 'Profile',
+    tabSecurity: 'Security',
+    tabPreferences: 'Preferences',
+    tabBlocked: 'Blocked players',
+    security: 'Security',
+    loggedInAs: 'Logged in as {{email}}',
+    appearance: 'Language and appearance',
+    boardTheme: 'Board colors for new games',
+    boardThemeHint: 'Used the next time you set up a game. Saved on this device.',
+    blockedTitle: 'Blocked players',
+    blockedBody: 'Blocked players cannot message you or send you friend requests. Unblock them here.',
+    blockedEmpty: 'You have not blocked anyone.',
   },
   twoFactor: {
     title: 'Two-factor authentication',
@@ -31,6 +45,7 @@ export const settingsMessages = {
     confirmOff: 'Turn off',
     enabled: 'Two-factor authentication is on.',
     disabled: 'Two-factor authentication is off.',
+    unknownHint: 'We cannot tell yet whether it is on, so both choices are shown. The server checks your code.',
   },
 };
 

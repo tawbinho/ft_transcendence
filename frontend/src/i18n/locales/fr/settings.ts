@@ -17,6 +17,20 @@ export const settingsMessages: SettingsMessages = {
     displayNameHint: 'De 3 à 20 lettres, chiffres, _ ou -. Les autres joueurs vous trouvent par ce nom.',
     saveName: 'Enregistrer le nom',
     nameSaved: 'Nom d’affichage enregistré.',
+    subtitle: 'Gérez la façon dont les autres joueurs vous voient, votre connexion et l’apparence de l’application.',
+    sections: 'Sections du compte',
+    tabProfile: 'Profil',
+    tabSecurity: 'Sécurité',
+    tabPreferences: 'Préférences',
+    tabBlocked: 'Joueurs bloqués',
+    security: 'Sécurité',
+    loggedInAs: 'Connecté en tant que {{email}}',
+    appearance: 'Langue et apparence',
+    boardTheme: 'Couleurs du plateau pour les nouvelles parties',
+    boardThemeHint: 'Utilisées à la prochaine création de partie. Enregistrées sur cet appareil.',
+    blockedTitle: 'Joueurs bloqués',
+    blockedBody: 'Les joueurs bloqués ne peuvent ni vous écrire ni vous envoyer de demande d’ami. Débloquez-les ici.',
+    blockedEmpty: 'Vous n’avez bloqué personne.',
   },
   twoFactor: {
     title: 'Authentification à deux facteurs',
@@ -34,5 +48,7 @@ export const settingsMessages: SettingsMessages = {
     confirmOff: 'Désactiver',
     enabled: 'L’authentification à deux facteurs est activée.',
     disabled: 'L’authentification à deux facteurs est désactivée.',
+    unknownHint:
+      'Nous ne savons pas encore s’il est activé : les deux choix sont proposés. Le serveur vérifie votre code.',
   },
 };
