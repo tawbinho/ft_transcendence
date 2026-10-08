@@ -144,6 +144,8 @@ describe('same-screen tournament match', () => {
     saveLocalTournament(createLocalTournament(['Ana', 'Ben', 'Cleo', 'Dan'], DEFAULT_BOARD_SETTINGS, () => 0));
     const { events, container } = renderRoute('/tournaments/local', { user: null });
 
+    // A tournament saved on this device is offered back before anything else.
+    await events.click(await screen.findByRole('button', { name: 'Resume your tournament' }));
     await events.click(await screen.findByRole('button', { name: 'Play this match' }));
     const title = (await screen.findByRole('heading', { level: 1 })).textContent ?? '';
     const [first] = title.split(' vs ');
