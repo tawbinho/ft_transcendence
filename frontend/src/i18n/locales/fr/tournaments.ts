@@ -9,7 +9,7 @@ export const tournamentsMessages: TournamentsMessages = {
     onlineBody:
       'Créez un tournoi ou rejoignez-en un. Chaque match se joue en ligne et le tableau se met à jour tout seul.',
     listTitle: 'Tous les tournois en ligne',
-    loginRequired: 'Connectez-vous pour participer aux tournois en ligne.',
+    loginRequired: 'Connectez-vous pour rejoindre les tournois en ligne.',
     create: 'Créer un tournoi',
     empty: 'Aucun tournoi ici pour l’instant.',
     filters: {
@@ -56,6 +56,9 @@ export const tournamentsMessages: TournamentsMessages = {
     round: 'Tour {{n}}',
     bye: 'Exempt',
     toBeDecided: 'À déterminer',
+    championTitle: 'Champion',
+    filterLabel: 'Afficher',
+    yourMatch: 'Votre match',
   },
   localTournament: {
     title: 'Tournoi sur un écran',
@@ -81,5 +84,13 @@ export const tournamentsMessages: TournamentsMessages = {
     abandon: 'Abandonner le tournoi',
     abandonTitle: 'Abandonner ce tournoi ?',
     abandonBody: 'Le tableau et ses résultats seront perdus.',
+    vs: 'contre',
+    progress: '{{played}} sur {{total}} matchs joués',
+    resumeTitle: 'Reprendre votre tournoi ?',
+    resumeBody: 'Un tournoi vous attend sur cet appareil : {{names}}.',
+    resumeAction: 'Reprendre votre tournoi',
+    startNew: 'En commencer un nouveau',
+    startNewHint: 'En commencer un nouveau efface le tableau enregistré.',
+    playAgain: 'Mêmes joueurs, nouveau tirage',
   },
 };

@@ -5,7 +5,7 @@ export const tournamentsMessages = {
     onlineTitle: 'Online tournaments',
     onlineBody: 'Create a tournament or join one. Each match is played online and the bracket updates by itself.',
     listTitle: 'All online tournaments',
-    loginRequired: 'Log in to take part in online tournaments.',
+    loginRequired: 'Log in to join online tournaments.',
     create: 'Create a tournament',
     empty: 'No tournament here yet.',
     filters: {
@@ -52,6 +52,9 @@ export const tournamentsMessages = {
     round: 'Round {{n}}',
     bye: 'Bye',
     toBeDecided: 'To be decided',
+    championTitle: 'Champion',
+    filterLabel: 'Show',
+    yourMatch: 'Your match',
   },
   localTournament: {
     title: 'Same-screen tournament',
@@ -77,6 +80,14 @@ export const tournamentsMessages = {
     abandon: 'Abandon tournament',
     abandonTitle: 'Abandon this tournament?',
     abandonBody: 'The bracket and its results will be lost.',
+    vs: 'vs',
+    progress: '{{played}} of {{total}} matches played',
+    resumeTitle: 'Resume your tournament?',
+    resumeBody: 'A tournament is waiting on this device: {{names}}.',
+    resumeAction: 'Resume your tournament',
+    startNew: 'Start a new one',
+    startNewHint: 'Starting a new one clears the saved bracket.',
+    playAgain: 'Same players, new draw',
   },
 };
 

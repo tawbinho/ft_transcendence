@@ -7,7 +7,7 @@ export const tournamentsMessages: TournamentsMessages = {
     onlineTitle: 'البطولات عبر الإنترنت',
     onlineBody: 'أنشئ بطولة أو انضم إلى واحدة. تُلعب كل مباراة عبر الإنترنت، ويتحدّث الجدول تلقائيًا.',
     listTitle: 'كل البطولات عبر الإنترنت',
-    loginRequired: 'سجّل الدخول للمشاركة في البطولات عبر الإنترنت.',
+    loginRequired: 'سجّل الدخول للانضمام إلى البطولات عبر الإنترنت.',
     create: 'إنشاء بطولة',
     empty: 'لا توجد بطولات هنا بعد.',
     filters: {
@@ -54,6 +54,9 @@ export const tournamentsMessages: TournamentsMessages = {
     round: 'الدور {{n}}',
     bye: 'تأهل مباشر',
     toBeDecided: 'لم يُحدَّد بعد',
+    championTitle: 'البطل',
+    filterLabel: 'عرض',
+    yourMatch: 'مباراتك',
   },
   localTournament: {
     title: 'بطولة على شاشة واحدة',
@@ -79,5 +82,13 @@ export const tournamentsMessages: TournamentsMessages = {
     abandon: 'التخلي عن البطولة',
     abandonTitle: 'التخلي عن هذه البطولة؟',
     abandonBody: 'سيضيع الجدول ونتائجه.',
+    vs: 'ضد',
+    progress: 'لُعبت {{played}} من {{total}} مباريات',
+    resumeTitle: 'هل تريد متابعة بطولتك؟',
+    resumeBody: 'هناك بطولة تنتظرك على هذا الجهاز: {{names}}.',
+    resumeAction: 'متابعة بطولتك',
+    startNew: 'بدء بطولة جديدة',
+    startNewHint: 'بدء بطولة جديدة يمسح الجدول المحفوظ.',
+    playAgain: 'اللاعبون أنفسهم، قرعة جديدة',
   },
 };

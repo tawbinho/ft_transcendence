@@ -4,6 +4,7 @@ import { CrownIcon } from '@/components/icons';
 import { Avatar } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import type { Slot } from '../bracket';
+import { roundName } from '../view';
 
 /** A player as the bracket shows them: a name, and their avatar for online tournaments. */
 export interface BracketEntrant {
@@ -23,62 +24,87 @@ export interface BracketPairingView {
   action?: ReactNode;
 }
 
-/** "Final", "Semi-finals", "Quarter-finals", else "Round n". */
-function useRoundName() {
-  const { t } = useTranslation();
-  return (round: number, total: number) => {
-    const fromEnd = total - 1 - round;
-    if (fromEnd === 0) return t('tournaments.final');
-    if (fromEnd === 1) return t('tournaments.semiFinals');
-    if (fromEnd === 2) return t('tournaments.quarterFinals');
-    return t('tournaments.round', { n: round + 1 });
-  };
-}
-
 /**
- * The bracket as columns of rounds, the final last. Later rounds sit between
- * the pairings that feed them. On small screens the columns scroll sideways.
+ * The bracket as columns of rounds, the final last, then the champion once
+ * there is one. Later rounds sit between the pairings that feed them. When the
+ * columns are wider than the screen they scroll inside this box, not the page.
  */
-export function BracketView({ rounds, label }: { rounds: BracketPairingView[][]; label: string }) {
-  const roundName = useRoundName();
+export function BracketView({
+  rounds,
+  label,
+  currentLabel,
+  champion,
+}: {
+  rounds: BracketPairingView[][];
+  /** Names the scrolling box for screen readers. */
+  label: string;
+  /** A short word on the highlighted pairing, e.g. "Next match". */
+  currentLabel?: string;
+  /** The winner's name, shown in a last column with a crown. */
+  champion?: string | null;
+}) {
+  const { t } = useTranslation();
   return (
-    <div className="overflow-x-auto pb-2">
-      <ol aria-label={label} className="flex min-w-max gap-4">
+    // The box can scroll, so it must be reachable with the keyboard.
+    <div
+      role="region"
+      aria-label={label}
+      tabIndex={0}
+      className="max-w-full overflow-x-auto rounded-2xl border border-border bg-surface-2/50 p-4"
+    >
+      <ol className="flex min-w-max gap-4">
         {rounds.map((pairings, round) => (
           <li key={round} className="flex w-56 flex-col">
             <h3 className="mb-3 text-sm font-bold tracking-wide text-muted uppercase">
-              {roundName(round, rounds.length)}
+              {t(`tournaments.${roundName(round, rounds.length)}`, { n: round + 1 })}
             </h3>
             <ol className="flex flex-1 flex-col justify-around gap-4">
               {pairings.map((pairing) => (
                 <li key={pairing.key}>
-                  <PairingCard pairing={pairing} />
+                  <PairingCard pairing={pairing} currentLabel={currentLabel} />
                 </li>
               ))}
             </ol>
           </li>
         ))}
+        {champion && (
+          <li className="flex w-44 flex-col">
+            <h3 className="mb-3 text-sm font-bold tracking-wide text-muted uppercase">
+              {t('tournaments.championTitle')}
+            </h3>
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-warning bg-surface p-3 text-center">
+              <CrownIcon className="text-4xl text-warning" />
+              <span className="max-w-full truncate font-bold">{champion}</span>
+            </div>
+          </li>
+        )}
       </ol>
     </div>
   );
 }
 
-function PairingCard({ pairing }: { pairing: BracketPairingView }) {
+function PairingCard({ pairing, currentLabel }: { pairing: BracketPairingView; currentLabel?: string }) {
   const { t } = useTranslation();
   return (
     <div
       className={cn(
         'flex flex-col gap-2 rounded-xl border bg-surface p-2 shadow-sm',
-        pairing.current ? 'border-primary ring-1 ring-primary' : 'border-border',
+        pairing.current ? 'border-primary ring-2 ring-primary' : 'border-border',
       )}
     >
+      {pairing.current && currentLabel && (
+        <p className="px-1.5 text-xs font-bold tracking-wide text-primary uppercase">{currentLabel}</p>
+      )}
       <ul className="flex flex-col divide-y divide-border">
         {([0, 1] as const).map((slot) => {
           const player = pairing.players[slot];
           const won = pairing.winner === slot;
           const lost = pairing.winner !== null && !won && player !== null;
           return (
-            <li key={slot} className="flex min-h-10 items-center gap-2 px-1.5 py-1">
+            <li
+              key={slot}
+              className={cn('flex min-h-10 items-center gap-2 rounded-md px-1.5 py-1', won && 'bg-success-soft')}
+            >
               {player ? (
                 <>
                   {player.user && <Avatar user={player.user} size="xs" />}
