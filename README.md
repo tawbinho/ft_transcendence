@@ -138,6 +138,17 @@ including the `data` / `error` wrapper. The browser must send requests with
 
 All `/api/matches` routes need a logged-in user.
 
+| Route                              | Description                                         |
+| ---------------------------------- | --------------------------------------------------- |
+| `GET  /api/tournaments`            | list tournaments, newest first (`status`, `limit`, `offset`) |
+| `POST /api/tournaments`            | create one: `{ "name", "size": 4 or 8, "settings"? }` |
+| `GET  /api/tournaments/:id`        | one tournament with its registered players          |
+| `DELETE /api/tournaments/:id`      | cancel it (creator only, while registering)         |
+| `POST /api/tournaments/:id/join`   | take a place                                        |
+| `POST /api/tournaments/:id/leave`  | give the place back                                 |
+
+All `/api/tournaments` routes need a logged-in user.
+
 **Login uses database sessions.** Signup and login set one httpOnly cookie,
 `session`, holding a random token (valid `SESSION_TTL_DAYS`, 7 by default).
 The `sessions` table stores only the SHA-256 hash of that token, so a leaked
@@ -175,8 +186,20 @@ same seat and a move cannot be stored twice. Common error codes:
 `MATCH_NOT_JOINABLE`, `ALREADY_IN_MATCH`, `NOT_INVITED`, `USER_NOT_FOUND`,
 `TOO_MANY_WAITING_MATCHES`.
 
+**Tournaments.** A single-elimination tournament with 4 or 8 places, created
+with a name and an optional board (the same settings as a match). The creator
+takes the first place; others join and leave while it is `registering`.
+Cancelling deletes it. Every change runs in a transaction that locks the
+tournament row, so two players cannot take the last place together. Error
+codes: `TOURNAMENT_NOT_FOUND`, `TOURNAMENT_NOT_OPEN`, `TOURNAMENT_FULL`,
+`ALREADY_JOINED`, `NOT_JOINED`, `CREATOR_CANNOT_LEAVE`, `NOT_CREATOR`.
+**Not built yet:** starting a tournament, the bracket, the matches it creates
+and advancing winners (`rounds` is always empty, and players are always
+reported offline until presence exists). The full API design, including these
+parts, is in `backend/docs/openapi.yaml`.
+
 **Rate limits** (per IP, per minute): 100 requests overall; login 10; signup 5;
-2FA verify, enable and disable 5; creating a match 20. Beyond that the API answers `429` with the
+2FA verify, enable and disable 5; creating a match or a tournament 20. Beyond that the API answers `429` with the
 code `RATE_LIMITED`. The counters are kept in memory and reset when the
 backend restarts.
 

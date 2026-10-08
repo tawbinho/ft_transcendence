@@ -1,0 +1,2980 @@
+# Connect Four API: the TARGET design (existing backend + what the frontend needs).
+# Generated from frontend/docs/api-contract.md and frontend/src/features/*/types.ts, checked against the
+# real backend. Edit this file by hand from now on. Read `info.description` first.
+# Open it in https://editor.swagger.io (paste the file) or any OpenAPI viewer.
+openapi: 3.0.3
+info:
+  title: Connect Four API (target design)
+  version: 0.2.0
+  description: |
+    The TARGET API of the Connect Four app: what the backend already does plus what the frontend needs.
+
+    **How this file was made.** From `frontend/docs/api-contract.md` and the TypeScript types in `frontend/src/features/*/types.ts` (the app is compiled against them),
+    checked against the real backend routes. It is a DESIGN: the backend implements it step by step. The Swagger page served by the running backend (`/api/docs`,
+    generated from the code) shows what exists today.
+
+    **Status of each route** (`x-status`):
+    - `implemented`: the backend already does this, exactly as written (checked with real requests).
+    - `change`: exists, but must change (only `GET /matches/{id}`: spectators may read a match).
+    - `new`: does not exist yet. The frontend answers it with its in-browser demo server (`x-demo-feature` names the feature switch `VITE_DEMO_FEATURES`).
+
+    **Conventions** (the existing backend already follows these; the new routes keep them)
+    - Every route is under `/api`, on the same origin as the app (an HTTPS proxy sends `/api` and `/socket.io` to the backend, everything else to the frontend).
+    - Login is the httpOnly `session` cookie. Every route needs it except signup, login, 2FA verify, logout and `GET /auth/me`. Without a valid session: `401 UNAUTHORIZED`.
+    - Success: any 2xx with `{ "data": ... }` (`{ "data": null }` when there is nothing to return). Failure: `{ "error": { "code", "message" } }`.
+    - A body or query that breaks a rule: `400 VALIDATION_ERROR`. An id in a path that is not a UUID should be `VALIDATION_ERROR` too (today the backend answers `BAD_REQUEST`).
+    - Ids are UUID strings. Dates are ISO 8601 in UTC.
+    - Long lists take `limit` (1 to 50, default 20) and `offset` (default 0) and answer `{ items, total, limit, offset }`.
+    - Rate limit: 100 requests a minute per client address and per route; less on signup (5), login (10), 2FA (5) and creating a match (20). Over: `429 RATE_LIMITED`.
+    - Online presence: a player is online while they have the app open. With sockets: at least one open socket. Before sockets exist: a request in the last minute (the app sends one at least every 30 s while a tab is visible).
+
+    **Not in this document:** the real-time events are described under the `x-realtime` extension at the top level (OpenAPI cannot describe sockets).
+servers:
+- url: https://localhost:{port}/api
+  description: Local, behind the HTTPS proxy (self-signed certificate)
+  variables:
+    port:
+      default: '8443'
+      description: HTTPS_PORT of the root .env
+tags:
+- name: auth
+  description: Accounts, login, two-factor authentication. All implemented.
+- name: matches
+  description: Online games. Implemented, except `live` (new) and the spectator change on `GET /matches/{id}`.
+- name: users
+  description: Player search, profiles, display name and avatar. New (frontend demo feature `users`).
+- name: friends
+  description: Friend requests and friends. New (demo feature `friends`).
+- name: chat
+  description: Private messages, match invitations, read receipts, typing, and blocking. New (demo feature `chat`).
+- name: tournaments
+  description: 'Online single-elimination tournaments with 4 or 8 places. Implemented: list, create, read, cancel,
+    join, leave (`rounds` is always empty). New: `start` (the bracket, the matches and advancing winners), still
+    faked by the frontend demo feature `tournaments`.'
+security:
+- session: []
+paths:
+  /auth/signup:
+    post:
+      tags:
+      - auth
+      operationId: signup
+      summary: Create an account and log in
+      description: 'Sets the `session` cookie. Rate limit: 5 per minute.'
+      x-status: implemented
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '201':
+          description: Account created, logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SessionResult'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: 'Codes: `EMAIL_TAKEN`, `DISPLAY_NAME_TAKEN`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: EMAIL_TAKEN
+                  message: See the error code table
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/login:
+    post:
+      tags:
+      - auth
+      operationId: login
+      summary: Log in with email and password
+      description: 'Without 2FA: sets the `session` cookie and returns the user. With 2FA on: sets a PENDING session
+        (5 minutes) that only works for `/auth/2fa/verify`, and answers `{ user: null, twoFactorRequired: true }`.
+        Wrong email and wrong password give the same error. Rate limit: 10 per minute.'
+      x-status: implemented
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Logged in, or a 2FA code is needed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LoginResult'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          description: 'Codes: `INVALID_CREDENTIALS`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: INVALID_CREDENTIALS
+                  message: See the error code table
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/2fa/verify:
+    post:
+      tags:
+      - auth
+      operationId: verifyTwoFactor
+      summary: Finish a login with the 6-digit code
+      description: 'Needs the pending session cookie from `/auth/login`. On success the cookie is replaced by a
+        new full session. A code cannot be used twice. Rate limit: 5 per minute.'
+      x-status: implemented
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorCodeRequest'
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SessionResult'
+        '400':
+          description: 'INVALID_2FA_CODE: wrong, expired or already used code. Codes: `VALIDATION_ERROR`, `INVALID_2FA_CODE`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: VALIDATION_ERROR
+                  message: See the error code table
+        '401':
+          description: 'No pending session: log in with the password first. Codes: `UNAUTHORIZED`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: UNAUTHORIZED
+                  message: See the error code table
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/logout:
+    post:
+      tags:
+      - auth
+      operationId: logout
+      summary: Log out
+      description: Deletes the session on the server (immediately) and clears the cookie. Works even when nobody
+        is logged in.
+      x-status: implemented
+      security: []
+      responses:
+        '200':
+          description: Session ended
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    nullable: true
+                    description: Always null
+                    example: null
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/me:
+    get:
+      tags:
+      - auth
+      operationId: me
+      summary: The logged-in user, or null
+      description: 'Never answers 401: nobody logged in is a normal answer (`data: null`), so a visit by a logged-out
+        user does not print an error in the browser console. A pending 2FA session also answers null.'
+      x-status: implemented
+      security: []
+      responses:
+        '200':
+          description: The user, or null
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    nullable: true
+                    allOf:
+                    - $ref: '#/components/schemas/User'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/2fa/setup:
+    post:
+      tags:
+      - auth
+      operationId: setupTwoFactor
+      summary: Start the 2FA setup
+      description: Creates a secret (stored encrypted, not active yet) and returns the QR code. Call again before
+        enabling to replace it.
+      x-status: implemented
+      responses:
+        '200':
+          description: Scan the QR code
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TwoFactorSetup'
+        '409':
+          description: 'Codes: `TWO_FACTOR_ALREADY_ENABLED`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: TWO_FACTOR_ALREADY_ENABLED
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/2fa/enable:
+    post:
+      tags:
+      - auth
+      operationId: enableTwoFactor
+      summary: Turn 2FA on
+      description: The first valid code from the authenticator app activates 2FA.
+      x-status: implemented
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorCodeRequest'
+      responses:
+        '200':
+          description: 2FA is on
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    nullable: true
+                    description: Always null
+                    example: null
+        '400':
+          description: 'Codes: `VALIDATION_ERROR`, `INVALID_2FA_CODE`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: VALIDATION_ERROR
+                  message: See the error code table
+        '409':
+          description: 'Call setup first. Codes: `TWO_FACTOR_NOT_PENDING`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: TWO_FACTOR_NOT_PENDING
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/2fa/disable:
+    post:
+      tags:
+      - auth
+      operationId: disableTwoFactor
+      summary: Turn 2FA off
+      description: Needs a valid code, so a stolen session cannot remove the protection.
+      x-status: implemented
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorCodeRequest'
+      responses:
+        '200':
+          description: 2FA is off
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    nullable: true
+                    description: Always null
+                    example: null
+        '400':
+          description: 'Codes: `VALIDATION_ERROR`, `INVALID_2FA_CODE`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: VALIDATION_ERROR
+                  message: See the error code table
+        '409':
+          description: 'Codes: `TWO_FACTOR_NOT_ENABLED`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: TWO_FACTOR_NOT_ENABLED
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /matches:
+    post:
+      tags:
+      - matches
+      operationId: createMatch
+      summary: Create a match
+      description: 'Creates a `waiting` match and puts the caller in it, in seat 1 or 2 chosen at random. With `opponentDisplayName`
+        only that player can join; otherwise anyone who has the match id can. Rate limit: 20 per minute. Once blocking
+        exists, inviting a player who blocked you, or whom you blocked, answers `BLOCKED`.'
+      x-status: implemented
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMatchRequest'
+      responses:
+        '201':
+          description: The new match
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Match'
+        '400':
+          description: 'Codes: `VALIDATION_ERROR`, `CANNOT_INVITE_SELF`, `INVALID_SETTINGS`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: VALIDATION_ERROR
+                  message: See the error code table
+        '403':
+          description: 'NEW, once blocking exists. Codes: `BLOCKED`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: BLOCKED
+                  message: See the error code table
+        '404':
+          description: 'No player has this display name. Codes: `USER_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: USER_NOT_FOUND
+                  message: See the error code table
+        '409':
+          description: 'Three matches already wait for an opponent. Codes: `TOO_MANY_WAITING_MATCHES`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: TOO_MANY_WAITING_MATCHES
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /matches/mine:
+    get:
+      tags:
+      - matches
+      operationId: listMyMatches
+      summary: My matches
+      description: The matches the caller plays or played, newest first. Declare this route BEFORE `/matches/{id}`.
+      x-status: implemented
+      parameters:
+      - name: status
+        in: query
+        required: false
+        description: Only matches in this state
+        schema:
+          type: string
+          enum:
+          - waiting
+          - in_progress
+          - finished
+          - abandoned
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MatchSummaryPage'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /matches/live:
+    get:
+      tags:
+      - matches
+      operationId: listLiveMatches
+      summary: Matches being played now
+      description: Every `in_progress` match, most recently started first. `yourSeat` is the viewer's seat in the
+        matches they play, null in the others. The Watch page lists these, then opens one with `GET /matches/{id}`.
+        Declare this route BEFORE `/matches/{id}`.
+      x-status: new
+      x-demo-feature: spectate
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MatchSummaryPage'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /matches/{id}:
+    get:
+      tags:
+      - matches
+      operationId: getMatch
+      summary: One match
+      description: 'CHANGE: today only the two players can read a match (anyone else gets `MATCH_NOT_FOUND`). Spectator
+        mode needs every logged-in user to read it, with `yourSeat: null` for those who do not play. Joining, moving
+        and resigning stay for players only. This also removes the 404 (a red line in the console) a player gets
+        when opening a shared match link before joining.'
+      x-status: change
+      parameters:
+      - $ref: '#/components/parameters/MatchId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Match'
+        '404':
+          description: 'Codes: `MATCH_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: MATCH_NOT_FOUND
+                  message: See the error code table
+        '400':
+          description: 'The id is not a UUID (today the backend answers `BAD_REQUEST`). Codes: `VALIDATION_ERROR`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: VALIDATION_ERROR
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /matches/{id}/join:
+    post:
+      tags:
+      - matches
+      operationId: joinMatch
+      summary: Join a waiting match
+      description: Takes the free seat and starts the match. The match row is locked, so of several simultaneous
+        joiners exactly one gets in.
+      x-status: implemented
+      parameters:
+      - $ref: '#/components/parameters/MatchId'
+      responses:
+        '200':
+          description: The match, now `in_progress`
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Match'
+        '403':
+          description: 'The match is reserved for another player. Codes: `NOT_INVITED`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: NOT_INVITED
+                  message: See the error code table
+        '404':
+          description: 'Codes: `MATCH_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: MATCH_NOT_FOUND
+                  message: See the error code table
+        '409':
+          description: 'Codes: `MATCH_NOT_JOINABLE`, `ALREADY_IN_MATCH`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: MATCH_NOT_JOINABLE
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /matches/{id}/moves:
+    post:
+      tags:
+      - matches
+      operationId: playMove
+      summary: Play a move
+      description: The server judges the move with the engine (the browser never decides a result). Locked, so two
+        simultaneous moves cannot both be stored.
+      x-status: implemented
+      parameters:
+      - $ref: '#/components/parameters/MatchId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MakeMoveRequest'
+      responses:
+        '200':
+          description: The whole updated match
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Match'
+        '400':
+          description: 'Codes: `VALIDATION_ERROR`, `INVALID_COLUMN`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: VALIDATION_ERROR
+                  message: See the error code table
+        '404':
+          description: 'Codes: `MATCH_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: MATCH_NOT_FOUND
+                  message: See the error code table
+        '409':
+          description: 'Codes: `NOT_YOUR_TURN`, `COLUMN_FULL`, `MATCH_NOT_ACTIVE`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: NOT_YOUR_TURN
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /matches/{id}/resign:
+    post:
+      tags:
+      - matches
+      operationId: resignMatch
+      summary: Resign
+      description: A running match ends with the opponent as winner. A match still waiting for an opponent is cancelled
+        (`abandoned`).
+      x-status: implemented
+      parameters:
+      - $ref: '#/components/parameters/MatchId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Match'
+        '404':
+          description: 'Codes: `MATCH_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: MATCH_NOT_FOUND
+                  message: See the error code table
+        '409':
+          description: 'Codes: `MATCH_NOT_ACTIVE`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: MATCH_NOT_ACTIVE
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /users:
+    get:
+      tags:
+      - users
+      operationId: searchPlayers
+      summary: Search players
+      description: 'The viewer is in the results too, with `friendship: self`. The Players page keeps the filters
+        in its URL and sends the search 300 ms after the last key press.'
+      x-status: new
+      x-demo-feature: users
+      parameters:
+      - name: search
+        in: query
+        required: false
+        description: Part of a display name, case-insensitive
+        schema:
+          type: string
+      - name: online
+        in: query
+        required: false
+        description: Only players online now
+        schema:
+          type: boolean
+      - name: friends
+        in: query
+        required: false
+        description: Only the viewer's friends
+        schema:
+          type: boolean
+      - name: sort
+        in: query
+        required: false
+        description: '`name` A to Z, `wins` most wins first then by name, `newest` newest account first'
+        schema:
+          type: string
+          enum:
+          - name
+          - wins
+          - newest
+          default: name
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PlayerListItemPage'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /users/{displayName}:
+    get:
+      tags:
+      - users
+      operationId: getProfile
+      summary: A player's profile
+      description: 'The display name must match exactly, as stored (case-sensitive). The viewer''s own profile has
+        `friendship: self` and `online: true`.'
+      x-status: new
+      x-demo-feature: users
+      parameters:
+      - $ref: '#/components/parameters/DisplayName'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Profile'
+        '404':
+          description: 'Codes: `USER_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: USER_NOT_FOUND
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /users/{displayName}/matches:
+    get:
+      tags:
+      - users
+      operationId: listProfileMatches
+      summary: A player's finished matches
+      description: Newest first (by `endedAt`). Every logged-in user can read every player's history.
+      x-status: new
+      x-demo-feature: users
+      parameters:
+      - $ref: '#/components/parameters/DisplayName'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ProfileMatchPage'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          description: 'Codes: `USER_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: USER_NOT_FOUND
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /users/me:
+    patch:
+      tags:
+      - users
+      operationId: updateMe
+      summary: Change my display name
+      description: Same rules as signup. Returns the updated user.
+      x-status: new
+      x-demo-feature: users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: The updated user
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: 'Codes: `DISPLAY_NAME_TAKEN`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: DISPLAY_NAME_TAKEN
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /users/me/avatar:
+    put:
+      tags:
+      - users
+      operationId: uploadAvatar
+      summary: Upload my profile picture
+      description: 'The app crops to a square and shrinks to 256 x 256 (WebP, or PNG where WebP cannot be written)
+        before sending. Check the file CONTENT, not only the type the browser declares. Serve the pictures under
+        `/api` (for example `/api/avatars/<file>`): the proxy only sends `/api` and `/socket.io` to the backend.
+        Give every new picture a new file name so browsers never show an old cached copy. The proxy accepts bodies
+        up to 5 MB.'
+      x-status: new
+      x-demo-feature: users
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                  description: PNG, JPEG or WebP, 2 MB at most
+              required:
+              - avatar
+      responses:
+        '200':
+          description: The updated user, whose `avatarUrl` shows the new picture
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '413':
+          description: 'Codes: `AVATAR_TOO_LARGE`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: AVATAR_TOO_LARGE
+                  message: See the error code table
+        '415':
+          description: 'Codes: `AVATAR_INVALID_TYPE`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: AVATAR_INVALID_TYPE
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+      - users
+      operationId: removeAvatar
+      summary: Remove my profile picture
+      description: 'Back to the default avatar (`avatarUrl: null`).'
+      x-status: new
+      x-demo-feature: users
+      responses:
+        '200':
+          description: The updated user
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /friends:
+    get:
+      tags:
+      - friends
+      operationId: getFriends
+      summary: Friends and friend requests
+      x-status: new
+      x-demo-feature: friends
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FriendsOverview'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /friends/{userId}:
+    put:
+      tags:
+      - friends
+      operationId: addFriend
+      summary: Send or accept a friend request
+      description: 'Sends a friend request, or accepts theirs if they already sent one. Idempotent: to a friend,
+        or to a player who already has the viewer''s request, it changes nothing and answers the current `friendship`.
+        Sends `friends:update` to both players.'
+      x-status: new
+      x-demo-feature: friends
+      parameters:
+      - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FriendshipResult'
+        '400':
+          description: 'Codes: `CANNOT_FRIEND_SELF`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: CANNOT_FRIEND_SELF
+                  message: See the error code table
+        '403':
+          description: 'Either player blocked the other. Codes: `BLOCKED`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: BLOCKED
+                  message: See the error code table
+        '404':
+          description: 'Codes: `USER_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: USER_NOT_FOUND
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+      - friends
+      operationId: removeFriend
+      summary: Remove a friend, cancel or decline a request
+      description: 'Removes the friend, cancels the viewer''s request, or declines theirs. Idempotent: with nothing
+        to remove it answers `none`. Sends `friends:update` to both players.'
+      x-status: new
+      x-demo-feature: friends
+      parameters:
+      - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: 'Always `friendship: none`'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FriendshipResult'
+        '400':
+          description: 'Codes: `CANNOT_FRIEND_SELF`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: CANNOT_FRIEND_SELF
+                  message: See the error code table
+        '404':
+          description: 'Codes: `USER_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: USER_NOT_FOUND
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /chat/conversations:
+    get:
+      tags:
+      - chat
+      operationId: listConversations
+      summary: My conversations
+      description: One per player the viewer has at least one message with (system messages included), latest message
+        first. Not paginated.
+      x-status: new
+      x-demo-feature: chat
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /chat/{userId}/messages:
+    get:
+      tags:
+      - chat
+      operationId: listMessages
+      summary: Messages with a player
+      description: 'Without `before`: the latest `limit` messages. With `before` (the id of a message of THIS conversation):
+        the `limit` messages just before it, which is how older messages load when the reader scrolls up. A `before`
+        from another conversation is `VALIDATION_ERROR`.'
+      x-status: new
+      x-demo-feature: chat
+      parameters:
+      - $ref: '#/components/parameters/UserId'
+      - name: before
+        in: query
+        required: false
+        description: A message id of this conversation
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        required: false
+        description: How many messages
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 30
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MessagePage'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          description: 'Codes: `USER_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: USER_NOT_FOUND
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+      - chat
+      operationId: sendMessage
+      summary: Send a message or an invitation
+      description: 'Text: `{ body }`, trimmed, 1 to 500 characters. Invitation: `{ matchId }`, a match that is `waiting`,
+        created by the sender and reserved for this player (`POST /matches` with their `opponentDisplayName`); the
+        message gets `kind: invite` and an empty `body`. Sends `chat:message` to both players, so the sender''s
+        other tabs see it too.'
+      x-status: new
+      x-demo-feature: chat
+      parameters:
+      - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '201':
+          description: The new message
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Message'
+        '400':
+          description: 'Codes: `VALIDATION_ERROR`, `INVALID_INVITE`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: VALIDATION_ERROR
+                  message: See the error code table
+        '403':
+          description: 'Either player blocked the other. Codes: `BLOCKED`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: BLOCKED
+                  message: See the error code table
+        '404':
+          description: 'Codes: `USER_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: USER_NOT_FOUND
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /chat/{userId}/read:
+    post:
+      tags:
+      - chat
+      operationId: markConversationRead
+      summary: Mark a conversation as read
+      description: Marks every message that player sent so far as read and answers the time. The app calls it when
+        a new message from the peer is on screen in a visible tab. Sends `chat:read` to that player, whose app then
+        shows "Seen". `unread` counts the peer's messages sent after the viewer's last read time.
+      x-status: new
+      x-demo-feature: chat
+      parameters:
+      - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ReadResult'
+        '404':
+          description: 'Codes: `USER_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: USER_NOT_FOUND
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /chat/{userId}/typing:
+    post:
+      tags:
+      - chat
+      operationId: sendTyping
+      summary: '"Is typing" signal'
+      description: 'Stores nothing: it only sends `chat:typing` to that player. The app calls it at most once every
+        3 seconds while the viewer types.'
+      x-status: new
+      x-demo-feature: chat
+      parameters:
+      - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Signal sent
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    nullable: true
+                    description: Always null
+                    example: null
+        '404':
+          description: 'Codes: `USER_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: USER_NOT_FOUND
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /blocks:
+    get:
+      tags:
+      - chat
+      operationId: listBlocks
+      summary: The players I blocked
+      x-status: new
+      x-demo-feature: chat
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /blocks/{userId}:
+    put:
+      tags:
+      - chat
+      operationId: blockPlayer
+      summary: Block a player
+      description: Also ends any friendship or friend request between the two and sends `friends:update` to both.
+        While either player blocks the other, messages, friend requests and match invitations between them answer
+        `BLOCKED`; earlier messages stay. Idempotent.
+      x-status: new
+      x-demo-feature: chat
+      parameters:
+      - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Blocked
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    nullable: true
+                    description: Always null
+                    example: null
+        '404':
+          description: 'Codes: `USER_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: USER_NOT_FOUND
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+      - chat
+      operationId: unblockPlayer
+      summary: Unblock a player
+      description: Idempotent.
+      x-status: new
+      x-demo-feature: chat
+      parameters:
+      - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Unblocked
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    nullable: true
+                    description: Always null
+                    example: null
+        '404':
+          description: 'Codes: `USER_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: USER_NOT_FOUND
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /tournaments:
+    get:
+      tags:
+      - tournaments
+      operationId: listTournaments
+      summary: List tournaments
+      description: Newest first. (The same-screen tournament runs in the browser and needs no route.)
+      x-status: implemented
+      parameters:
+      - name: status
+        in: query
+        required: false
+        description: Only tournaments in this state
+        schema:
+          type: string
+          enum:
+          - registering
+          - running
+          - finished
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TournamentSummaryPage'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+      - tournaments
+      operationId: createTournament
+      summary: Create a tournament
+      description: A single-elimination bracket with 4 or 8 places. The creator is registered at once.
+      x-status: implemented
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTournamentRequest'
+      responses:
+        '201':
+          description: The new tournament
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tournament'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /tournaments/{id}:
+    get:
+      tags:
+      - tournaments
+      operationId: getTournament
+      summary: One tournament
+      x-status: implemented
+      parameters:
+      - $ref: '#/components/parameters/TournamentId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tournament'
+        '404':
+          description: 'Codes: `TOURNAMENT_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: TOURNAMENT_NOT_FOUND
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+      - tournaments
+      operationId: cancelTournament
+      summary: Cancel a tournament
+      description: Creator only, while registration is open.
+      x-status: implemented
+      parameters:
+      - $ref: '#/components/parameters/TournamentId'
+      responses:
+        '200':
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    nullable: true
+                    description: Always null
+                    example: null
+        '403':
+          description: 'Codes: `NOT_CREATOR`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: NOT_CREATOR
+                  message: See the error code table
+        '404':
+          description: 'Codes: `TOURNAMENT_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: TOURNAMENT_NOT_FOUND
+                  message: See the error code table
+        '409':
+          description: 'Codes: `TOURNAMENT_NOT_OPEN`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: TOURNAMENT_NOT_OPEN
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /tournaments/{id}/join:
+    post:
+      tags:
+      - tournaments
+      operationId: joinTournament
+      summary: Register
+      description: While `registering`. Taking the last place starts the tournament at once.
+      x-status: implemented
+      parameters:
+      - $ref: '#/components/parameters/TournamentId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tournament'
+        '404':
+          description: 'Codes: `TOURNAMENT_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: TOURNAMENT_NOT_FOUND
+                  message: See the error code table
+        '409':
+          description: 'Codes: `ALREADY_JOINED`, `TOURNAMENT_FULL`, `TOURNAMENT_NOT_OPEN`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: ALREADY_JOINED
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /tournaments/{id}/leave:
+    post:
+      tags:
+      - tournaments
+      operationId: leaveTournament
+      summary: Leave a tournament
+      description: 'While `registering`. The creator cannot leave: they cancel instead.'
+      x-status: implemented
+      parameters:
+      - $ref: '#/components/parameters/TournamentId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tournament'
+        '404':
+          description: 'Codes: `TOURNAMENT_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: TOURNAMENT_NOT_FOUND
+                  message: See the error code table
+        '409':
+          description: 'Codes: `NOT_JOINED`, `CREATOR_CANNOT_LEAVE`, `TOURNAMENT_NOT_OPEN`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: NOT_JOINED
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /tournaments/{id}/start:
+    post:
+      tags:
+      - tournaments
+      operationId: startTournament
+      summary: Start before it is full
+      description: 'NOT BUILT YET (the rest of the tournaments feature is: list, create, read, cancel, join, leave).
+        Creator only, with at least 3 players. At the start the players are shuffled into a bracket of the next
+        power of two (4 for 3 or 4 players, 8 for 5 to 8). The empty places are byes, one per first-round pairing,
+        and a player with a bye goes straight to round 2. As soon as both players of a pairing are known the server
+        creates their match: both seated, `in_progress` at once, seats at random, the tournament''s settings; it
+        sets the pairing''s `matchId` and adds a `system` chat message (`event: tournament_match`). The winner of
+        pairing `i` in round `r` moves to pairing `floor(i/2)` of round `r+1`, in place `i % 2`. A draw is replayed
+        with a new match. When the final has a winner the tournament is `finished`. Every change sends `tournament:update`.
+        Open decision: what happens to a match nobody plays (for example a player who does not move for some minutes
+        loses).'
+      x-status: new
+      x-demo-feature: tournaments
+      parameters:
+      - $ref: '#/components/parameters/TournamentId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tournament'
+        '403':
+          description: 'Codes: `NOT_CREATOR`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: NOT_CREATOR
+                  message: See the error code table
+        '404':
+          description: 'Codes: `TOURNAMENT_NOT_FOUND`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: TOURNAMENT_NOT_FOUND
+                  message: See the error code table
+        '409':
+          description: 'Codes: `NOT_ENOUGH_PLAYERS`, `TOURNAMENT_NOT_OPEN`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: NOT_ENOUGH_PLAYERS
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: session
+      description: 'httpOnly cookie set by signup, login and 2FA verify. The browser sends it by itself: use `credentials:
+        "include"`.'
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      description: Page size
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    Offset:
+      name: offset
+      in: query
+      description: How many items to skip
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    MatchId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TournamentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: The OTHER player
+      schema:
+        type: string
+        format: uuid
+    DisplayName:
+      name: displayName
+      in: path
+      required: true
+      description: 'Matched exactly, as stored (case-sensitive). Note: nothing stops a player from choosing the
+        name `me`; the routes under `/users/me` are fixed paths and do not clash.'
+      schema:
+        type: string
+  responses:
+    Unauthorized:
+      description: 'No valid session: the app goes back to the login page. Code `UNAUTHORIZED`.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: UNAUTHORIZED
+              message: 'No valid session: the app goes back to the login page. Code `UNAUTHORIZED`.'
+    ValidationError:
+      description: A body or query breaks a rule. Code `VALIDATION_ERROR`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: VALIDATION_ERROR
+              message: A body or query breaks a rule. Code `VALIDATION_ERROR`.
+    RateLimited:
+      description: Too many requests. Code `RATE_LIMITED`; `Retry-After` says when.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: RATE_LIMITED
+              message: Too many requests. Code `RATE_LIMITED`; `Retry-After` says when.
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              $ref: '#/components/schemas/ErrorCode'
+            message:
+              type: string
+              description: English explanation, a fallback for codes the client does not translate
+          required:
+          - code
+          - message
+      required:
+      - error
+    ErrorCode:
+      type: string
+      enum:
+      - VALIDATION_ERROR
+      - UNAUTHORIZED
+      - FORBIDDEN
+      - NOT_FOUND
+      - RATE_LIMITED
+      - INTERNAL_ERROR
+      - INVALID_CREDENTIALS
+      - EMAIL_TAKEN
+      - DISPLAY_NAME_TAKEN
+      - INVALID_2FA_CODE
+      - TWO_FACTOR_ALREADY_ENABLED
+      - TWO_FACTOR_NOT_ENABLED
+      - TWO_FACTOR_NOT_PENDING
+      - USER_NOT_FOUND
+      - CANNOT_INVITE_SELF
+      - INVALID_SETTINGS
+      - TOO_MANY_WAITING_MATCHES
+      - MATCH_NOT_FOUND
+      - MATCH_NOT_JOINABLE
+      - ALREADY_IN_MATCH
+      - NOT_INVITED
+      - MATCH_NOT_ACTIVE
+      - NOT_YOUR_TURN
+      - COLUMN_FULL
+      - INVALID_COLUMN
+      - BLOCKED
+      - CANNOT_FRIEND_SELF
+      - INVALID_INVITE
+      - AVATAR_INVALID_TYPE
+      - AVATAR_TOO_LARGE
+      - TOURNAMENT_NOT_FOUND
+      - TOURNAMENT_NOT_OPEN
+      - TOURNAMENT_FULL
+      - ALREADY_JOINED
+      - NOT_JOINED
+      - CREATOR_CANNOT_LEAVE
+      - NOT_CREATOR
+      - NOT_ENOUGH_PLAYERS
+      description: Stable identifier of a failure. The frontend translates it (English, French, Arabic). Every code
+        a route can answer is listed on the route.
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+          description: 3 to 20 letters of any language, digits, `_` or `-`; unique, case-sensitive
+        avatarUrl:
+          type: string
+          description: 'Path under /api, for example `/api/avatars/<file>`. null: the app draws a default avatar'
+          nullable: true
+        locale:
+          type: string
+          enum:
+          - en
+          - fr
+          - ar
+        twoFactorEnabled:
+          type: boolean
+          description: NEW, optional. Lets the account page show only the button that applies
+      required:
+      - id
+      - email
+      - displayName
+      - avatarUrl
+      - locale
+    SignupRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          description: Trimmed and lowercased by the server
+        displayName:
+          type: string
+          minLength: 3
+          maxLength: 20
+          description: Letters of any language, digits, `_` and `-`
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          format: password
+      required:
+      - email
+      - displayName
+      - password
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+          format: password
+      required:
+      - email
+      - password
+    TwoFactorCodeRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          pattern: ^\d{6}$
+          description: 6 digits. Spaces are removed before the check
+      required:
+      - code
+    SessionResult:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+      - user
+    LoginResult:
+      oneOf:
+      - type: object
+        properties:
+          user:
+            $ref: '#/components/schemas/User'
+        required:
+        - user
+      - type: object
+        properties:
+          user:
+            type: object
+            nullable: true
+            example: null
+          twoFactorRequired:
+            type: boolean
+            enum:
+            - true
+        required:
+        - user
+        - twoFactorRequired
+        description: The password was right but a 2FA code is needed. The user is NOT logged in yet.
+    TwoFactorSetup:
+      type: object
+      properties:
+        qr:
+          type: string
+          description: QR code image as a data URL, for an <img>
+        secret:
+          type: string
+          description: The same secret as text, for manual entry in an authenticator app
+      required:
+      - qr
+      - secret
+    MatchSettings:
+      type: object
+      properties:
+        cols:
+          type: integer
+          minimum: 5
+          maximum: 10
+        rows:
+          type: integer
+          minimum: 5
+          maximum: 9
+        winLength:
+          type: integer
+          minimum: 3
+          maximum: 5
+          description: Never more than the smaller board side
+        theme:
+          type: string
+          enum:
+          - classic
+          - ocean
+          - sunset
+          - midnight
+      required:
+      - cols
+      - rows
+      - winLength
+      - theme
+    MatchSettingsInput:
+      type: object
+      properties:
+        cols:
+          type: integer
+          minimum: 5
+          maximum: 10
+        rows:
+          type: integer
+          minimum: 5
+          maximum: 9
+        winLength:
+          type: integer
+          minimum: 3
+          maximum: 5
+        theme:
+          type: string
+          enum:
+          - classic
+          - ocean
+          - sunset
+          - midnight
+      description: Every field is optional; missing ones use the classic 7 x 6, four in a row, classic theme.
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        online:
+          type: boolean
+          description: Has at least one open socket (or, before sockets exist, a request in the last minute)
+      required:
+      - id
+      - displayName
+      - avatarUrl
+      - online
+    PlayerRef:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+      required:
+      - id
+      - displayName
+    Friendship:
+      type: string
+      enum:
+      - self
+      - none
+      - friends
+      - request_sent
+      - request_received
+      description: How the viewer relates to another player
+    ProfileStats:
+      type: object
+      properties:
+        played:
+          type: integer
+        wins:
+          type: integer
+        losses:
+          type: integer
+        draws:
+          type: integer
+      required:
+      - played
+      - wins
+      - losses
+      - draws
+      description: Finished matches only (abandoned ones do not count). played = wins + losses + draws.
+    PlayerListItem:
+      allOf:
+      - $ref: '#/components/schemas/UserSummary'
+      - type: object
+        properties:
+          createdAt:
+            type: string
+            format: date-time
+            description: ISO 8601, UTC
+          stats:
+            $ref: '#/components/schemas/ProfileStats'
+          friendship:
+            $ref: '#/components/schemas/Friendship'
+        required:
+        - createdAt
+        - stats
+        - friendship
+    Profile:
+      allOf:
+      - $ref: '#/components/schemas/UserSummary'
+      - type: object
+        properties:
+          createdAt:
+            type: string
+            format: date-time
+            description: ISO 8601, UTC
+          lastSeenAt:
+            type: string
+            format: date-time
+            description: When they were last online; null while online
+            nullable: true
+          stats:
+            $ref: '#/components/schemas/ProfileStats'
+          friendship:
+            $ref: '#/components/schemas/Friendship'
+          blocked:
+            type: boolean
+            description: The viewer blocked this player
+        required:
+        - createdAt
+        - lastSeenAt
+        - stats
+        - friendship
+        - blocked
+    ProfileMatch:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        opponent:
+          $ref: '#/components/schemas/PlayerRef'
+        result:
+          type: string
+          enum:
+          - win
+          - loss
+          - draw
+        settings:
+          $ref: '#/components/schemas/MatchSettings'
+        endedAt:
+          type: string
+          format: date-time
+          description: ISO 8601, UTC
+        moveCount:
+          type: integer
+      required:
+      - id
+      - opponent
+      - result
+      - settings
+      - endedAt
+      - moveCount
+      description: A finished match, seen from the profile owner's side
+    UpdateProfileRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+          minLength: 3
+          maxLength: 20
+          description: Same rules as signup
+      required:
+      - displayName
+    Position:
+      type: object
+      properties:
+        col:
+          type: integer
+        row:
+          type: integer
+      required:
+      - col
+      - row
+    MatchPlayer:
+      type: object
+      properties:
+        seat:
+          type: integer
+          enum:
+          - 1
+          - 2
+          description: Seat 1 plays first
+        userId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        result:
+          type: string
+          enum:
+          - win
+          - loss
+          - draw
+          description: null until the match is over
+          nullable: true
+      required:
+      - seat
+      - userId
+      - displayName
+      - result
+    MatchGame:
+      type: object
+      properties:
+        board:
+          type: array
+          items:
+            type: array
+            items:
+              type: integer
+              enum:
+              - 0
+              - 1
+              - 2
+          description: '`board[col][row]`: first index the COLUMN, `row 0` is the BOTTOM. 0 empty, 1 and 2 the seats'
+        current:
+          type: integer
+          enum:
+          - 1
+          - 2
+          description: Whose turn it is; null unless in progress
+          nullable: true
+        lastMove:
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/Position'
+        winningLine:
+          type: array
+          items:
+            $ref: '#/components/schemas/Position'
+          description: The connected discs to highlight
+          nullable: true
+        moveCount:
+          type: integer
+        moves:
+          type: array
+          items:
+            type: integer
+          description: The columns played, in order
+      required:
+      - board
+      - current
+      - lastMove
+      - winningLine
+      - moveCount
+      - moves
+    Match:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - waiting
+          - in_progress
+          - finished
+          - abandoned
+        endReason:
+          type: string
+          enum:
+          - win
+          - draw
+          - resign
+          - disconnect
+          nullable: true
+        settings:
+          $ref: '#/components/schemas/MatchSettings'
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO 8601, UTC
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        endedAt:
+          type: string
+          format: date-time
+          nullable: true
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchPlayer'
+          description: Ordered by seat
+        yourSeat:
+          type: integer
+          enum:
+          - 1
+          - 2
+          description: null when the viewer is not a player (a spectator)
+          nullable: true
+        winnerSeat:
+          type: integer
+          enum:
+          - 1
+          - 2
+          description: Read from the players' results; also covers a resignation
+          nullable: true
+        game:
+          $ref: '#/components/schemas/MatchGame'
+      required:
+      - id
+      - status
+      - endReason
+      - settings
+      - createdAt
+      - startedAt
+      - endedAt
+      - players
+      - yourSeat
+      - winnerSeat
+      - game
+    MatchSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - waiting
+          - in_progress
+          - finished
+          - abandoned
+        endReason:
+          type: string
+          enum:
+          - win
+          - draw
+          - resign
+          - disconnect
+          nullable: true
+        settings:
+          $ref: '#/components/schemas/MatchSettings'
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO 8601, UTC
+        endedAt:
+          type: string
+          format: date-time
+          nullable: true
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchPlayer'
+        yourSeat:
+          type: integer
+          enum:
+          - 1
+          - 2
+          nullable: true
+        winnerSeat:
+          type: integer
+          enum:
+          - 1
+          - 2
+          nullable: true
+        moveCount:
+          type: integer
+      required:
+      - id
+      - status
+      - endReason
+      - settings
+      - createdAt
+      - endedAt
+      - players
+      - yourSeat
+      - winnerSeat
+      - moveCount
+      description: 'A row of a match list: a Match without `game`, with its number of moves'
+    CreateMatchRequest:
+      type: object
+      properties:
+        settings:
+          $ref: '#/components/schemas/MatchSettingsInput'
+        opponentDisplayName:
+          type: string
+          minLength: 3
+          maxLength: 20
+          description: Reserve the match for this player. Omit for a match anyone with the link can join
+    MakeMoveRequest:
+      type: object
+      properties:
+        col:
+          type: integer
+          minimum: 0
+          maximum: 11
+          description: The column, from 0 on the left (the engine checks it against the real board)
+      required:
+      - col
+    MatchSummaryPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchSummary'
+        total:
+          type: integer
+          description: Every matching item, for the page count
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+      - items
+      - total
+      - limit
+      - offset
+    PlayerListItemPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerListItem'
+        total:
+          type: integer
+          description: Every matching item, for the page count
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+      - items
+      - total
+      - limit
+      - offset
+    ProfileMatchPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileMatch'
+        total:
+          type: integer
+          description: Every matching item, for the page count
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+      - items
+      - total
+      - limit
+      - offset
+    TournamentSummaryPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentSummary'
+        total:
+          type: integer
+          description: Every matching item, for the page count
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+      - items
+      - total
+      - limit
+      - offset
+    Friend:
+      allOf:
+      - $ref: '#/components/schemas/UserSummary'
+      - type: object
+        properties:
+          since:
+            type: string
+            format: date-time
+            description: ISO 8601, UTC
+        required:
+        - since
+    FriendsOverview:
+      type: object
+      properties:
+        friends:
+          type: array
+          items:
+            $ref: '#/components/schemas/Friend'
+          description: Online first, then by name
+        incoming:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSummary'
+          description: Requests other players sent to the viewer
+        outgoing:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSummary'
+          description: Requests the viewer sent, not answered yet
+      required:
+      - friends
+      - incoming
+      - outgoing
+    FriendshipResult:
+      type: object
+      properties:
+        friendship:
+          $ref: '#/components/schemas/Friendship'
+      required:
+      - friendship
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        senderId:
+          type: string
+          format: uuid
+          nullable: true
+        kind:
+          type: string
+          enum:
+          - text
+          - invite
+          - system
+        body:
+          type: string
+          maxLength: 500
+          description: The text; empty for invites and system messages
+        matchId:
+          type: string
+          format: uuid
+          nullable: true
+        tournamentId:
+          type: string
+          format: uuid
+          nullable: true
+        event:
+          type: string
+          enum:
+          - tournament_match
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO 8601, UTC
+      required:
+      - id
+      - senderId
+      - kind
+      - body
+      - matchId
+      - tournamentId
+      - event
+      - createdAt
+      description: '`text`: written by a player (1 to 500 characters). `invite`: an invitation to a match the sender
+        created for the peer. `system`: written by the server (`event: tournament_match` = "your tournament match
+        is ready"); `senderId` is null.'
+    Conversation:
+      type: object
+      properties:
+        peer:
+          $ref: '#/components/schemas/UserSummary'
+        lastMessage:
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/Message'
+        unread:
+          type: integer
+          description: Messages from the peer the viewer has not read
+        peerReadAt:
+          type: string
+          format: date-time
+          description: The peer read the viewer's messages up to this time
+          nullable: true
+        blocked:
+          type: boolean
+          description: The viewer blocked the peer
+      required:
+      - peer
+      - lastMessage
+      - unread
+      - peerReadAt
+      - blocked
+    MessagePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+          description: Oldest first
+        hasMore:
+          type: boolean
+          description: 'Older messages exist: ask again with `before` = the id of the oldest one'
+        peerReadAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - items
+      - hasMore
+      - peerReadAt
+    SendMessageRequest:
+      type: object
+      description: Send `body` for a text message, OR `matchId` for an invitation. Exactly one of them.
+      minProperties: 1
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Trimmed, 1 to 500 characters
+        matchId:
+          type: string
+          format: uuid
+          description: A match that is `waiting`, was created by the sender and is reserved for this player
+    ReadResult:
+      type: object
+      properties:
+        readAt:
+          type: string
+          format: date-time
+          description: ISO 8601, UTC
+      required:
+      - readAt
+    TournamentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - registering
+          - running
+          - finished
+        size:
+          type: integer
+          enum:
+          - 4
+          - 8
+          description: Places
+        playerCount:
+          type: integer
+        settings:
+          $ref: '#/components/schemas/MatchSettings'
+        createdBy:
+          $ref: '#/components/schemas/PlayerRef'
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO 8601, UTC
+        winner:
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/PlayerRef'
+        joined:
+          type: boolean
+          description: The viewer is registered
+      required:
+      - id
+      - name
+      - status
+      - size
+      - playerCount
+      - settings
+      - createdBy
+      - createdAt
+      - winner
+      - joined
+    Pairing:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        players:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            nullable: true
+            allOf:
+            - $ref: '#/components/schemas/UserSummary'
+          description: 'Exactly two places. null: waiting for the winner of an earlier pairing, or empty (bye)'
+        matchId:
+          type: string
+          format: uuid
+          nullable: true
+        winnerId:
+          type: string
+          format: uuid
+          nullable: true
+        bye:
+          type: boolean
+          description: One player had no opponent and went through without playing
+      required:
+      - id
+      - players
+      - matchId
+      - winnerId
+      - bye
+    Round:
+      type: object
+      properties:
+        pairings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pairing'
+      required:
+      - pairings
+    Tournament:
+      allOf:
+      - $ref: '#/components/schemas/TournamentSummary'
+      - type: object
+        properties:
+          players:
+            type: array
+            items:
+              $ref: '#/components/schemas/UserSummary'
+            description: In order of registration
+          rounds:
+            type: array
+            items:
+              $ref: '#/components/schemas/Round'
+            description: Empty until the start. `rounds[0]` is the first round
+          startedAt:
+            type: string
+            format: date-time
+            nullable: true
+          endedAt:
+            type: string
+            format: date-time
+            nullable: true
+        required:
+        - players
+        - rounds
+        - startedAt
+        - endedAt
+    CreateTournamentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 30
+          description: Trimmed. Letters, digits, spaces and `- _ ' .`, starting with a letter or a digit
+        size:
+          type: integer
+          enum:
+          - 4
+          - 8
+        settings:
+          $ref: '#/components/schemas/MatchSettingsInput'
+      required:
+      - name
+      - size
+    RtMatchWatch:
+      type: object
+      properties:
+        matchId:
+          type: string
+          format: uuid
+      required:
+      - matchId
+    RtChatMessage:
+      type: object
+      properties:
+        peerId:
+          type: string
+          format: uuid
+          description: The OTHER player, as seen by the receiver
+        message:
+          $ref: '#/components/schemas/Message'
+      required:
+      - peerId
+      - message
+    RtChatTyping:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: The one who is typing
+      required:
+      - userId
+    RtChatRead:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: The one who read
+        readAt:
+          type: string
+          format: date-time
+          description: ISO 8601, UTC
+      required:
+      - userId
+      - readAt
+    RtPresence:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        online:
+          type: boolean
+      required:
+      - userId
+      - online
+    RtEmpty:
+      type: object
+      description: No fields
+      properties: {}
+    RtTournamentUpdate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+      required:
+      - id
+x-realtime:
+  description: 'Live updates over Socket.IO. They are HINTS: the app also polls, so a missed event only delays an
+    update. The frontend uses them when built with `VITE_REALTIME=socket`; polling then slows to every 30 s.'
+  connection:
+    library: Socket.IO v4
+    url: 'Same origin as the app, path `/socket.io`, WebSocket transport only: `io({ withCredentials: true, transports:
+      ["websocket"] })`'
+    authentication: The browser sends the `session` cookie with the handshake. Check it there and refuse the connection
+      without a valid (non-pending) session.
+    rooms: Put every socket in the room `user:<id>` so an event reaches every tab of that user. `match:watch` adds
+      it to the room of that match.
+    reconnection: 'After a reconnection the server has forgotten the watched matches: the app sends `match:watch`
+      again.'
+  clientToServer:
+    match:watch:
+      payload:
+        $ref: '#/components/schemas/RtMatchWatch'
+      does: Adds the socket to the room of that match (players and spectators alike).
+    match:unwatch:
+      payload:
+        $ref: '#/components/schemas/RtMatchWatch'
+      does: Removes it.
+  serverToClient:
+    match:update:
+      payload:
+        $ref: '#/components/schemas/Match'
+      sentTo: The room of the match
+      when: 'Every change: join, move, resignation, end. One payload for the whole room: `yourSeat` in it is ignored,
+        the app keeps the seat from its own `GET /matches/{id}`.'
+    chat:message:
+      payload:
+        $ref: '#/components/schemas/RtChatMessage'
+      sentTo: Both players
+      when: A message is sent (so the sender's other tabs see it too).
+    chat:typing:
+      payload:
+        $ref: '#/components/schemas/RtChatTyping'
+      sentTo: The other player
+      when: After `POST /chat/{userId}/typing`.
+    chat:read:
+      payload:
+        $ref: '#/components/schemas/RtChatRead'
+      sentTo: The other player
+      when: After `POST /chat/{userId}/read`.
+    presence:
+      payload:
+        $ref: '#/components/schemas/RtPresence'
+      sentTo: Everyone, or at least friends and chat peers
+      when: A user's first socket connects, or their last one disconnects. Set `lastSeenAt` when the last one goes.
+    friends:update:
+      payload:
+        $ref: '#/components/schemas/RtEmpty'
+      sentTo: Both players
+      when: A friend request is sent, accepted, declined or cancelled, a friend is removed, or a block ends a friendship.
+    tournament:update:
+      payload:
+        $ref: '#/components/schemas/RtTournamentUpdate'
+      sentTo: Everyone
+      when: Registration, start, a result, a new match, the end, a cancellation.
