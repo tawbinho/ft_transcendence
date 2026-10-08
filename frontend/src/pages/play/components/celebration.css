@@ -1,0 +1,55 @@
+.celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti {
+  position: absolute;
+  top: -5vh;
+  left: var(--x);
+  width: 0.55rem;
+  height: 0.95rem;
+  border-radius: 2px;
+  animation: confetti-fall var(--time) var(--delay) cubic-bezier(0.3, 0.1, 0.6, 1) both;
+}
+
+/* The two disc colors of the board, then three colors of the app. */
+.confetti-0 {
+  background: var(--disc-1);
+}
+.confetti-1 {
+  background: var(--disc-2);
+}
+.confetti-2 {
+  background: var(--c-primary);
+}
+.confetti-3 {
+  background: var(--c-success);
+}
+.confetti-4 {
+  background: var(--c-warning);
+}
+
+@keyframes confetti-fall {
+  from {
+    transform: translate(0, 0) rotate(0);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--drift), 110vh) rotate(var(--turn));
+    opacity: 0;
+  }
+}
+
+/* The component also renders nothing in this case; this is the safety net. */
+@media (prefers-reduced-motion: reduce) {
+  .celebration {
+    display: none;
+  }
+}
