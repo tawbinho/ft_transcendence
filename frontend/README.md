@@ -103,10 +103,10 @@ The app is then served on https://localhost:8443 (`HTTPS_PORT` in the root `.env
 
 ```text
 src/
-  app/          The shell: router, data cache, login guards, live updates
+  app/          The shell: route table, data cache, login guards, live updates
   components/   Shared components; ui/ is the design system (buttons, fields, dialogs...)
-  features/     One folder per feature: api.ts (calls), types.ts (shapes), hooks.ts (data), components/
-  pages/        One component per URL, built from features and components
+  features/     One folder per domain: api.ts (calls), types.ts (shapes), hooks.ts (data), components/
+  pages/        One folder per area (play, tournaments, profile...); one component per URL inside it
   layout/       Header, footer, menus, demo banner
   lib/          Code without pages: the API client, live events, formatting, storage
   i18n/         Translations (en, fr, ar) and the language switch
@@ -117,6 +117,10 @@ src/
 
 A few rules keep it easy to follow:
 
+- Where a file goes: used by one area only, next to its page in `pages/<area>/`; used by several areas, in
+  `features/<domain>/`; used everywhere, in `components/`.
+- The four game screens (same screen, online match, spectator, same-screen tournament) are built from the same pieces in
+  `features/game/components/`: `GameLayout`, `PlayersBar`, `GameStatus`, `GameBoard` and `MoveAnnouncer`.
 - A page never calls `fetch`. It uses a feature's hooks, which call the feature's `api.ts`, which uses
   `lib/api/http.ts`.
 - Data from the server lives in the TanStack Query cache, under keys defined per feature (`matchKeys`, `chatKeys`...).
@@ -144,8 +148,9 @@ to `app/realtime.ts`, which updates the cache, and polling slows down to every 3
 
 ### Translations and right-to-left
 
-`src/i18n/locales/en.ts` is the reference. `fr.ts` and `ar.ts` must have exactly the same keys: a test checks it, and
-TypeScript checks every key given to `t()`. Arabic turns the whole page right-to-left (`dir="rtl"` on `<html>`), and
+`src/i18n/locales/en/` is the reference. It holds one file per area (`play.ts`, `profile.ts`...), and `fr/` and `ar/`
+have the same files with exactly the same keys: a test checks it, and TypeScript checks every key given to `t()`. A
+section of texts (such as `offline` or `chat`) lives in one file only. Arabic turns the whole page right-to-left (`dir="rtl"` on `<html>`), and
 layouts use logical properties (`ms-`, `me-`, `start`, `end`) so they mirror by themselves. Text written by players gets
 `dir="auto"`, so a message keeps its own direction whatever the page's.
 
@@ -168,4 +173,16 @@ the lines that load it in `main.tsx` and `layout/DemoBanner.tsx`.
 ## Testing
 
 `npm test` runs the unit tests with Vitest and Testing Library: the game engine and the computer opponent, brackets,
-the match model and statistics, form validation, the API client, the demo server, and the translations.
+the match model and statistics, form validation, the API client, the demo server, the translations, the shared
+components and the pages.
+
+Helpers in `src/test/` keep page tests short:
+
+- `renderWithProviders(ui, { user })` and `renderRoute('/path', { user })` render with the data cache, the router and
+  English texts; `user: null` is a visitor. They also return `events` (user-event).
+- `fakeApi({ 'GET /friends': {...} })` answers the requests of the test (an `ApiError` value makes a request fail).
+  A request without an answer fails with a message that names it.
+- `expectNoA11yViolations(container)` runs axe-core on what was rendered.
+- A test fails when the page prints a console error or warning; `allowConsole()` (from `test/console`) allows it.
+- `app/routes.test.tsx` opens every page for a visitor and a member. The answers its fake API gives come from
+  `test/fixtures/api/<area>.ts`.

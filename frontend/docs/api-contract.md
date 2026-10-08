@@ -552,7 +552,7 @@ to leave the read-only `GET` routes out of the global limit and keep the strict 
 
 ## Error codes
 
-Each code below has a translation in English, French and Arabic (`errors` in `src/i18n/locales/*.ts`). A code without
+Each code below has a translation in English, French and Arabic (`errors` in `src/i18n/locales/*/common.ts`). A code without
 one shows the server's English `message`.
 
 | Code                         | Status   | Where                                                           |
