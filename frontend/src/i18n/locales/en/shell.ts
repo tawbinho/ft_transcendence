@@ -18,6 +18,14 @@ export const shellMessages = {
     profile: 'My profile',
     accountMenu: 'Account menu',
     newCount: 'new: {{count}}',
+    history: 'History',
+    settings: 'Settings',
+    groupPlay: 'Play',
+    groupCommunity: 'Community',
+    groupYou: 'You',
+    themeToLight: 'Switch to the light theme',
+    themeToDark: 'Switch to the dark theme',
+    sessionError: 'Your account could not be loaded.',
   },
   preferences: {
     language: 'Language',
@@ -27,6 +35,8 @@ export const shellMessages = {
     dark: 'Dark',
   },
   demo: {
+    short: 'Demo data in this browser',
+    details: 'Details',
     title: 'Demo data.',
     body: 'These parts run on made-up players kept in this browser until the server supports them: {{features}}.',
     features: {
@@ -44,6 +54,8 @@ export const shellMessages = {
     privacy: 'Privacy policy',
     terms: 'Terms of service',
     project: 'A 42 ft_transcendence project.',
+    design: 'Design system',
+    nav: 'Site information',
   },
 };
 

@@ -20,6 +20,14 @@ export const shellMessages: ShellMessages = {
     profile: 'Mon profil',
     accountMenu: 'Menu du compte',
     newCount: 'nouveaux : {{count}}',
+    history: 'Historique',
+    settings: 'Paramètres',
+    groupPlay: 'Jouer',
+    groupCommunity: 'Communauté',
+    groupYou: 'Vous',
+    themeToLight: 'Passer au thème clair',
+    themeToDark: 'Passer au thème sombre',
+    sessionError: 'Votre compte n’a pas pu être chargé.',
   },
   preferences: {
     language: 'Langue',
@@ -29,6 +37,8 @@ export const shellMessages: ShellMessages = {
     dark: 'Sombre',
   },
   demo: {
+    short: 'Données de démonstration dans ce navigateur',
+    details: 'Détails',
     title: 'Données de démonstration.',
     body: 'Ces parties utilisent des joueurs fictifs gardés dans ce navigateur, en attendant que le serveur les prenne en charge : {{features}}.',
     features: {
@@ -47,5 +57,7 @@ export const shellMessages: ShellMessages = {
     privacy: 'Politique de confidentialité',
     terms: 'Conditions d’utilisation',
     project: 'Un projet ft_transcendence de 42.',
+    design: 'Système de design',
+    nav: 'Informations du site',
   },
 };

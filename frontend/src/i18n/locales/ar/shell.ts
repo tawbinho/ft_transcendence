@@ -20,6 +20,14 @@ export const shellMessages: ShellMessages = {
     profile: 'ملفي الشخصي',
     accountMenu: 'قائمة الحساب',
     newCount: 'جديد: {{count}}',
+    history: 'السجل',
+    settings: 'الإعدادات',
+    groupPlay: 'العب',
+    groupCommunity: 'المجتمع',
+    groupYou: 'أنت',
+    themeToLight: 'التبديل إلى المظهر الفاتح',
+    themeToDark: 'التبديل إلى المظهر الداكن',
+    sessionError: 'تعذّر تحميل حسابك.',
   },
   preferences: {
     language: 'اللغة',
@@ -29,6 +37,8 @@ export const shellMessages: ShellMessages = {
     dark: 'داكن',
   },
   demo: {
+    short: 'بيانات تجريبية في هذا المتصفح',
+    details: 'التفاصيل',
     title: 'بيانات تجريبية.',
     body: 'تعمل هذه الأجزاء بلاعبين وهميين محفوظين في هذا المتصفح، إلى أن يدعمها الخادم: {{features}}.',
     features: {
@@ -46,5 +56,7 @@ export const shellMessages: ShellMessages = {
     privacy: 'سياسة الخصوصية',
     terms: 'شروط الاستخدام',
     project: 'مشروع ft_transcendence من 42.',
+    design: 'نظام التصميم',
+    nav: 'معلومات الموقع',
   },
 };
