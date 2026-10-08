@@ -65,6 +65,15 @@ export function Board({
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    // Keys 1 to 9 drop a disc straight into that column (the board has 10 columns at most; the 10th has no key).
+    if (/^[1-9]$/.test(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      const col = Number(event.key) - 1;
+      if (col >= cols) return;
+      event.preventDefault();
+      moveFocus(col);
+      if (canPlay(col)) onPlay?.(col);
+      return;
+    }
     const moves: Record<string, number> = {
       ArrowLeft: activeCol - 1,
       ArrowRight: activeCol + 1,
