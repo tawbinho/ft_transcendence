@@ -9,10 +9,12 @@ import { validateDisplayName } from '@/features/auth/validation';
 import { Board } from '@/features/game/components/Board';
 import { BoardSettingsFields } from '@/features/game/components/BoardSettingsFields';
 import { createGame } from '@/features/game/engine';
-import { DEFAULT_BOARD_SETTINGS, type BoardSettings } from '@/features/game/settings';
+import { loadLastSettings, saveLastSettings } from '@/features/game/lastSettings';
+import type { BoardSettings } from '@/features/game/settings';
 import { useCreateMatch } from '@/features/matches/hooks';
 import { isApiError } from '@/lib/api/errors';
 import { useErrorMessage } from '@/lib/errorMessage';
+import { FriendPicks } from './online/FriendPicks';
 
 const OPPONENT_ERRORS = ['USER_NOT_FOUND', 'CANNOT_INVITE_SELF'];
 
@@ -26,7 +28,7 @@ export function NewMatchPage() {
   // "Challenge" buttons on profiles and in the friend list fill in the opponent.
   const [params] = useSearchParams();
   const [opponent, setOpponent] = useState(() => params.get('opponent') ?? '');
-  const [settings, setSettings] = useState<BoardSettings>(DEFAULT_BOARD_SETTINGS);
+  const [settings, setSettings] = useState<BoardSettings>(loadLastSettings);
   const [submitted, setSubmitted] = useState(false);
 
   const name = opponent.trim();
@@ -37,10 +39,16 @@ export function NewMatchPage() {
   const serverOpponentError = OPPONENT_ERRORS.some((code) => isApiError(create.error, code));
   const opponentError = localError ? t(localError) : serverOpponentError ? errorMessage(create.error) : null;
 
+  function pickFriend(displayName: string) {
+    setOpponent(displayName);
+    if (serverOpponentError) create.reset();
+  }
+
   function submit(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
     if (name && validateDisplayName(name)) return;
+    saveLastSettings(settings);
     create.mutate(
       { settings, ...(name ? { opponentDisplayName: name } : {}) },
       { onSuccess: (match) => navigate(paths.match(match.id)) },
@@ -86,6 +94,7 @@ export function NewMatchPage() {
               autoComplete="off"
               spellCheck={false}
             />
+            <FriendPicks selected={name} onPick={pickFriend} />
             <BoardSettingsFields value={settings} onChange={setSettings} />
             <Button type="submit" size="lg" className="self-start" loading={create.isPending}>
               {t('online.create')}
