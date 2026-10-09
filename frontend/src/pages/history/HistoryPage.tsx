@@ -1,45 +1,28 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { PageHeader } from '@/components/PageHeader';
 import { LoadError } from '@/components/LoadError';
-import { buttonClass, EmptyState, OptionGroup, PageSpinner, Pagination } from '@/components/ui';
+import { PageHeader } from '@/components/PageHeader';
+import { buttonClass, EmptyState, PageSpinner, Pagination } from '@/components/ui';
 import { MatchList } from '@/features/matches/components/MatchList';
-import { StatsPanel } from '@/features/matches/components/StatsPanel';
 import { useMatchList } from '@/features/matches/hooks';
-import type { MatchStatus } from '@/features/matches/types';
 import { cn } from '@/lib/cn';
-import { pageCount, readPage } from '@/lib/pages';
+import { pageCount } from '@/lib/pages';
 import { useUrlParams } from '@/lib/useUrlParams';
+import { HistoryFilters } from './HistoryFilters';
+import { HistoryStats } from './HistoryStats';
+import { historySearch, PAGE_SIZE, readHistoryView, toListParams, type HistoryView } from './historyQuery';
 
-const PAGE_SIZE = 10;
-const FILTERS = ['all', 'in_progress', 'waiting', 'finished', 'abandoned'] as const;
-type Filter = (typeof FILTERS)[number];
-
-const isFilter = (value: string | null): value is Filter => FILTERS.includes(value as Filter);
-
+/** The member's matches: statistics on top, then the list with a filter and pages. */
 export function HistoryPage() {
   const { t } = useTranslation();
 
   // Filter and page live in the URL, so they survive a reload and can be shared.
   const [params, setParams] = useUrlParams();
-  const statusParam = params.get('status');
-  const filter: Filter = isFilter(statusParam) ? statusParam : 'all';
-  const page = readPage(params);
+  const view = readHistoryView(params);
+  const list = useMatchList(toListParams(view));
 
-  const list = useMatchList({
-    status: filter === 'all' ? undefined : (filter as MatchStatus),
-    limit: PAGE_SIZE,
-    offset: (page - 1) * PAGE_SIZE,
-  });
-
-  const go = (next: { filter?: Filter; page?: number }) => {
-    const nextFilter = next.filter ?? filter;
-    const nextPage = next.page ?? 1;
-    const search = new URLSearchParams();
-    if (nextFilter !== 'all') search.set('status', nextFilter);
-    if (nextPage > 1) search.set('page', String(nextPage));
-    setParams(search);
-  };
+  // Changing the filter goes back to the first page.
+  const show = (next: Partial<HistoryView>) => setParams(historySearch({ filter: view.filter, page: 1, ...next }));
 
   return (
     <>
@@ -56,19 +39,14 @@ export function HistoryPage() {
         <h2 id="stats-title" className="text-xl font-bold">
           {t('history.statsTitle')}
         </h2>
-        <StatsPanel />
+        <HistoryStats />
       </section>
 
       <section aria-labelledby="matches-title" className="flex flex-col gap-4">
         <h2 id="matches-title" className="sr-only">
           {t('history.tableCaption')}
         </h2>
-        <OptionGroup
-          legend={t('history.filterLabel')}
-          value={filter}
-          onChange={(value) => go({ filter: value })}
-          options={FILTERS.map((value) => ({ value, label: t(`history.filters.${value}`) }))}
-        />
+        <HistoryFilters value={view.filter} onChange={(filter) => show({ filter })} />
 
         {list.isPending ? (
           <PageSpinner />
@@ -92,10 +70,10 @@ export function HistoryPage() {
 
         {list.data && (
           <Pagination
-            page={page}
+            page={view.page}
             pages={pageCount(list.data.total, PAGE_SIZE)}
             label={t('history.tableCaption')}
-            onChange={(next) => go({ page: next })}
+            onChange={(page) => show({ page })}
           />
         )}
       </section>

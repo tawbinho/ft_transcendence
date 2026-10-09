@@ -40,6 +40,11 @@ export const historyMessages = {
     result: 'Result',
     board: 'Board',
     date: 'Date',
+    replay: 'Replay',
+    replayMatch: 'Replay the match against {{name}}',
+    recent: 'Latest results',
+    recentHint: 'Newest first',
+    winRateBar: 'Share of matches won',
   },
 };
 

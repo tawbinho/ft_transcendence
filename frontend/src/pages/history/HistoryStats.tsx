@@ -1,20 +1,27 @@
 import { useTranslation } from 'react-i18next';
 import { LoadError } from '@/components/LoadError';
 import { StatTiles } from '@/components/StatTiles';
-import { Spinner } from '@/components/ui';
+import { Badge, ProgressBar, Skeleton, type BadgeTone } from '@/components/ui';
+import { useFinishedMatches } from '@/features/matches/hooks';
+import { computeStats } from '@/features/matches/stats';
 import { formatPercent } from '@/lib/format';
-import { useFinishedMatches } from '../hooks';
-import { computeStats } from '../stats';
+import { recentResults, type RecentResult } from './recentResults';
 
-export function StatsPanel() {
+const RECENT_COUNT = 10;
+const RESULT_TONE: Record<RecentResult, BadgeTone> = { won: 'success', lost: 'danger', draw: 'neutral' };
+
+/** The player's numbers, worked out from their finished matches. */
+export function HistoryStats() {
   const { t, i18n } = useTranslation();
   const finished = useFinishedMatches();
 
   if (finished.isPending) {
     return (
-      <div role="status" className="flex items-center gap-3 text-muted">
-        <Spinner />
-        {t('common.loading')}
+      <div role="status" className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        <span className="sr-only">{t('common.loading')}</span>
+        {Array.from({ length: 7 }, (_, i) => (
+          <Skeleton key={i} className="h-20" />
+        ))}
       </div>
     );
   }
@@ -25,6 +32,7 @@ export function StatsPanel() {
   }
 
   const stats = computeStats(finished.data.items);
+  const recent = recentResults(finished.data.items, RECENT_COUNT);
   const streak = stats.streak
     ? t(
         stats.streak.outcome === 'won'
@@ -49,6 +57,21 @@ export function StatsPanel() {
   return (
     <div className="flex flex-col gap-3">
       <StatTiles tiles={tiles} className="lg:grid-cols-7" />
+      {stats.winRate !== null && <ProgressBar value={stats.winRate * 100} label={t('history.winRateBar')} />}
+      {recent.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-muted">
+            <span className="font-semibold text-fg">{t('history.recent')}</span> · {t('history.recentHint')}
+          </p>
+          <ul className="flex flex-wrap gap-1.5">
+            {recent.map((result, i) => (
+              <li key={i}>
+                <Badge tone={RESULT_TONE[result]}>{t(`history.status.${result}`)}</Badge>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {!finished.data.complete && (
         <p className="text-sm text-muted">{t('history.statsPartial', { count: finished.data.items.length })}</p>
       )}

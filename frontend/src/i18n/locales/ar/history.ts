@@ -42,5 +42,10 @@ export const historyMessages: HistoryMessages = {
     result: 'النتيجة',
     board: 'اللوحة',
     date: 'التاريخ',
+    replay: 'إعادة',
+    replayMatch: 'إعادة المباراة ضد {{name}}',
+    recent: 'آخر النتائج',
+    recentHint: 'من الأحدث إلى الأقدم',
+    winRateBar: 'نسبة المباريات المنتصر فيها',
   },
 };

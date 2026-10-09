@@ -42,5 +42,10 @@ export const historyMessages: HistoryMessages = {
     result: 'Résultat',
     board: 'Plateau',
     date: 'Date',
+    replay: 'Rejouer',
+    replayMatch: 'Rejouer la partie contre {{name}}',
+    recent: 'Derniers résultats',
+    recentHint: 'Du plus récent au plus ancien',
+    winRateBar: 'Part de parties gagnées',
   },
 };

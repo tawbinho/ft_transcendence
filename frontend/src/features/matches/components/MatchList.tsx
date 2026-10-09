@@ -1,10 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { paths } from '@/app/paths';
-import { Badge, type BadgeTone } from '@/components/ui';
+import { PlayIcon } from '@/components/icons';
+import { Badge, buttonClass, type BadgeTone } from '@/components/ui';
+import { toBoardTheme } from '@/features/game/settings';
 import { formatDateTime } from '@/lib/format';
 import { opponentOf, outcomeOf } from '../model';
 import type { MatchSummary } from '../types';
+import { BoardShape } from './BoardShape';
 
 function StatusBadge({ match }: { match: MatchSummary }) {
   const { t } = useTranslation();
@@ -24,7 +27,10 @@ function StatusBadge({ match }: { match: MatchSummary }) {
   return <Badge tone={tone}>{label}</Badge>;
 }
 
-/** The viewer's matches, one row each, linking to the match page. */
+/** A finished match with moves to show can be replayed. */
+const canReplay = (match: MatchSummary) => match.status === 'finished' && match.moveCount > 0;
+
+/** The viewer's matches, one row each: the row opens the match page, its Replay link the replay. */
 export function MatchList({ matches }: { matches: readonly MatchSummary[] }) {
   const { t, i18n } = useTranslation();
 
@@ -33,26 +39,43 @@ export function MatchList({ matches }: { matches: readonly MatchSummary[] }) {
       {matches.map((match) => {
         const opponent = opponentOf(match)?.displayName;
         return (
-          <li key={match.id}>
-            <Link
-              to={paths.match(match.id)}
-              aria-label={opponent ? t('history.open', { name: opponent }) : t('history.noOpponent')}
-              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-4 py-3 transition hover:bg-surface-2 sm:grid-cols-[minmax(0,1fr)_8rem_10rem_6.5rem]"
-            >
-              <span className="truncate font-semibold">
+          // The row's main link covers the whole row (the ::after layer); the Replay link sits above it.
+          <li key={match.id} className="relative flex items-center gap-3 px-4 py-3 transition hover:bg-surface-2">
+            <BoardShape
+              cols={match.settings.cols}
+              rows={match.settings.rows}
+              theme={toBoardTheme(match.settings.theme)}
+              className="hidden sm:block"
+            />
+            <div className="grid min-w-0 flex-1 gap-x-4 gap-y-0.5 sm:grid-cols-[minmax(0,1fr)_8rem_10rem]">
+              <Link
+                to={paths.match(match.id)}
+                aria-label={opponent ? t('history.open', { name: opponent }) : t('history.noOpponent')}
+                className="truncate font-semibold after:absolute after:inset-0"
+              >
                 {opponent ?? <span className="text-muted">{t('history.noOpponent')}</span>}
-              </span>
-              <span className="justify-self-end sm:order-last">
-                <StatusBadge match={match} />
-              </span>
+              </Link>
               <span className="text-sm text-muted">
                 {t('game.size', { cols: match.settings.cols, rows: match.settings.rows })} ·{' '}
                 {t('game.connect', { n: match.settings.winLength })}
               </span>
-              <span className="text-end text-sm text-muted sm:text-start">
-                <time dateTime={match.createdAt}>{formatDateTime(match.createdAt, i18n.language)}</time>
-              </span>
-            </Link>
+              <time dateTime={match.createdAt} className="text-sm text-muted">
+                {formatDateTime(match.createdAt, i18n.language)}
+              </time>
+            </div>
+            <div className="flex flex-none flex-col items-end gap-2 sm:flex-row sm:items-center">
+              <StatusBadge match={match} />
+              {canReplay(match) && (
+                <Link
+                  to={paths.watch(match.id)}
+                  aria-label={t('history.replayMatch', { name: opponent ?? '?' })}
+                  className={buttonClass({ variant: 'secondary', size: 'sm', className: 'relative z-10' })}
+                >
+                  <PlayIcon />
+                  {t('history.replay')}
+                </Link>
+              )}
+            </div>
           </li>
         );
       })}
