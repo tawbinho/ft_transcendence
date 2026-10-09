@@ -4,6 +4,7 @@ import { CrownIcon } from '@/components/icons';
 import { Avatar } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import type { Slot } from '../bracket';
+import { ScrollFade } from './ScrollFade';
 import { roundName } from '../view';
 
 /** A player as the bracket shows them: a name, and their avatar for online tournaments. */
@@ -45,40 +46,37 @@ export function BracketView({
 }) {
   const { t } = useTranslation();
   return (
-    // The box can scroll, so it must be reachable with the keyboard.
-    <div
-      role="group"
-      aria-label={label}
-      tabIndex={0}
-      className="max-w-full overflow-x-auto rounded-2xl border border-border bg-surface-2/50 p-4"
-    >
-      <ol className="flex min-w-max gap-4">
-        {rounds.map((pairings, round) => (
-          <li key={round} className="flex w-56 flex-col">
-            <h3 className="mb-3 text-sm font-bold tracking-wide text-muted uppercase">
-              {t(`tournaments.${roundName(round, rounds.length)}`, { n: round + 1 })}
-            </h3>
-            <ol className="flex flex-1 flex-col justify-around gap-4">
-              {pairings.map((pairing) => (
-                <li key={pairing.key}>
-                  <PairingCard pairing={pairing} currentLabel={currentLabel} />
-                </li>
-              ))}
-            </ol>
-          </li>
-        ))}
-        {champion && (
-          <li className="flex w-44 flex-col">
-            <h3 className="mb-3 text-sm font-bold tracking-wide text-muted uppercase">
-              {t('tournaments.championTitle')}
-            </h3>
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-warning bg-surface p-3 text-center">
-              <CrownIcon className="text-4xl text-warning" />
-              <span className="max-w-full truncate font-bold">{champion}</span>
-            </div>
-          </li>
-        )}
-      </ol>
+    <div className="rounded-2xl border border-border bg-surface-2/50 p-4">
+      {/* When the rounds do not fit, the box scrolls and fades the edge that has more. */}
+      <ScrollFade label={label}>
+        <ol className="flex min-w-max gap-4">
+          {rounds.map((pairings, round) => (
+            <li key={round} className="flex w-56 flex-col">
+              <h3 className="mb-3 text-sm font-bold tracking-wide text-muted uppercase">
+                {t(`tournaments.${roundName(round, rounds.length)}`, { n: round + 1 })}
+              </h3>
+              <ol className="flex flex-1 flex-col justify-around gap-4">
+                {pairings.map((pairing) => (
+                  <li key={pairing.key}>
+                    <PairingCard pairing={pairing} currentLabel={currentLabel} />
+                  </li>
+                ))}
+              </ol>
+            </li>
+          ))}
+          {champion && (
+            <li className="flex w-44 flex-col">
+              <h3 className="mb-3 text-sm font-bold tracking-wide text-muted uppercase">
+                {t('tournaments.championTitle')}
+              </h3>
+              <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-warning bg-surface p-3 text-center">
+                <CrownIcon className="text-4xl text-warning" />
+                <span className="max-w-full truncate font-bold">{champion}</span>
+              </div>
+            </li>
+          )}
+        </ol>
+      </ScrollFade>
     </div>
   );
 }
