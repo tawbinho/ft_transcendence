@@ -1,8 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
+import { returnPath } from '@/app/guards';
 import { Alert, Button, TextField } from '@/components/ui';
+import { LoginHint } from '@/features/auth/components/LoginHint';
+import { PasswordField } from '@/features/auth/components/PasswordField';
 import { useLogin, useVerifyTwoFactor } from '@/features/auth/hooks';
+import { loginHint } from '@/features/auth/loginHint';
+import { useFocusFirstInvalid } from '@/features/auth/useFocusFirstInvalid';
 import { normalizeCode, validateCode, validateEmail } from '@/features/auth/validation';
 import { useErrorMessage } from '@/lib/errorMessage';
 import { AuthLayout } from '@/layout/AuthLayout';
@@ -21,6 +26,10 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  // How many times the form was sent with mistakes: moves the focus to the first one.
+  const [failedSubmits, setFailedSubmits] = useState(0);
+  const form = useFocusFirstInvalid(failedSubmits);
+  const hint = loginHint(returnPath(location));
 
   const emailError = submitted ? validateEmail(email) : null;
   const passwordError = submitted && !password ? 'validation.required' : null;
@@ -29,7 +38,10 @@ export function LoginPage() {
   function submitCredentials(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
-    if (validateEmail(email) || !password) return;
+    if (validateEmail(email) || !password) {
+      setFailedSubmits((count) => count + 1);
+      return;
+    }
     login.mutate(
       { email: email.trim(), password },
       {
@@ -46,7 +58,10 @@ export function LoginPage() {
   function submitCode(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
-    if (validateCode(code)) return;
+    if (validateCode(code)) {
+      setFailedSubmits((count) => count + 1);
+      return;
+    }
     verify.mutate(normalizeCode(code));
   }
 
@@ -62,7 +77,7 @@ export function LoginPage() {
   if (step === 'code') {
     return (
       <AuthLayout title={t('auth.twoFactorTitle')} subtitle={t('auth.twoFactorBody')}>
-        <form onSubmit={submitCode} noValidate className="flex flex-col gap-4">
+        <form ref={form} onSubmit={submitCode} noValidate className="flex flex-col gap-4">
           {verify.error && <Alert tone="danger">{errorMessage(verify.error)}</Alert>}
           <TextField
             label={t('auth.code')}
@@ -99,7 +114,8 @@ export function LoginPage() {
         </>
       }
     >
-      <form onSubmit={submitCredentials} noValidate className="flex flex-col gap-4">
+      <form ref={form} onSubmit={submitCredentials} noValidate className="flex flex-col gap-4">
+        {hint && <LoginHint hint={hint} />}
         {login.error && <Alert tone="danger">{errorMessage(login.error)}</Alert>}
         <TextField
           label={t('auth.email')}
@@ -111,9 +127,8 @@ export function LoginPage() {
           autoFocus
           required
         />
-        <TextField
+        <PasswordField
           label={t('auth.password')}
-          type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           error={passwordError && t(passwordError)}

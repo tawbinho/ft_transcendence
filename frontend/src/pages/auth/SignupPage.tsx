@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
 import { Alert, Button, TextField } from '@/components/ui';
+import { PasswordField } from '@/features/auth/components/PasswordField';
 import { useSignup } from '@/features/auth/hooks';
 import {
   validateDisplayName,
@@ -9,6 +10,7 @@ import {
   validateNewPassword,
   validatePasswordConfirmation,
 } from '@/features/auth/validation';
+import { useFocusFirstInvalid } from '@/features/auth/useFocusFirstInvalid';
 import { isApiError } from '@/lib/api/errors';
 import { useErrorMessage } from '@/lib/errorMessage';
 import { AuthLayout } from '@/layout/AuthLayout';
@@ -24,6 +26,9 @@ export function SignupPage() {
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  // How many times the form was sent with mistakes: moves the focus to the first one.
+  const [failedSubmits, setFailedSubmits] = useState(0);
+  const form = useFocusFirstInvalid(failedSubmits);
 
   const errors = {
     email: validateEmail(email),
@@ -44,7 +49,10 @@ export function SignupPage() {
   function submit(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
-    if (Object.values(errors).some(Boolean)) return;
+    if (Object.values(errors).some(Boolean)) {
+      setFailedSubmits((count) => count + 1);
+      return;
+    }
     signup.mutate({ email: email.trim(), displayName: displayName.trim(), password });
   }
 
@@ -61,7 +69,7 @@ export function SignupPage() {
         </>
       }
     >
-      <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+      <form ref={form} onSubmit={submit} noValidate className="flex flex-col gap-4">
         {formError && <Alert tone="danger">{formError}</Alert>}
         <TextField
           label={t('auth.email')}
@@ -89,9 +97,8 @@ export function SignupPage() {
           maxLength={20}
           required
         />
-        <TextField
+        <PasswordField
           label={t('auth.password')}
-          type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           error={shown('password')}
@@ -100,9 +107,8 @@ export function SignupPage() {
           maxLength={128}
           required
         />
-        <TextField
+        <PasswordField
           label={t('auth.confirmPassword')}
-          type="password"
           value={confirmation}
           onChange={(event) => setConfirmation(event.target.value)}
           error={shown('confirmation')}

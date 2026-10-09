@@ -21,5 +21,11 @@ export const authMessages: AuthMessages = {
     code: 'رمز المصادقة',
     verify: 'تحقّق',
     backToLogin: 'استخدم حسابًا آخر',
+    showPassword: 'إظهار',
+    hidePassword: 'إخفاء',
+    showPasswordLabel: 'إظهار كلمة المرور',
+    hidePasswordLabel: 'إخفاء كلمة المرور',
+    hintSection: 'سجّل الدخول لفتح «{{section}}».',
+    hintGeneric: 'سجّل الدخول للمتابعة.',
   },
 };

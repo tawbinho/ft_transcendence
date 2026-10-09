@@ -19,6 +19,12 @@ export const authMessages = {
     code: 'Authentication code',
     verify: 'Verify',
     backToLogin: 'Use a different account',
+    showPassword: 'Show',
+    hidePassword: 'Hide',
+    showPasswordLabel: 'Show password',
+    hidePasswordLabel: 'Hide password',
+    hintSection: 'Log in to open {{section}}.',
+    hintGeneric: 'Log in to continue.',
   },
 };
 

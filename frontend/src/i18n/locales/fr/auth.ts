@@ -21,5 +21,11 @@ export const authMessages: AuthMessages = {
     code: 'Code d’authentification',
     verify: 'Vérifier',
     backToLogin: 'Utiliser un autre compte',
+    showPassword: 'Afficher',
+    hidePassword: 'Masquer',
+    showPasswordLabel: 'Afficher le mot de passe',
+    hidePasswordLabel: 'Masquer le mot de passe',
+    hintSection: 'Connectez-vous pour ouvrir « {{section}} ».',
+    hintGeneric: 'Connectez-vous pour continuer.',
   },
 };
