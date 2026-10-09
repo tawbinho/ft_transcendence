@@ -55,7 +55,8 @@ export function Board({
 
   // Only on mount: later renders must not pull focus back from wherever the player went.
   useEffect(() => {
-    if (autoFocus) buttons.current[activeCol]?.focus();
+    // preventScroll: the page must not jump just because a new game started.
+    if (autoFocus) buttons.current[activeCol]?.focus({ preventScroll: true });
   }, []);
 
   function moveFocus(col: number) {

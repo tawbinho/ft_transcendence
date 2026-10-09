@@ -144,6 +144,5 @@ export const playMessages: PlayMessages = {
     friendsOnline: 'Amis en ligne maintenant',
     friendsNone: 'Aucun de vos amis n’est en ligne pour le moment.',
     friendsError: 'Impossible de charger vos amis.',
-    invite: 'Inviter {{name}}',
   },
 };

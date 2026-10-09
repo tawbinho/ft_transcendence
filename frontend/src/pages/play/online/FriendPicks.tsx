@@ -27,7 +27,6 @@ export function FriendPicks({ selected, onPick }: { selected: string; onPick: (d
             <button
               type="button"
               aria-pressed={selected === friend.displayName}
-              aria-label={t('online.invite', { name: friend.displayName })}
               onClick={() => onPick(friend.displayName)}
               className={cn(
                 'flex h-10 items-center gap-2 rounded-full border ps-1.5 pe-4 font-semibold transition',

@@ -140,6 +140,5 @@ export const playMessages: PlayMessages = {
     friendsOnline: 'الأصدقاء المتصلون الآن',
     friendsNone: 'لا أحد من أصدقائك متصل الآن.',
     friendsError: 'تعذّر تحميل أصدقائك.',
-    invite: 'ادعُ {{name}}',
   },
 };

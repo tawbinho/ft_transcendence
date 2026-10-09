@@ -138,7 +138,6 @@ export const playMessages = {
     friendsOnline: 'Friends online now',
     friendsNone: 'None of your friends is online right now.',
     friendsError: 'Your friends could not be loaded.',
-    invite: 'Invite {{name}}',
   },
 };
 

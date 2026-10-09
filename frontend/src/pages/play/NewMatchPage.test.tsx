@@ -35,8 +35,8 @@ describe('NewMatchPage friend picks', () => {
     });
     const { events, container, queryClient } = renderRoute('/play/online', { user: alice });
 
-    const bob = await screen.findByRole('button', { name: 'Invite bob' });
-    expect(screen.queryByRole('button', { name: 'Invite carol' })).not.toBeInTheDocument();
+    const bob = await screen.findByRole('button', { name: 'bob' });
+    expect(screen.queryByRole('button', { name: 'carol' })).not.toBeInTheDocument();
 
     await events.click(bob);
 
@@ -72,7 +72,7 @@ describe('NewMatchPage friend picks', () => {
     });
     const { events } = renderRoute('/play/online', { user: alice });
 
-    await events.click(await screen.findByRole('button', { name: 'Invite bob' }));
+    await events.click(await screen.findByRole('button', { name: 'bob' }));
     await events.click(screen.getByRole('radio', { name: /Ocean/ }));
     await events.click(screen.getByRole('button', { name: 'Create match' }));
 
