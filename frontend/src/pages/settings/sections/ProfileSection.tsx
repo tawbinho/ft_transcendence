@@ -13,7 +13,10 @@ export function ProfileSection({ user }: { user: User }) {
     <Card className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-bold">{t('account.profile')}</h2>
-        <Link to={paths.profile(user.displayName)} className="text-sm font-semibold text-primary hover:underline">
+        <Link
+          to={paths.profile(user.displayName)}
+          className="inline-flex min-h-6 items-center text-sm font-semibold text-primary hover:underline"
+        >
           {t('account.viewProfile')}
         </Link>
       </div>

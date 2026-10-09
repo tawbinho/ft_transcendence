@@ -8,13 +8,13 @@ export function Footer() {
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-6 text-sm text-muted">
         <p>{t('footer.project')}</p>
         <nav className="flex flex-wrap gap-x-4 gap-y-2" aria-label={t('footer.nav')}>
-          <Link to="/privacy" className="hover:text-fg hover:underline">
+          <Link to="/privacy" className="py-1 hover:text-fg hover:underline">
             {t('footer.privacy')}
           </Link>
-          <Link to="/terms" className="hover:text-fg hover:underline">
+          <Link to="/terms" className="py-1 hover:text-fg hover:underline">
             {t('footer.terms')}
           </Link>
-          <Link to="/design" className="hover:text-fg hover:underline">
+          <Link to="/design" className="py-1 hover:text-fg hover:underline">
             {t('footer.design')}
           </Link>
         </nav>

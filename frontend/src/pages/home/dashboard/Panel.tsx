@@ -26,7 +26,10 @@ export function Panel({
           {title}
         </h2>
         {action && (
-          <Link to={action.to} className="text-sm font-semibold text-primary hover:underline">
+          <Link
+            to={action.to}
+            className="inline-flex min-h-6 items-center text-sm font-semibold text-primary hover:underline"
+          >
             {action.label}
           </Link>
         )}

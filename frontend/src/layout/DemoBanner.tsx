@@ -36,7 +36,7 @@ export function DemoBanner() {
           type="button"
           aria-expanded={showDetails}
           aria-controls={detailsId}
-          className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+          className="inline-flex min-h-6 items-center gap-1 font-semibold text-primary hover:underline"
           onClick={() => setShowDetails((open) => !open)}
         >
           {t('demo.details')}
@@ -44,7 +44,7 @@ export function DemoBanner() {
         </button>
         <button
           type="button"
-          className="font-semibold text-primary hover:underline"
+          className="inline-flex min-h-6 items-center font-semibold text-primary hover:underline"
           onClick={() => setConfirming(true)}
         >
           {t('demo.reset')}
