@@ -35,9 +35,10 @@ them with made-up players, following this document (see
 | `POST /chat/:userId/read`                         | Mark a conversation as read          | New                        | `chat`        |
 | `POST /chat/:userId/typing`                       | "Is typing" signal                   | New                        | `chat`        |
 | `GET /blocks`, `PUT` and `DELETE /blocks/:userId` | Block and unblock                    | New                        | `chat`        |
-| `GET` and `POST /tournaments`                     | List and create tournaments          | New                        | `tournaments` |
-| `GET` and `DELETE /tournaments/:id`               | Read and cancel a tournament         | New                        | `tournaments` |
-| `POST /tournaments/:id/join`, `leave`, `start`    | Register and start                   | New                        | `tournaments` |
+| `GET` and `POST /tournaments`                     | List and create tournaments          | Exists                     | `tournaments` |
+| `GET` and `DELETE /tournaments/:id`               | Read and cancel a tournament         | Exists                     | `tournaments` |
+| `POST /tournaments/:id/join` and `leave`          | Register and unregister              | Exists                     | `tournaments` |
+| `POST /tournaments/:id/start`                     | Start the bracket                    | New                        | `tournaments` |
 | Socket.IO on `/socket.io`                         | Live updates                         | New                        | (setting)     |
 
 ## Conventions
@@ -405,7 +406,10 @@ most once every 3 seconds while the viewer types, and hides "is typing" 5 second
 - `Profile.blocked` and `Conversation.blocked` say whether the viewer blocked that player. The app then shows "Unblock"
   instead of the message box.
 
-## Tournaments (new, demo feature `tournaments`)
+## Tournaments (registration exists, starting is new; demo feature `tournaments`)
+
+Registration (list, create, read, join, leave, cancel) is served by the backend. `rounds` stays empty and nothing
+starts until the start route and the bracket exist.
 
 Online tournaments: a single-elimination bracket with 4 or 8 places. The same-screen tournament, where players are
 names typed on one computer, runs in the browser and needs no route.
@@ -614,6 +618,10 @@ is a group of routes:
 | `spectate`    | `GET /matches/live`                                                            |
 | `tournaments` | `/tournaments/...`                                                             |
 
+`tournaments` is already off the default list (`DEFAULT_DEMO_FEATURES` in `src/config.ts`). Where the setting is
+written out, as in the root `docker-compose.yml`, take it out of that line too. To use the demo tournaments again,
+list `tournaments` in it.
+
 When the backend serves a feature's routes as described here, remove the feature from the list and rebuild. The pages
 do not change: only where their answers come from. An empty value turns the demo off completely, and its code is then
 not even downloaded.
@@ -622,5 +630,5 @@ not even downloaded.
   demo as long as any feature is on the list. Real matches always go to the backend.
 - The made-up players exist only in the browser. While some features are real and others are not, a link from one
   world to the other (the message button on a real profile, a made-up player's name in the chat) leads to "not found".
-  Switching `users` and `friends` together, then `chat`, `spectate` and `tournaments`, keeps this short.
+  Switching `users` and `friends` together, then `chat` and `spectate`, keeps this short.
 - Demo data is saved in the browser only (`localStorage`). The "Reset demo" button in the demo banner erases it.
