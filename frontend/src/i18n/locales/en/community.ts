@@ -60,6 +60,7 @@ export const communityMessages = {
     conversations: 'Conversations',
     noConversations: 'No conversations yet. Open a friend’s profile or your friend list to send a first message.',
     pickConversation: 'Pick a conversation to read it here.',
+    pickHint: "Start a new one with the Message button on a player's profile.",
     back: 'Back to conversations',
     historyLabel: 'Messages with {{name}}',
     loadOlder: 'Load earlier messages',

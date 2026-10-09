@@ -63,6 +63,7 @@ export const communityMessages: CommunityMessages = {
     noConversations:
       'Aucune conversation pour l’instant. Ouvrez le profil d’un ami ou votre liste d’amis pour envoyer un premier message.',
     pickConversation: 'Choisissez une conversation pour la lire ici.',
+    pickHint: "Commencez-en une avec le bouton Message sur le profil d'un joueur.",
     back: 'Retour aux conversations',
     historyLabel: 'Messages avec {{name}}',
     loadOlder: 'Charger les messages précédents',

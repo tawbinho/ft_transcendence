@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
-import { ChatIcon } from '@/components/icons';
 import { PageHeader } from '@/components/PageHeader';
+import { EmptyState } from '@/components/ui';
 import { ChatThread } from '@/features/chat/components/ChatThread';
 import { ConversationList } from '@/features/chat/components/ConversationList';
 import { phonePane } from '@/features/chat/panes';
@@ -33,10 +33,14 @@ export function ChatPage() {
           {displayName ? (
             <ChatThread key={displayName} displayName={displayName} />
           ) : (
-            <div className="flex h-[min(44rem,calc(100dvh-13rem))] min-h-[24rem] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border p-8 text-center text-muted">
-              <ChatIcon className="text-4xl" />
-              <p>{t('chat.pickConversation')}</p>
-            </div>
+            // The empty pane takes the height of an open conversation, so the page does not jump when one is opened.
+            <EmptyState
+              illustration="chat"
+              className="h-[min(44rem,calc(100dvh-13rem))] min-h-[24rem] justify-center bg-surface"
+            >
+              <p className="font-semibold text-fg">{t('chat.pickConversation')}</p>
+              <p className="mt-1 text-sm">{t('chat.pickHint')}</p>
+            </EmptyState>
           )}
         </div>
       </div>

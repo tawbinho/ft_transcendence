@@ -61,6 +61,7 @@ export const communityMessages: CommunityMessages = {
     conversations: 'المحادثات',
     noConversations: 'لا توجد محادثات بعد. افتح الملف الشخصي لأحد أصدقائك أو قائمة أصدقائك لإرسال أول رسالة.',
     pickConversation: 'اختر محادثة لقراءتها هنا.',
+    pickHint: 'ابدأ محادثة جديدة بزر «رسالة» في ملف أي لاعب.',
     back: 'العودة إلى المحادثات',
     historyLabel: 'الرسائل مع {{name}}',
     loadOlder: 'تحميل الرسائل السابقة',
