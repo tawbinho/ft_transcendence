@@ -22,8 +22,9 @@ export function AuthLayout({
   useDocumentTitle(title);
   return (
     <div className="mx-auto grid w-full max-w-5xl items-center gap-10 py-4 lg:grid-cols-[1fr_28rem]">
-      <div aria-hidden="true" className="hidden lg:block">
-        <AuthBoard className="mx-auto max-w-md" />
+      {/* Narrower than the form beside it, so the picture never competes with it. */}
+      <div aria-hidden="true" className="mx-auto hidden w-full max-w-xs lg:block">
+        <AuthBoard />
       </div>
       <div className="mx-auto flex w-full max-w-md flex-col gap-6">
         <div className="flex flex-col items-center gap-3 text-center">
