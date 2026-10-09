@@ -29,6 +29,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       TWO_FACTOR_KEY: ${TWO_FACTOR_KEY}
+      AVATAR_DIR: /data/avatars
     # Not published to the host on purpose: the only way in from outside is
     # the HTTPS proxy below (the subject requires HTTPS for every connection
     # to the backend). `expose` only makes the port visible to other
@@ -41,6 +42,8 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      # Profile pictures: kept between restarts, not inside the source tree.
+      - avatar-data:/data/avatars
 
   frontend:
     build:
@@ -68,4 +71,5 @@ services:
 
 volumes:
   db-data:
+  avatar-data:
   proxy-certs:

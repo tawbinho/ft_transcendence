@@ -6,6 +6,8 @@ COPY package.json package-lock.json ./
 FROM base AS dev
 RUN npm ci --legacy-peer-deps
 COPY . .
+# Folder of the profile pictures (compose mounts a volume on it).
+RUN mkdir -p /data/avatars
 CMD ["npm", "run", "start:dev"]
 
 FROM base AS build
@@ -20,5 +22,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --legacy-peer-deps
 COPY --from=build /app/dist ./dist
+# The volume mounted here keeps this owner, so the node user can write to it.
+RUN mkdir -p /data/avatars && chown node:node /data/avatars
 USER node
 CMD ["node", "dist/main"]

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module.js';
+import { AvatarsController } from './avatars.controller.js';
 import { UsersController } from './users.controller.js';
 import { UsersModule } from './users.module.js';
 
@@ -10,6 +11,6 @@ import { UsersModule } from './users.module.js';
 // import each other in a circle.
 @Module({
   imports: [UsersModule, AuthModule],
-  controllers: [UsersController],
+  controllers: [UsersController, AvatarsController],
 })
 export class UsersHttpModule {}

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import type { ListUsersQuery } from './dto/list-users.query.js';
 import { ONLINE_WINDOW_MS } from './presence.service.js';
 import { User } from './entities/user.entity.js';
@@ -266,6 +266,45 @@ export class UsersService {
       limit,
       offset,
     };
+  }
+
+  // Changes the display name. Same rules as signup (the DTO checked them).
+  // Names are unique and case-sensitive, like at signup.
+  async rename(userId: string, displayName: string): Promise<User> {
+    const user = await this.users.findOneBy({ id: userId });
+    if (!user) throw this.notFound();
+    // Choosing the name you already have changes nothing.
+    if (user.displayName === displayName) return user;
+
+    if (await this.users.existsBy({ displayName })) throw this.nameTaken();
+    try {
+      await this.users.update({ id: userId }, { displayName });
+    } catch (error) {
+      // Two people choosing the same name at the same moment: the database
+      // unique rule (23505) refuses the second one.
+      if (
+        error instanceof QueryFailedError &&
+        (error.driverError as { code?: string }).code === '23505'
+      ) {
+        throw this.nameTaken();
+      }
+      throw error;
+    }
+    user.displayName = displayName;
+    return user;
+  }
+
+  // Used by the avatar service. null: back to the default avatar.
+  async setAvatarUrl(userId: string, avatarUrl: string | null): Promise<void> {
+    await this.users.update({ id: userId }, { avatarUrl });
+  }
+
+  private nameTaken(): AppError {
+    return new AppError(
+      'DISPLAY_NAME_TAKEN',
+      'This display name is already taken',
+      409,
+    );
   }
 
   private notFound(): AppError {

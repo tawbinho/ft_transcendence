@@ -83,6 +83,7 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 | `DB_NAME`                | `connect4` | database name                                           |
 | `TWO_FACTOR_KEY`         | none       | **required**, 64 hex chars, encrypts the 2FA secrets    |
 | `SESSION_TTL_DAYS`       | `7`        | how long a login lasts, optional                        |
+| `AVATAR_DIR`             | `./uploads/avatars` | where profile pictures are stored; Docker sets it to a volume |
 
 If a port is already used on your machine, change it in `.env`.
 Do not change `TWO_FACTOR_KEY` once users have enabled 2FA: their stored
@@ -154,10 +155,23 @@ All `/api/tournaments` routes need a logged-in user.
 | `GET  /api/users`                  | search players: `search`, `online`, `friends`, `sort` (`name`, `wins`, `newest`), `limit`, `offset` |
 | `GET  /api/users/:displayName`     | one player's profile: stats, `online`, `lastSeenAt` (exact name, case-sensitive) |
 | `GET  /api/users/:displayName/matches` | their finished matches, newest first (`limit`, `offset`) |
+| `PATCH /api/users/me`              | change my display name: `{ "displayName" }` (same rules as signup) |
+| `PUT  /api/users/me/avatar`        | upload my picture: form file `avatar` (PNG, JPEG or WebP, 2 MB) |
+| `DELETE /api/users/me/avatar`      | back to the default avatar                          |
+| `GET  /api/avatars/:file`          | a stored picture (the file itself, no login needed) |
 
 Needs a logged-in user, and every logged-in user can read every profile and
 history. Each player comes with `online` and their `stats` (played, wins,
-losses, draws). Error code: `USER_NOT_FOUND`.
+losses, draws). Error codes: `USER_NOT_FOUND`, `DISPLAY_NAME_TAKEN`,
+`AVATAR_TOO_LARGE`, `AVATAR_INVALID_TYPE`.
+
+**Profile pictures.** The file type is decided from the file's first bytes, not
+from the type the browser declares. A picture is stored under a new random
+name (so browsers never show an old cached copy) in the `avatar-data` Docker
+volume, mounted at `/data/avatars` (`AVATAR_DIR`, default `./uploads/avatars`
+for a run without Docker). The old file is deleted when a picture is replaced
+or removed. The app shrinks pictures to 256 x 256 before sending; the backend
+does not re-encode them, so it only accepts what the checks above let through.
 
 **Login uses database sessions.** Signup and login set one httpOnly cookie,
 `session`, holding a random token (valid `SESSION_TTL_DAYS`, 7 by default).
@@ -215,7 +229,8 @@ reported offline in a tournament's player list). The full API design, including 
 parts, is in `backend/docs/openapi.yaml`.
 
 **Rate limits** (per IP, per minute): 100 requests overall; login 10; signup 5;
-2FA verify, enable and disable 5; creating a match or a tournament 20. Beyond that the API answers `429` with the
+2FA verify, enable and disable 5; creating a match or a tournament 20;
+renaming and uploading a picture 10. Beyond that the API answers `429` with the
 code `RATE_LIMITED`. The counters are kept in memory and reset when the
 backend restarts.
 

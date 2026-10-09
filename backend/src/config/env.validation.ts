@@ -16,6 +16,7 @@ export interface Env {
   DB_NAME: string;
   SESSION_TTL_DAYS: number; // how long a login lasts before the user must log in again
   TWO_FACTOR_KEY: string; // 64 hex chars: AES-256 key that encrypts 2FA secrets in the database
+  AVATAR_DIR: string; // folder where uploaded profile pictures are stored
 }
 
 // Returns the variable if it is a non-empty string, otherwise stops the app.
@@ -76,5 +77,10 @@ export function validateEnv(config: Record<string, unknown>): Env {
     DB_NAME: requiredString(config, 'DB_NAME'),
     SESSION_TTL_DAYS: positiveInt(config, 'SESSION_TTL_DAYS', 7),
     TWO_FACTOR_KEY: twoFactorKey,
+    // optional: Docker sets it to a volume, a local run uses ./uploads/avatars
+    AVATAR_DIR:
+      typeof config.AVATAR_DIR === 'string' && config.AVATAR_DIR !== ''
+        ? config.AVATAR_DIR
+        : './uploads/avatars',
   };
 }

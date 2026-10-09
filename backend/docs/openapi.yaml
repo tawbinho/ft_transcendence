@@ -42,7 +42,7 @@ tags:
 - name: matches
   description: Online games. Implemented, except `live` (new) and the spectator change on `GET /matches/{id}`.
 - name: users
-  description: Player search, profiles, display name and avatar. New (frontend demo feature `users`).
+  description: Player search, profiles, display name and avatar. All implemented (`friendship` is only `self` or `none`, and `blocked` is always false, until friends and blocks exist).
 - name: friends
   description: Friend requests and friends. New (demo feature `friends`).
 - name: chat
@@ -885,8 +885,7 @@ paths:
       operationId: updateMe
       summary: Change my display name
       description: Same rules as signup. Returns the updated user.
-      x-status: new
-      x-demo-feature: users
+      x-status: implemented
       requestBody:
         required: true
         content:
@@ -932,8 +931,7 @@ paths:
         `/api` (for example `/api/avatars/<file>`): the proxy only sends `/api` and `/socket.io` to the backend.
         Give every new picture a new file name so browsers never show an old cached copy. The proxy accepts bodies
         up to 5 MB.'
-      x-status: new
-      x-demo-feature: users
+      x-status: implemented
       requestBody:
         required: true
         content:
@@ -989,8 +987,7 @@ paths:
       operationId: removeAvatar
       summary: Remove my profile picture
       description: 'Back to the default avatar (`avatarUrl: null`).'
-      x-status: new
-      x-demo-feature: users
+      x-status: implemented
       responses:
         '200':
           description: The updated user

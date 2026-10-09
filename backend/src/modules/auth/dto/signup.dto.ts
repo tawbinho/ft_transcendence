@@ -1,6 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEmail, IsString, Length, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  DISPLAY_NAME_MAX,
+  DISPLAY_NAME_MIN,
+  DISPLAY_NAME_PATTERN,
+} from '../../users/user.constants.js';
 
 // WHY THIS FILE EXISTS
 // A DTO (data transfer object) describes what a request body must look like.
@@ -22,9 +27,9 @@ export class SignupDto {
   @ApiProperty({ example: 'mario', minLength: 3, maxLength: 20 })
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
-  @Length(3, 20)
+  @Length(DISPLAY_NAME_MIN, DISPLAY_NAME_MAX)
   // Letters of any language (Arabic, French accents...), digits, _ and -.
-  @Matches(/^[\p{L}\p{N}_-]+$/u, {
+  @Matches(DISPLAY_NAME_PATTERN, {
     message:
       'displayName may only contain letters, numbers, underscores and hyphens',
   })

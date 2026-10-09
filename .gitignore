@@ -29,3 +29,6 @@ Thumbs.db
 
 # Claude Code local files
 .claude/
+
+# uploaded profile pictures (local runs)
+uploads/
