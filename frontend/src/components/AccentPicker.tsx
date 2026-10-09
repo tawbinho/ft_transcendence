@@ -30,7 +30,8 @@ export function AccentPicker({ className }: { className?: string }) {
         label: (
           <span className="flex items-center gap-2">
             <Swatch accent={value} />
-            {t(`accent.${value}`)}
+            {/* On a phone the five options only fit as swatches; the name stays for screen readers. */}
+            <span className="sr-only sm:not-sr-only">{t(`accent.${value}`)}</span>
           </span>
         ),
       }))}

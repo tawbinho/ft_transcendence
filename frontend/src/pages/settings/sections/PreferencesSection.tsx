@@ -22,9 +22,9 @@ export function PreferencesSection() {
     <>
       <Card className="flex flex-col gap-4">
         <h2 className="text-lg font-bold">{t('account.appearance')}</h2>
-        <div className="flex flex-wrap gap-6">
-          <LanguageSelect showLabel />
-          <ColorSchemeSelect showLabel />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <LanguageSelect showLabel stacked />
+          <ColorSchemeSelect showLabel stacked />
         </div>
         <AccentPicker />
       </Card>
@@ -33,6 +33,7 @@ export function PreferencesSection() {
         <OptionGroup
           legend={<span className="text-lg font-bold">{t('account.boardTheme')}</span>}
           variant="cards"
+          columns={2}
           value={theme}
           onChange={chooseTheme}
           options={BOARD_THEMES.map((id) => ({

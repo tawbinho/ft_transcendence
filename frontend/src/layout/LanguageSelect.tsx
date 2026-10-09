@@ -4,14 +4,25 @@ import { GlobeIcon } from '@/components/icons';
 import { LANGUAGES, isLanguage, useLanguage } from '@/i18n';
 import { cn } from '@/lib/cn';
 
-/** Compact language picker; the label stays available to screen readers. */
-export function LanguageSelect({ className, showLabel = false }: { className?: string; showLabel?: boolean }) {
+/**
+ * Compact language picker; the label stays available to screen readers.
+ * `stacked` is the form version: the label above, and a field as wide and as tall as the other fields.
+ */
+export function LanguageSelect({
+  className,
+  showLabel = false,
+  stacked = false,
+}: {
+  className?: string;
+  showLabel?: boolean;
+  stacked?: boolean;
+}) {
   const { t } = useTranslation();
   const [language, setLanguage] = useLanguage();
   const id = useId();
 
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div className={cn('flex gap-2', stacked ? 'flex-col' : 'items-center', className)}>
       <label htmlFor={id} className={cn(showLabel ? 'text-sm font-semibold' : 'sr-only')}>
         {t('preferences.language')}
       </label>
@@ -21,7 +32,10 @@ export function LanguageSelect({ className, showLabel = false }: { className?: s
           id={id}
           value={language}
           onChange={(event) => isLanguage(event.target.value) && setLanguage(event.target.value)}
-          className="h-9 appearance-none rounded-lg border border-border bg-surface ps-8 pe-3 text-sm font-medium text-fg hover:bg-surface-2"
+          className={cn(
+            'appearance-none rounded-lg border border-border bg-surface ps-8 pe-3 text-sm font-medium text-fg hover:bg-surface-2',
+            stacked ? 'h-11 w-full' : 'h-9',
+          )}
         >
           {LANGUAGES.map(({ code, label }) => (
             <option key={code} value={code} lang={code}>
