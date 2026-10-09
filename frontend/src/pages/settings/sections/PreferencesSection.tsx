@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getAppearanceControls } from '@/app/extensions';
 import { AccentPicker } from '@/components/AccentPicker';
 import { Card, OptionGroup } from '@/components/ui';
 import { loadLastSettings, saveLastSettings } from '@/features/game/lastSettings';
@@ -25,6 +26,10 @@ export function PreferencesSection() {
         <LanguagePicker />
         <ColorSchemePicker />
         <AccentPicker />
+        {/* Optional features add their own control here (src/app/extensions.ts). */}
+        {getAppearanceControls().map((Control, index) => (
+          <Control key={index} />
+        ))}
       </Card>
 
       <Card className="flex flex-col gap-4">

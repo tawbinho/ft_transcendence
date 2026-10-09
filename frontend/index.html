@@ -10,16 +10,20 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Connect Four</title>
     <script>
-      // Apply the saved light or dark mode and accent color before the first paint
-      // (see src/lib/colorScheme.ts and src/lib/accent.ts).
+      // Apply the saved light or dark mode, accent color and page background before the first paint
+      // (see src/lib/colorScheme.ts, src/lib/accent.ts and src/features/backdrop/backdrops.ts).
       (function () {
         var scheme = 'system';
         var accent = '';
+        var backdrop = '';
         try {
           scheme = localStorage.getItem('color-scheme') || 'system';
           accent = localStorage.getItem('accent') || '';
+          backdrop = localStorage.getItem('backdrop') || '';
         } catch (error) {}
         if (['violet', 'teal', 'rose', 'orange'].indexOf(accent) >= 0) document.documentElement.dataset.accent = accent;
+        if (['glow', 'dots', 'grid', 'board'].indexOf(backdrop) >= 0)
+          document.documentElement.dataset.backdrop = backdrop;
         var dark =
           scheme === 'dark' || (scheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.dataset.theme = dark ? 'dark' : 'light';
