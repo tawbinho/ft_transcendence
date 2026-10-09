@@ -25,8 +25,13 @@ export function TournamentView({ tournament }: { tournament: Tournament }) {
     <>
       <PageHeader
         title={tournament.name}
-        subtitle={t('tournaments.createdBy', { name: tournament.createdBy.displayName })}
-        actions={<TournamentStatusBadge status={tournament.status} />}
+        subtitle={
+          // The status sits right after "Created by", not at the far end of the header row.
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            {t('tournaments.createdBy', { name: tournament.createdBy.displayName })}
+            <TournamentStatusBadge status={tournament.status} />
+          </span>
+        }
       />
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
