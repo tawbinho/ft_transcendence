@@ -64,6 +64,17 @@ export function MobileMenu({
       </IconButton>
 
       {open && (
+        // A dim layer over the page under the bar. Tapping it closes the menu. It sits behind
+        // the panel (-z-10, inside the header) and is only as tall as the screen under the bar.
+        <div
+          aria-hidden="true"
+          data-testid="menu-backdrop"
+          onClick={close}
+          className="absolute inset-x-0 top-full -z-10 h-[calc(100dvh-4rem)] bg-black/40 dark:bg-black/60"
+        />
+      )}
+
+      {open && (
         <div
           id={panelId}
           className="absolute inset-x-0 top-full max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-border bg-surface px-4 pb-4 shadow-lg"

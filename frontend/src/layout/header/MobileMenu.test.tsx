@@ -76,6 +76,16 @@ describe('the phone menu for a member', () => {
     expect(button).toHaveFocus();
   });
 
+  it('dims the page and closes when the dim layer is tapped', async () => {
+    const { events } = renderMenu(member);
+    await openMenu(events);
+
+    await events.click(screen.getByTestId('menu-backdrop'));
+
+    expect(screen.getByRole('button', { name: 'Open menu' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByTestId('menu-backdrop')).not.toBeInTheDocument();
+  });
+
   it('closes when the person goes to another page', async () => {
     const { events, queryByRole, container } = renderMenu(member);
     await openMenu(events);
