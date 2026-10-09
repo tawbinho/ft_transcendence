@@ -218,18 +218,8 @@ export const PlusIcon = (props: SVGProps<SVGSVGElement>) => (
   </Icon>
 );
 
-/** The app's mark: a small board with four discs. */
-export function LogoMark(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 32 32" width="1em" height="1em" aria-hidden="true" focusable="false" {...props}>
-      <rect width="32" height="32" rx="8" fill="#2350d2" />
-      <circle cx="10.5" cy="10.5" r="5" fill="#f9c623" />
-      <circle cx="21.5" cy="10.5" r="5" fill="#102a70" />
-      <circle cx="10.5" cy="21.5" r="5" fill="#e5383b" />
-      <circle cx="21.5" cy="21.5" r="5" fill="#f9c623" />
-    </svg>
-  );
-}
+// The mark lives in its own file; this line keeps the old import path working.
+export { LogoMark } from './LogoMark';
 
 // ---- More icons, drawn the same way ---------------------------------------------
 

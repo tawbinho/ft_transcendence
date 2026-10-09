@@ -5,15 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Play Connect Four on the same screen, against the computer, or online." />
     <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f3f5fc" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0f1a" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Connect Four</title>
     <script>
-      // Apply the saved light or dark mode before the first paint (see src/lib/colorScheme.ts).
+      // Apply the saved light or dark mode and accent color before the first paint
+      // (see src/lib/colorScheme.ts and src/lib/accent.ts).
       (function () {
         var scheme = 'system';
+        var accent = '';
         try {
           scheme = localStorage.getItem('color-scheme') || 'system';
+          accent = localStorage.getItem('accent') || '';
         } catch (error) {}
+        if (['violet', 'teal', 'rose', 'orange'].indexOf(accent) >= 0) document.documentElement.dataset.accent = accent;
         var dark =
           scheme === 'dark' || (scheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.dataset.theme = dark ? 'dark' : 'light';
