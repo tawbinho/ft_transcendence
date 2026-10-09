@@ -40,3 +40,18 @@ export class TwoFactorSetupResponse {
   })
   secret: string;
 }
+
+export class BackupCodesResponse {
+  @ApiProperty({
+    type: [String],
+    example: ['ABCDE-FGHJK', 'MNPQR-STUVW'],
+    description:
+      '10 one-time codes, shown ONLY this once. Each works once, instead of the 6-digit code.',
+  })
+  backupCodes: string[];
+}
+
+export class BackupCodesRemainingResponse {
+  @ApiProperty({ example: 8, description: 'Backup codes not used yet' })
+  remaining: number;
+}

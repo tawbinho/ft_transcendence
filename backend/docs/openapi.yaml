@@ -144,7 +144,7 @@ paths:
       - auth
       operationId: verifyTwoFactor
       summary: Finish a login with the 6-digit code
-      description: 'Needs the pending session cookie from `/auth/login`. On success the cookie is replaced by a
+      description: 'Needs the pending session cookie from `/auth/login`. The code can be the 6 digits of the app or a one-time backup code (it is spent when used). On success the cookie is replaced by a
         new full session. A code cannot be used twice. Rate limit: 5 per minute.'
       x-status: implemented
       security: []
@@ -153,7 +153,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
+              $ref: '#/components/schemas/TwoFactorOrBackupCodeRequest'
       responses:
         '200':
           description: Logged in
@@ -282,7 +282,7 @@ paths:
       - auth
       operationId: enableTwoFactor
       summary: Turn 2FA on
-      description: The first valid code from the authenticator app activates 2FA.
+      description: The first valid code from the authenticator app activates 2FA, and the answer holds the 10 backup codes (shown ONLY this once, so the app must tell the user to keep them safe). Only the 6-digit code works here.
       x-status: implemented
       requestBody:
         required: true
@@ -301,10 +301,7 @@ paths:
                 - data
                 properties:
                   data:
-                    type: object
-                    nullable: true
-                    description: Always null
-                    example: null
+                    $ref: '#/components/schemas/BackupCodes'
         '400':
           description: 'Codes: `VALIDATION_ERROR`, `INVALID_2FA_CODE`.'
           content:
@@ -335,14 +332,14 @@ paths:
       - auth
       operationId: disableTwoFactor
       summary: Turn 2FA off
-      description: Needs a valid code, so a stolen session cannot remove the protection.
+      description: Needs a valid code, so a stolen session cannot remove the protection. The code can be the 6 digits of the app or a one-time backup code (it is spent when used).
       x-status: implemented
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TwoFactorCodeRequest'
+              $ref: '#/components/schemas/TwoFactorOrBackupCodeRequest'
       responses:
         '200':
           description: 2FA is off
@@ -367,6 +364,90 @@ paths:
               example:
                 error:
                   code: VALIDATION_ERROR
+                  message: See the error code table
+        '409':
+          description: 'Codes: `TWO_FACTOR_NOT_ENABLED`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: TWO_FACTOR_NOT_ENABLED
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /auth/2fa/backup-codes:
+    get:
+      tags:
+      - auth
+      operationId: getBackupCodesRemaining
+      summary: How many backup codes are left
+      description: Never returns the codes themselves (the server only keeps keyed hashes). Lets the app tell the user to make new ones before they run out.
+      x-status: implemented
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/BackupCodesRemaining'
+        '409':
+          description: 'Codes: `TWO_FACTOR_NOT_ENABLED`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: TWO_FACTOR_NOT_ENABLED
+                  message: See the error code table
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+      - auth
+      operationId: regenerateBackupCodes
+      summary: Make new backup codes
+      description: "Replaces the whole list: the old codes, used or not, stop working. Needs a valid code (the app's 6 digits or a backup code) so a stolen session cannot reset them. Rate limit: 5 per minute."
+      x-status: implemented
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorOrBackupCodeRequest'
+      responses:
+        '200':
+          description: The 10 new codes, shown only this once
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/BackupCodes'
+        '400':
+          description: 'Codes: `VALIDATION_ERROR`, `INVALID_2FA_CODE`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: INVALID_2FA_CODE
                   message: See the error code table
         '409':
           description: 'Codes: `TWO_FACTOR_NOT_ENABLED`.'
@@ -2008,6 +2089,33 @@ components:
           description: 6 digits. Spaces are removed before the check
       required:
       - code
+    TwoFactorOrBackupCodeRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          pattern: ^(\d{6}|[0-9A-Za-z]{5}-?[0-9A-Za-z]{5})$
+          description: The 6 digits of the authenticator app, or a one-time backup code such as `ABCDE-FGHJK` (spaces and case are ignored)
+      required:
+      - code
+    BackupCodes:
+      type: object
+      properties:
+        backupCodes:
+          type: array
+          items:
+            type: string
+          description: 10 one-time codes like `ABCDE-FGHJK`, shown ONLY this once. Each works once, in place of the 6-digit code
+      required:
+      - backupCodes
+    BackupCodesRemaining:
+      type: object
+      properties:
+        remaining:
+          type: integer
+          description: Backup codes not used yet
+      required:
+      - remaining
     SessionResult:
       type: object
       properties:

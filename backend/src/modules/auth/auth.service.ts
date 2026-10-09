@@ -129,8 +129,16 @@ export class AuthService {
     return this.twoFactor.setup(userId, user.email);
   }
 
-  enableTwoFactor(userId: string, code: string): Promise<void> {
+  enableTwoFactor(userId: string, code: string): Promise<string[]> {
     return this.twoFactor.enable(userId, code);
+  }
+
+  regenerateBackupCodes(userId: string, code: string): Promise<string[]> {
+    return this.twoFactor.regenerateBackupCodes(userId, code);
+  }
+
+  backupCodesRemaining(userId: string): Promise<number> {
+    return this.twoFactor.backupCodesRemaining(userId);
   }
 
   disableTwoFactor(userId: string, code: string): Promise<void> {

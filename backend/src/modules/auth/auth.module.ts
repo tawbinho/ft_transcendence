@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { TwoFactorBackupCode } from '../users/entities/two-factor-backup-code.entity.js';
 import { TwoFactor } from '../users/entities/two-factor.entity.js';
 import { UsersModule } from '../users/users.module.js';
 import { AuthController } from './auth.controller.js';
@@ -7,6 +8,7 @@ import { AuthService } from './auth.service.js';
 import { Session } from './entities/session.entity.js';
 import { SessionGuard } from './session.guard.js';
 import { SessionsService } from './sessions.service.js';
+import { BackupCodesService } from './two-factor/backup-codes.service.js';
 import { SecretCipher } from './two-factor/secret-cipher.js';
 import { TwoFactorService } from './two-factor/two-factor.service.js';
 
@@ -18,13 +20,14 @@ import { TwoFactorService } from './two-factor/two-factor.service.js';
     UsersModule, // for UsersService
     // Session belongs to auth; TwoFactor is owned by the users module but its
     // setup/verify logic lives here.
-    TypeOrmModule.forFeature([Session, TwoFactor]),
+    TypeOrmModule.forFeature([Session, TwoFactor, TwoFactorBackupCode]),
   ],
   controllers: [AuthController],
   providers: [
     AuthService,
     SessionsService,
     TwoFactorService,
+    BackupCodesService,
     SecretCipher,
     SessionGuard,
   ],

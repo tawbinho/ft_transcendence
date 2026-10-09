@@ -129,9 +129,11 @@ including the `data` / `error` wrapper. The browser must send requests with
 | `POST /api/auth/logout`  | end the session on the server and clear the cookie |
 | `GET  /api/auth/me`      | the logged-in user, or `data: null` if not logged in (status 200, never 401) |
 | `POST /api/auth/2fa/setup`   | start 2FA setup, returns a QR code (logged in) |
-| `POST /api/auth/2fa/enable`  | turn 2FA on with a code from the app (logged in) |
-| `POST /api/auth/2fa/disable` | turn 2FA off, needs a valid code (logged in)   |
-| `POST /api/auth/2fa/verify`  | finish a 2FA login with the 6-digit code       |
+| `POST /api/auth/2fa/enable`  | turn 2FA on with a code from the app; returns the 10 backup codes, once (logged in) |
+| `POST /api/auth/2fa/disable` | turn 2FA off, needs a valid code or a backup code (logged in) |
+| `POST /api/auth/2fa/verify`  | finish a 2FA login with the 6-digit code or a backup code |
+| `GET  /api/auth/2fa/backup-codes` | how many backup codes are left (logged in)     |
+| `POST /api/auth/2fa/backup-codes` | make 10 new backup codes, the old ones stop working (needs a valid code) |
 | `POST /api/matches`           | create a match (optional settings, optional invited player) |
 | `GET  /api/matches/mine`      | my matches, newest first (`status`, `limit`, `offset`) |
 | `GET  /api/matches/:id`       | the full state of a match (players only)       |
@@ -257,6 +259,18 @@ each move; ordinary matches have no clock). A sweep every 15 seconds checks
 the database, so a restart cannot lose a clock. That loss is recorded as
 `endReason: "disconnect"`.
 
+**2FA backup codes.** Turning 2FA on returns 10 one-time backup codes (like
+`ABCDE-FGHJK`, from an alphabet without 0, 1, I, L and O so they are easy to
+copy from paper), shown ONLY that once. A user who lost their phone types one in
+the same `code` field instead of the 6 digits, to log in, to turn 2FA off or to
+make new codes. Each code works once: it is spent atomically, so five requests
+racing with the same code produce one login. The server stores only an
+HMAC-SHA256 of each code, keyed with `TWO_FACTOR_KEY` (a code has about 50 bits,
+so a plain hash could be brute-forced offline from a stolen database, a keyed one
+cannot; for the same reason, changing `TWO_FACTOR_KEY` also invalidates the
+codes). Making new codes replaces the whole list. Turning 2FA off deletes them.
+Only the app's 6-digit code can turn 2FA on.
+
 **Presence.** A player is online if they made a request while logged in during
 the last minute: the session guard writes `users.last_seen_at` (at most every
 30 seconds per user), and by the live connection (see below). The wins, losses and
@@ -305,7 +319,7 @@ players. After a server restart the bots pick up their waiting and running
 matches again.
 
 **Not built yet:** chat, the "your tournament match is ready" chat message, the
-list of live matches for spectators (`GET /matches/live`), and 2FA backup codes.
+list of live matches for spectators (`GET /matches/live`).
 The full API design, including these parts, is in `backend/docs/openapi.yaml`.
 
 **Rate limits** (per IP, per minute): 100 requests overall; login 10; signup 5;

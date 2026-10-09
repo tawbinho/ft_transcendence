@@ -33,11 +33,16 @@ import { AuthService, type AuthResult } from './auth.service.js';
 import {
   LoginResponse,
   SessionResponse,
+  BackupCodesRemainingResponse,
+  BackupCodesResponse,
   TwoFactorSetupResponse,
 } from './dto/auth.responses.js';
 import { LoginDto } from './dto/login.dto.js';
 import { SignupDto } from './dto/signup.dto.js';
-import { TwoFactorCodeDto } from './dto/two-factor-code.dto.js';
+import {
+  TwoFactorCodeDto,
+  TwoFactorOrBackupCodeDto,
+} from './dto/two-factor-code.dto.js';
 import { SessionGuard } from './session.guard.js';
 
 // Rate limits are per IP address. A 6-digit code has only a million
@@ -105,13 +110,15 @@ export class AuthController {
   @Post('2fa/verify')
   @Throttle(strict(5))
   @HttpCode(200)
-  @ApiOperation({ summary: 'Finish a 2FA login with the 6-digit code' })
+  @ApiOperation({
+    summary: 'Finish a 2FA login with the 6-digit code or a backup code',
+  })
   @ApiOkResponse({
     type: SessionResponse,
     description: 'Logged in. The `session` cookie is replaced by a full session.',
   })
   async verifyTwoFactor(
-    @Body() dto: TwoFactorCodeDto,
+    @Body() dto: TwoFactorOrBackupCodeDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ user: PublicUser }> {
@@ -147,12 +154,16 @@ export class AuthController {
   @UseGuards(SessionGuard)
   @ApiOperation({ summary: 'Turn 2FA on with a code from the app' })
   @ApiCookieAuth('session')
-  @ApiOkResponse({ description: '2FA is now on. `data` is null.' })
+  @ApiOkResponse({
+    type: BackupCodesResponse,
+    description:
+      '2FA is now on. The 10 backup codes are returned, ONCE: keep them safe.',
+  })
   async enableTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: TwoFactorCodeDto,
-  ): Promise<void> {
-    await this.auth.enableTwoFactor(user.id, dto.code);
+  ): Promise<{ backupCodes: string[] }> {
+    return { backupCodes: await this.auth.enableTwoFactor(user.id, dto.code) };
   }
 
   // POST /api/auth/2fa/disable: needs a valid code, so a stolen session
@@ -161,14 +172,53 @@ export class AuthController {
   @Throttle(strict(5))
   @HttpCode(200)
   @UseGuards(SessionGuard)
-  @ApiOperation({ summary: 'Turn 2FA off (needs a valid code)' })
+  @ApiOperation({
+    summary: 'Turn 2FA off (needs a valid code or a backup code)',
+  })
   @ApiCookieAuth('session')
   @ApiOkResponse({ description: '2FA is now off. `data` is null.' })
   async disableTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: TwoFactorCodeDto,
+    @Body() dto: TwoFactorOrBackupCodeDto,
   ): Promise<void> {
     await this.auth.disableTwoFactor(user.id, dto.code);
+  }
+
+  // POST /api/auth/2fa/backup-codes: a NEW list of 10 backup codes; the old
+  // ones stop working. Needs a valid code, so a stolen session cannot reset them.
+  @Post('2fa/backup-codes')
+  @Throttle(strict(5))
+  @HttpCode(200)
+  @UseGuards(SessionGuard)
+  @ApiOperation({
+    summary: 'Make new backup codes (the old ones stop working)',
+    description:
+      'Needs a valid code (app or backup). Errors: INVALID_2FA_CODE, TWO_FACTOR_NOT_ENABLED.',
+  })
+  @ApiCookieAuth('session')
+  @ApiOkResponse({ type: BackupCodesResponse })
+  async regenerateBackupCodes(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: TwoFactorOrBackupCodeDto,
+  ): Promise<{ backupCodes: string[] }> {
+    return {
+      backupCodes: await this.auth.regenerateBackupCodes(user.id, dto.code),
+    };
+  }
+
+  // GET /api/auth/2fa/backup-codes: how many are left (never the codes).
+  @Get('2fa/backup-codes')
+  @UseGuards(SessionGuard)
+  @ApiOperation({
+    summary: 'How many backup codes are left',
+    description: 'Error: TWO_FACTOR_NOT_ENABLED.',
+  })
+  @ApiCookieAuth('session')
+  @ApiOkResponse({ type: BackupCodesRemainingResponse })
+  async backupCodesRemaining(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<{ remaining: number }> {
+    return { remaining: await this.auth.backupCodesRemaining(user.id) };
   }
 
   // POST /api/auth/logout: ends the login immediately (the session row is
