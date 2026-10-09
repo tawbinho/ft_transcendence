@@ -440,3 +440,33 @@ button.board-column:focus-visible {
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Scroll fade: a row that scrolls sideways fades out at an edge that still has
+   hidden content (see lib/useScrollEdges). Set --fade-start or --fade-end to a
+   length to turn that edge on; both are 0 by default. In the components layer so
+   that a utility such as [--fade-end:2rem] wins over the defaults.
+   --------------------------------------------------------------------------- */
+@layer components {
+  .scroll-fade {
+    --fade-start: 0px;
+    --fade-end: 0px;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 var(--fade-start),
+      #000 calc(100% - var(--fade-end)),
+      transparent
+    );
+  }
+
+  html[dir='rtl'] .scroll-fade {
+    mask-image: linear-gradient(
+      to left,
+      transparent,
+      #000 var(--fade-start),
+      #000 calc(100% - var(--fade-end)),
+      transparent
+    );
+  }
+}

@@ -55,4 +55,18 @@ describe('TabLinks', () => {
     renderWithProviders(<TabLinks label="Sections" tabs={tabs} />);
     expect(screen.getByRole('navigation')).toHaveClass('overflow-x-auto', 'max-w-full');
   });
+
+  it('fades the edge that hides more tabs', () => {
+    // jsdom has no layout, so say that the row is 300 px wide but holds 500 px of tabs.
+    const sizes = { scrollWidth: 500, clientWidth: 300 };
+    for (const [name, value] of Object.entries(sizes)) {
+      vi.spyOn(HTMLElement.prototype, name as keyof typeof sizes, 'get').mockReturnValue(value);
+    }
+    renderWithProviders(<TabLinks label="Sections" tabs={tabs} />);
+
+    // Not scrolled yet: only the end side has more to show.
+    expect(screen.getByRole('navigation')).toHaveClass('[--fade-end:2.5rem]');
+    expect(screen.getByRole('navigation')).not.toHaveClass('[--fade-start:2.5rem]');
+    vi.restoreAllMocks();
+  });
 });
