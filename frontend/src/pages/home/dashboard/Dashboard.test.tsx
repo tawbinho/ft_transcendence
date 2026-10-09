@@ -87,9 +87,12 @@ describe('the "Recent results" panel', () => {
     fakeApi(answers({ 'GET /matches/mine': mine({ finished: [won] }) }));
     renderWithProviders(<Dashboard user={user} />, { user });
 
-    const link = await panel('Recent results').findByRole('link', { name: /bob/ });
+    const link = await panel('Recent results').findByRole('link', { name: 'Open match against bob' });
     expect(link).toHaveAttribute('href', '/matches/m-won');
     expect(panel('Recent results').getByText('Won')).toBeInTheDocument();
+    // The shared match list also offers the replay of a finished match.
+    const replay = panel('Recent results').getByRole('link', { name: 'Replay the match against bob' });
+    expect(replay).toHaveAttribute('href', '/watch/m-won');
   });
 
   it('explains that finished matches will show up here', async () => {
