@@ -2,7 +2,7 @@ import type { SettingsMessages } from '../en/settings';
 
 export const settingsMessages: SettingsMessages = {
   account: {
-    title: 'الحساب',
+    title: 'الإعدادات',
     profile: 'الملف الشخصي',
     displayName: 'الاسم الظاهر',
     email: 'البريد الإلكتروني',
@@ -18,7 +18,7 @@ export const settingsMessages: SettingsMessages = {
     saveName: 'حفظ الاسم',
     nameSaved: 'تم حفظ الاسم الظاهر.',
     subtitle: 'تحكّم في طريقة ظهورك للاعبين الآخرين وفي تسجيل الدخول وفي مظهر التطبيق.',
-    sections: 'أقسام الحساب',
+    sections: 'أقسام الإعدادات',
     tabProfile: 'الملف الشخصي',
     tabSecurity: 'الأمان',
     tabPreferences: 'التفضيلات',

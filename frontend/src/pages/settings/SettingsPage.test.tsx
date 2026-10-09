@@ -19,7 +19,7 @@ afterEach(() => {
 async function openSettings(path: string, answers: FakeAnswers = {}, user: User = alice) {
   const api = fakeApi({ ...headerAnswers, 'GET /blocks': [], ...answers });
   const view = renderRoute(path, { user });
-  await screen.findByRole('heading', { level: 1, name: 'Account' });
+  await screen.findByRole('heading', { level: 1, name: 'Settings' });
   // The header's own requests may still be running: let them finish before the test looks.
   await waitFor(() => expect(view.queryClient.isFetching()).toBe(0));
   return { api, ...view };
@@ -29,7 +29,7 @@ describe('tabs', () => {
   it('opens the profile section at /settings and marks its tab', async () => {
     const { container } = await openSettings('/settings');
 
-    const tabs = screen.getByRole('navigation', { name: 'Account sections' });
+    const tabs = screen.getByRole('navigation', { name: 'Settings sections' });
     expect(
       within(tabs)
         .getAllByRole('link')
@@ -48,7 +48,7 @@ describe('tabs', () => {
 
     expect(router.state.location.pathname).toBe('/settings/security');
     expect(await screen.findByRole('heading', { level: 2, name: 'Two-factor authentication' })).toBeInTheDocument();
-    const tabs = screen.getByRole('navigation', { name: 'Account sections' });
+    const tabs = screen.getByRole('navigation', { name: 'Settings sections' });
     expect(within(tabs).getByRole('link', { name: 'Security' })).toHaveAttribute('aria-current', 'page');
     expect(within(tabs).getByRole('link', { name: 'Profile' })).not.toHaveAttribute('aria-current');
   });

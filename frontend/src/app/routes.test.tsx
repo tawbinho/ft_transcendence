@@ -69,7 +69,7 @@ describe('settings and the old account address', () => {
     fakeApi(answers);
     const { router } = renderRoute('/account', { user: makeUser() });
 
-    await screen.findByRole('heading', { level: 1, name: 'Account' });
+    await screen.findByRole('heading', { level: 1, name: 'Settings' });
     expect(router.state.location.pathname).toBe('/settings');
   });
 
@@ -77,7 +77,7 @@ describe('settings and the old account address', () => {
     fakeApi(answers);
     const { router } = renderRoute('/settings/security', { user: makeUser() });
 
-    await screen.findByRole('heading', { level: 1, name: 'Account' });
+    await screen.findByRole('heading', { level: 1, name: 'Settings' });
     expect(router.state.location.pathname).toBe('/settings/security');
   });
 

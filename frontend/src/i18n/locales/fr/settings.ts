@@ -2,7 +2,7 @@ import type { SettingsMessages } from '../en/settings';
 
 export const settingsMessages: SettingsMessages = {
   account: {
-    title: 'Compte',
+    title: 'Paramètres',
     profile: 'Profil',
     displayName: 'Pseudo',
     email: 'E-mail',
@@ -18,7 +18,7 @@ export const settingsMessages: SettingsMessages = {
     saveName: 'Enregistrer le nom',
     nameSaved: 'Nom d’affichage enregistré.',
     subtitle: 'Gérez la façon dont les autres joueurs vous voient, votre connexion et l’apparence de l’application.',
-    sections: 'Sections du compte',
+    sections: 'Sections des paramètres',
     tabProfile: 'Profil',
     tabSecurity: 'Sécurité',
     tabPreferences: 'Préférences',

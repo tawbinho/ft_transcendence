@@ -1,6 +1,6 @@
 export const settingsMessages = {
   account: {
-    title: 'Account',
+    title: 'Settings',
     profile: 'Profile',
     displayName: 'Display name',
     email: 'Email',
@@ -16,7 +16,7 @@ export const settingsMessages = {
     saveName: 'Save name',
     nameSaved: 'Display name saved.',
     subtitle: 'Manage how you appear to other players, how you log in and how the app looks.',
-    sections: 'Account sections',
+    sections: 'Settings sections',
     tabProfile: 'Profile',
     tabSecurity: 'Security',
     tabPreferences: 'Preferences',
