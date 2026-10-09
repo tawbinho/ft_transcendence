@@ -1,4 +1,9 @@
-import { toPlayerListItem, type PlayerRow } from './user-view.js';
+import {
+  toPlayerListItem,
+  toProfile,
+  toProfileMatch,
+  type PlayerRow,
+} from './user-view.js';
 
 const ME = 'user-me';
 const NOW = new Date('2026-01-01T12:00:00Z').getTime();
@@ -55,5 +60,64 @@ describe('toPlayerListItem', () => {
     const item = toPlayerListItem(row({ lastSeenAt: new Date(NOW) }), ME, NOW);
     expect(item).not.toHaveProperty('lastSeenAt');
     expect(item).not.toHaveProperty('email');
+  });
+});
+
+describe('toProfile', () => {
+  it('shows when an offline player was last seen', () => {
+    const seen = new Date(NOW - 5 * 60_000);
+    const profile = toProfile(row({ lastSeenAt: seen }), ME, NOW);
+    expect(profile.online).toBe(false);
+    expect(profile.lastSeenAt).toEqual(seen);
+  });
+
+  it('hides the last seen date while the player is online', () => {
+    const profile = toProfile(row({ lastSeenAt: new Date(NOW - 1000) }), ME, NOW);
+    expect(profile.online).toBe(true);
+    expect(profile.lastSeenAt).toBeNull();
+  });
+
+  it('shows the viewer as self, online, with no last seen', () => {
+    const profile = toProfile(row({ id: ME }), ME, NOW);
+    expect(profile).toMatchObject({
+      friendship: 'self',
+      online: true,
+      lastSeenAt: null,
+    });
+  });
+
+  it('carries the stats and says nobody is blocked yet', () => {
+    const profile = toProfile(row(), ME, NOW);
+    expect(profile.stats).toEqual({ played: 6, wins: 3, losses: 2, draws: 1 });
+    expect(profile.blocked).toBe(false);
+  });
+
+  it('does not leak the email', () => {
+    expect(toProfile(row(), ME, NOW)).not.toHaveProperty('email');
+  });
+});
+
+describe('toProfileMatch', () => {
+  it('maps a row to the history shape with grouped settings', () => {
+    expect(
+      toProfileMatch({
+        id: 'm1',
+        result: 'win',
+        cols: 7,
+        rows: 6,
+        winLength: 4,
+        theme: 'ocean',
+        endedAt: new Date('2026-01-01T00:00:00Z'),
+        moveCount: 9,
+        opponent: { id: 'u2', displayName: 'ann', email: 'a@x.com' } as never,
+      }),
+    ).toEqual({
+      id: 'm1',
+      opponent: { id: 'u2', displayName: 'ann' },
+      result: 'win',
+      settings: { cols: 7, rows: 6, winLength: 4, theme: 'ocean' },
+      endedAt: new Date('2026-01-01T00:00:00Z'),
+      moveCount: 9,
+    });
   });
 });

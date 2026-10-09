@@ -4,10 +4,17 @@ import { Repository } from 'typeorm';
 import type { ListUsersQuery } from './dto/list-users.query.js';
 import { ONLINE_WINDOW_MS } from './presence.service.js';
 import { User } from './entities/user.entity.js';
+import { AppError } from '../../common/errors/app-error.js';
+import type { ListProfileMatchesQuery } from './dto/list-profile-matches.query.js';
 import {
   toPlayerListItem,
+  toProfile,
+  toProfileMatch,
   type PlayerListItemView,
   type PlayerRow,
+  type ProfileMatchRow,
+  type ProfileMatchView,
+  type ProfileView,
 } from './user-view.js';
 
 export interface PlayerPage {
@@ -15,6 +22,60 @@ export interface PlayerPage {
   total: number;
   limit: number;
   offset: number;
+}
+
+export interface ProfileMatchPage {
+  items: ProfileMatchView[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// Wins, losses and draws of every player who has finished matches, counted
+// from `match_players` (never stored, so they cannot go out of date). Joined
+// to `users u` by the search and the profile; abandoned matches do not count.
+const STATS_JOIN = `
+  LEFT JOIN (
+        SELECT mp.user_id,
+               COUNT(*) FILTER (WHERE mp.result = 'win')  AS wins,
+               COUNT(*) FILTER (WHERE mp.result = 'loss') AS losses,
+               COUNT(*) FILTER (WHERE mp.result = 'draw') AS draws
+          FROM match_players mp
+          JOIN matches m ON m.id = mp.match_id
+         WHERE m.status = 'finished'
+         GROUP BY mp.user_id
+       ) s ON s.user_id = u.id`;
+
+// The columns both queries select for a player.
+const PLAYER_COLUMNS = `
+  u.id, u.display_name, u.avatar_url, u.last_seen_at, u.created_at,
+  COALESCE(s.wins, 0) AS wins,
+  COALESCE(s.losses, 0) AS losses,
+  COALESCE(s.draws, 0) AS draws`;
+
+// One raw row as Postgres returns it (COUNT is bigint, so it comes as text).
+interface PlayerSqlRow {
+  id: string;
+  display_name: string;
+  avatar_url: string | null;
+  last_seen_at: Date | null;
+  created_at: Date;
+  wins: string;
+  losses: string;
+  draws: string;
+}
+
+function toPlayerRow(row: PlayerSqlRow): PlayerRow {
+  return {
+    id: row.id,
+    displayName: row.display_name,
+    avatarUrl: row.avatar_url,
+    lastSeenAt: row.last_seen_at,
+    createdAt: row.created_at,
+    wins: Number(row.wins),
+    losses: Number(row.losses),
+    draws: Number(row.draws),
+  };
 }
 
 // ORDER BY clauses, chosen from a fixed list (never built from user input).
@@ -99,33 +160,10 @@ export class UsersService {
       params,
     );
 
-    const rows = await this.users.query<
-      {
-        id: string;
-        display_name: string;
-        avatar_url: string | null;
-        last_seen_at: Date | null;
-        created_at: Date;
-        wins: string;
-        losses: string;
-        draws: string;
-      }[]
-    >(
-      `SELECT u.id, u.display_name, u.avatar_url, u.last_seen_at, u.created_at,
-              COALESCE(s.wins, 0) AS wins,
-              COALESCE(s.losses, 0) AS losses,
-              COALESCE(s.draws, 0) AS draws
+    const rows = await this.users.query<PlayerSqlRow[]>(
+      `SELECT ${PLAYER_COLUMNS}
          FROM users u
-         LEFT JOIN (
-               SELECT mp.user_id,
-                      COUNT(*) FILTER (WHERE mp.result = 'win')  AS wins,
-                      COUNT(*) FILTER (WHERE mp.result = 'loss') AS losses,
-                      COUNT(*) FILTER (WHERE mp.result = 'draw') AS draws
-                 FROM match_players mp
-                 JOIN matches m ON m.id = mp.match_id
-                WHERE m.status = 'finished'
-                GROUP BY mp.user_id
-              ) s ON s.user_id = u.id
+         ${STATS_JOIN}
          ${whereSql}
         ORDER BY ${ORDER_BY[query.sort ?? 'name']}
         LIMIT ${param(limit)} OFFSET ${param(offset)}`,
@@ -134,23 +172,103 @@ export class UsersService {
 
     const now = Date.now();
     return {
-      // COUNT comes back from Postgres as text (bigint): turn it into numbers.
-      items: rows.map((row) => {
-        const player: PlayerRow = {
-          id: row.id,
-          displayName: row.display_name,
-          avatarUrl: row.avatar_url,
-          lastSeenAt: row.last_seen_at,
-          createdAt: row.created_at,
-          wins: Number(row.wins),
-          losses: Number(row.losses),
-          draws: Number(row.draws),
-        };
-        return toPlayerListItem(player, viewerId, now);
-      }),
+      items: rows.map((row) =>
+        toPlayerListItem(toPlayerRow(row), viewerId, now),
+      ),
       total: Number(total[0]?.count ?? 0),
       limit,
       offset,
     };
+  }
+
+  // One player's profile, found by their exact display name (case-sensitive).
+  async getProfile(
+    viewerId: string,
+    displayName: string,
+  ): Promise<ProfileView> {
+    const rows = await this.users.query<PlayerSqlRow[]>(
+      `SELECT ${PLAYER_COLUMNS}
+         FROM users u
+         ${STATS_JOIN}
+        WHERE u.display_name = $1`,
+      [displayName],
+    );
+    if (!rows[0]) throw this.notFound();
+    return toProfile(toPlayerRow(rows[0]), viewerId);
+  }
+
+  // The finished matches of a player, newest first, each seen from that
+  // player's side. Any logged-in user can read any player's history.
+  async listProfileMatches(
+    displayName: string,
+    query: ListProfileMatchesQuery,
+  ): Promise<ProfileMatchPage> {
+    const limit = query.limit ?? 20;
+    const offset = query.offset ?? 0;
+
+    const user = await this.users.findOneBy({ displayName });
+    if (!user) throw this.notFound();
+
+    const total = await this.users.query<{ count: string }[]>(
+      `SELECT COUNT(*) AS count
+         FROM match_players mp
+         JOIN matches m ON m.id = mp.match_id
+        WHERE mp.user_id = $1 AND m.status = 'finished'`,
+      [user.id],
+    );
+
+    // `mine` is the profile owner's seat in the match, `theirs` the other
+    // one. Moves are counted with a subquery.
+    const rows = await this.users.query<
+      {
+        id: string;
+        result: ProfileMatchRow['result'];
+        cols: number;
+        rows: number;
+        win_length: number;
+        theme: string;
+        ended_at: Date;
+        move_count: string;
+        opponent_id: string;
+        opponent_name: string;
+      }[]
+    >(
+      `SELECT m.id, mine.result, m.cols, m.rows, m.win_length, m.theme,
+              m.ended_at,
+              (SELECT COUNT(*) FROM match_moves mv WHERE mv.match_id = m.id) AS move_count,
+              opp.id AS opponent_id, opp.display_name AS opponent_name
+         FROM match_players mine
+         JOIN matches m ON m.id = mine.match_id
+         JOIN match_players theirs
+              ON theirs.match_id = m.id AND theirs.user_id <> mine.user_id
+         JOIN users opp ON opp.id = theirs.user_id
+        WHERE mine.user_id = $1 AND m.status = 'finished'
+        ORDER BY m.ended_at DESC, m.id DESC
+        LIMIT $2 OFFSET $3`,
+      [user.id, limit, offset],
+    );
+
+    return {
+      items: rows.map((row) =>
+        toProfileMatch({
+          id: row.id,
+          result: row.result,
+          cols: row.cols,
+          rows: row.rows,
+          winLength: row.win_length,
+          theme: row.theme,
+          endedAt: row.ended_at,
+          moveCount: Number(row.move_count),
+          opponent: { id: row.opponent_id, displayName: row.opponent_name },
+        }),
+      ),
+      total: Number(total[0]?.count ?? 0),
+      limit,
+      offset,
+    };
+  }
+
+  private notFound(): AppError {
+    return new AppError('USER_NOT_FOUND', 'No player has this name', 404);
   }
 }

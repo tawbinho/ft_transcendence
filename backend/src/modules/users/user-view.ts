@@ -68,3 +68,81 @@ export function toPlayerListItem(
     friendship: row.id === viewerId ? 'self' : 'none',
   };
 }
+
+// ---- Profile --------------------------------------------------------------
+
+export interface ProfileView {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+  online: boolean;
+  createdAt: Date;
+  // When they were last seen; null while they are online (and when never).
+  lastSeenAt: Date | null;
+  stats: ProfileStatsView;
+  friendship: Friendship;
+  // The viewer blocked this player. Blocking is not built yet.
+  blocked: boolean;
+}
+
+export function toProfile(
+  row: PlayerRow,
+  viewerId: string,
+  now = Date.now(),
+): ProfileView {
+  const online = row.id === viewerId || isOnline(row.lastSeenAt, now);
+  return {
+    id: row.id,
+    displayName: row.displayName,
+    avatarUrl: row.avatarUrl,
+    online,
+    createdAt: row.createdAt,
+    lastSeenAt: online ? null : row.lastSeenAt,
+    stats: toStats(row),
+    friendship: row.id === viewerId ? 'self' : 'none',
+    blocked: false,
+  };
+}
+
+// ---- Match history of a profile -------------------------------------------
+
+// A finished match, seen from the profile owner's side.
+export interface ProfileMatchRow {
+  id: string;
+  result: 'win' | 'loss' | 'draw';
+  cols: number;
+  rows: number;
+  winLength: number;
+  theme: string;
+  endedAt: Date;
+  moveCount: number;
+  opponent: { id: string; displayName: string };
+}
+
+export interface ProfileMatchView {
+  id: string;
+  opponent: { id: string; displayName: string };
+  result: 'win' | 'loss' | 'draw';
+  settings: { cols: number; rows: number; winLength: number; theme: string };
+  endedAt: Date;
+  moveCount: number;
+}
+
+export function toProfileMatch(row: ProfileMatchRow): ProfileMatchView {
+  return {
+    id: row.id,
+    opponent: {
+      id: row.opponent.id,
+      displayName: row.opponent.displayName,
+    },
+    result: row.result,
+    settings: {
+      cols: row.cols,
+      rows: row.rows,
+      winLength: row.winLength,
+      theme: row.theme,
+    },
+    endedAt: row.endedAt,
+    moveCount: row.moveCount,
+  };
+}

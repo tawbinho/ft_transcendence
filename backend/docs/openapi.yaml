@@ -809,8 +809,7 @@ paths:
       summary: A player's profile
       description: 'The display name must match exactly, as stored (case-sensitive). The viewer''s own profile has
         `friendship: self` and `online: true`.'
-      x-status: new
-      x-demo-feature: users
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/DisplayName'
       responses:
@@ -846,8 +845,7 @@ paths:
       operationId: listProfileMatches
       summary: A player's finished matches
       description: Newest first (by `endedAt`). Every logged-in user can read every player's history.
-      x-status: new
-      x-demo-feature: users
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/DisplayName'
       - $ref: '#/components/parameters/Limit'

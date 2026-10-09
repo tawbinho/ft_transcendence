@@ -152,9 +152,12 @@ All `/api/tournaments` routes need a logged-in user.
 | Route                              | Description                                         |
 | ---------------------------------- | --------------------------------------------------- |
 | `GET  /api/users`                  | search players: `search`, `online`, `friends`, `sort` (`name`, `wins`, `newest`), `limit`, `offset` |
+| `GET  /api/users/:displayName`     | one player's profile: stats, `online`, `lastSeenAt` (exact name, case-sensitive) |
+| `GET  /api/users/:displayName/matches` | their finished matches, newest first (`limit`, `offset`) |
 
-Needs a logged-in user. Each player comes with `online` and their `stats`
-(played, wins, losses, draws).
+Needs a logged-in user, and every logged-in user can read every profile and
+history. Each player comes with `online` and their `stats` (played, wins,
+losses, draws). Error code: `USER_NOT_FOUND`.
 
 **Login uses database sessions.** Signup and login set one httpOnly cookie,
 `session`, holding a random token (valid `SESSION_TTL_DAYS`, 7 by default).
