@@ -38,37 +38,36 @@ export function RecentMatches({ player }: { player: Profile }) {
         )}
       >
         {matches.data.items.map((match) => {
-          const cells = (
-            <>
-              <span className="truncate">
-                <span className="text-muted">{t('profile.versus')} </span>
-                <span className="font-semibold">{match.opponent.displayName}</span>
-              </span>
-              <span className="justify-self-end sm:order-last">
-                <Badge tone={RESULT_TONES[match.result]}>{t(`profile.result.${match.result}`)}</Badge>
-              </span>
-              <span className="text-sm text-muted">
-                <span dir="ltr">{t('game.size', { cols: match.settings.cols, rows: match.settings.rows })}</span> ·{' '}
-                {t('game.connect', { n: match.settings.winLength })}
-              </span>
-              <span className="text-end text-sm text-muted sm:text-start">
-                <time dateTime={match.endedAt}>{formatDateTime(match.endedAt, i18n.language)}</time>
-              </span>
-            </>
-          );
+          const opponent = match.opponent.displayName;
           return (
-            <li key={match.id}>
-              {self ? (
-                <Link
-                  to={paths.match(match.id)}
-                  aria-label={t('profile.openMatch', { name: match.opponent.displayName })}
-                  className={cn(ROW_CLASS, 'transition hover:bg-surface-2')}
-                >
-                  {cells}
-                </Link>
-              ) : (
-                <div className={ROW_CLASS}>{cells}</div>
-              )}
+            // On your own profile the opponent's name is a link that covers the whole row (the ::after layer).
+            <li key={match.id} className={cn('relative', self && 'transition hover:bg-surface-2')}>
+              <div className={ROW_CLASS}>
+                <span className="truncate">
+                  <span className="text-muted">{t('profile.versus')} </span>
+                  {self ? (
+                    <Link
+                      to={paths.match(match.id)}
+                      aria-label={t('profile.openMatch', { name: opponent })}
+                      className="font-semibold after:absolute after:inset-0"
+                    >
+                      {opponent}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold">{opponent}</span>
+                  )}
+                </span>
+                <span className="justify-self-end sm:order-last">
+                  <Badge tone={RESULT_TONES[match.result]}>{t(`profile.result.${match.result}`)}</Badge>
+                </span>
+                <span className="text-sm text-muted">
+                  <span dir="ltr">{t('game.size', { cols: match.settings.cols, rows: match.settings.rows })}</span> ·{' '}
+                  {t('game.connect', { n: match.settings.winLength })}
+                </span>
+                <span className="text-end text-sm text-muted sm:text-start">
+                  <time dateTime={match.endedAt}>{formatDateTime(match.endedAt, i18n.language)}</time>
+                </span>
+              </div>
             </li>
           );
         })}
