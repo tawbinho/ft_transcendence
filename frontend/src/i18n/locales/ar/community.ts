@@ -1,6 +1,9 @@
 import type { CommunityMessages } from '../en/community';
 
 export const communityMessages: CommunityMessages = {
+  community: {
+    tabsLabel: 'المجتمع',
+  },
   players: {
     title: 'اللاعبون',
     subtitle: 'ابحث عن لاعبين، واعرف من المتصل، وأضف أصدقاء.',
@@ -39,6 +42,9 @@ export const communityMessages: CommunityMessages = {
     waitingForAnswer: 'في انتظار الرد',
     messageName: 'مراسلة {{name}}',
     challengeName: 'تحدّي {{name}}',
+    manageBlocked: 'إدارة اللاعبين المحظورين',
+    blockedHint: 'اللاعبون الذين حظرتهم موجودون في إعداداتك.',
+    onlineCount: 'المتصلون الآن: {{count}}',
   },
   block: {
     block: 'حظر',
@@ -82,7 +88,20 @@ export const communityMessages: CommunityMessages = {
     unreadCount: 'غير مقروءة: {{count}}',
   },
   leaderboard: {
-    title: 'لوحة المتصدرين',
-    soon: 'ترتيب أفضل اللاعبين قادم قريباً.',
+    title: 'المتصدرون',
+    subtitle: 'اللاعبون الأكثر فوزًا.',
+    soon: 'ترتيب أفضل اللاعبين قادم قريبًا.',
+    podium: 'أفضل ثلاثة لاعبين',
+    ranking: 'الترتيب',
+    rank: 'المرتبة',
+    player: 'اللاعب',
+    wins: 'الفوز',
+    losses: 'الخسارة',
+    draws: 'التعادل',
+    winRate: 'نسبة الفوز',
+    place: 'المركز {{rank}}',
+    winsCount: 'مرات الفوز: {{count}}',
+    noGames: 'لا مباريات بعد',
+    empty: 'لا يوجد لاعب مصنَّف بعد.',
   },
 };

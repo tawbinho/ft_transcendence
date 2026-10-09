@@ -1,4 +1,7 @@
 export const communityMessages = {
+  community: {
+    tabsLabel: 'Community',
+  },
   players: {
     title: 'Players',
     subtitle: 'Find players, see who is online and add friends.',
@@ -37,6 +40,9 @@ export const communityMessages = {
     waitingForAnswer: 'Waiting for an answer',
     messageName: 'Message {{name}}',
     challengeName: 'Challenge {{name}}',
+    manageBlocked: 'Manage blocked players',
+    blockedHint: 'Players you blocked are listed in your settings.',
+    onlineCount: 'Online now: {{count}}',
   },
   block: {
     block: 'Block',
@@ -82,7 +88,20 @@ export const communityMessages = {
   },
   leaderboard: {
     title: 'Leaderboard',
+    subtitle: 'The players with the most wins.',
     soon: 'The ranking of the best players is coming soon.',
+    podium: 'Top three players',
+    ranking: 'Ranking',
+    rank: 'Rank',
+    player: 'Player',
+    wins: 'Wins',
+    losses: 'Losses',
+    draws: 'Draws',
+    winRate: 'Win rate',
+    place: 'Place {{rank}}',
+    winsCount: 'Wins: {{count}}',
+    noGames: 'No games yet',
+    empty: 'No player is ranked yet.',
   },
 };
 

@@ -1,6 +1,9 @@
 import type { CommunityMessages } from '../en/community';
 
 export const communityMessages: CommunityMessages = {
+  community: {
+    tabsLabel: 'Communauté',
+  },
   players: {
     title: 'Joueurs',
     subtitle: 'Trouvez des joueurs, voyez qui est en ligne et ajoutez des amis.',
@@ -39,6 +42,9 @@ export const communityMessages: CommunityMessages = {
     waitingForAnswer: 'En attente de réponse',
     messageName: 'Écrire à {{name}}',
     challengeName: 'Défier {{name}}',
+    manageBlocked: 'Gérer les joueurs bloqués',
+    blockedHint: 'Les joueurs que vous avez bloqués sont dans vos paramètres.',
+    onlineCount: 'En ligne : {{count}}',
   },
   block: {
     block: 'Bloquer',
@@ -85,6 +91,19 @@ export const communityMessages: CommunityMessages = {
   },
   leaderboard: {
     title: 'Classement',
+    subtitle: 'Les joueurs qui ont le plus de victoires.',
     soon: 'Le classement des meilleurs joueurs arrive bientôt.',
+    podium: 'Les trois meilleurs joueurs',
+    ranking: 'Classement',
+    rank: 'Rang',
+    player: 'Joueur',
+    wins: 'Victoires',
+    losses: 'Défaites',
+    draws: 'Nuls',
+    winRate: 'Taux de victoire',
+    place: 'Place {{rank}}',
+    winsCount: 'Victoires : {{count}}',
+    noGames: 'Aucune partie',
+    empty: 'Aucun joueur n’est encore classé.',
   },
 };
