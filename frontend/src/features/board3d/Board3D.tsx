@@ -39,6 +39,7 @@ interface Board3DProps {
   onDrop?: (col: number) => void; // leave out for a read-only board
   disabled?: boolean; // true while the player may not move
   theme?: string; // classic, ocean, sunset or midnight
+  backdrop?: string; // colour of the room around the board: use the page's, so the canvas blends in
   label?: string; // read by screen readers
   describeColumn?: (col: number) => string; // announced when a column is chosen with the keyboard
   autoFocus?: boolean; // focus the board once, when it appears, so a game can start with the keyboard
@@ -65,6 +66,7 @@ export function Board3D({
   onDrop,
   disabled = false,
   theme,
+  backdrop = '#e8ecf6',
   label = 'Connect Four board in 3D',
   describeColumn,
   autoFocus = false,
@@ -150,7 +152,7 @@ export function Board3D({
         gl={{ toneMapping: NeutralToneMapping }}
         camera={{ fov: 35, position: [0, 5, 20] }}
       >
-        <Stage theme={colors} floorY={bottom - middle} />
+        <Stage backdrop={backdrop} floorY={bottom - middle} />
         <CameraRig width={width} height={top - bottom} />
 
         <group position={[0, -middle, 0]}>

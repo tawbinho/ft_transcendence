@@ -1,19 +1,20 @@
 // WHY THIS FILE EXISTS
 // The room the board stands in: background, fog, lights, shadows and the
 // table. This is what turns a board floating in empty space into a scene.
+// The room's colour is given by the page (the backdrop prop), so it is light on
+// a light page and dark on a dark one.
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useThree } from '@react-three/fiber';
-import { PMREMGenerator } from 'three';
+import { Color, PMREMGenerator } from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import type { SceneTheme } from './themes';
 
 interface StageProps {
-  theme: SceneTheme;
+  backdrop: string; // background colour, and the fog colour the table fades into
   floorY: number; // height of the table top
 }
 
-export function Stage({ theme, floorY }: StageProps) {
+export function Stage({ backdrop, floorY }: StageProps) {
   const renderer = useThree((state) => state.gl);
   const scene = useThree((state) => state.scene);
 
@@ -35,12 +36,21 @@ export function Stage({ theme, floorY }: StageProps) {
     };
   }, [renderer, scene]);
 
+  // The table is a little darker than a light backdrop so the shadows show on it; on a
+  // dark backdrop it is a little lighter, because the lights already brighten it.
+  // (Lightness here is in three.js's linear colour space, where dark colours are near 0.)
+  const table = useMemo(() => {
+    const color = new Color(backdrop);
+    const isLight = color.getHSL({ h: 0, s: 0, l: 0 }).l > 0.5;
+    return color.offsetHSL(0, 0, isLight ? -0.06 : 0.015);
+  }, [backdrop]);
+
   return (
     <>
-      <color attach="background" args={[theme.sky]} />
+      <color attach="background" args={[backdrop]} />
       {/* Far away, everything fades into the background colour, so the table
           has no visible edge. Starts well behind the board. */}
-      <fog attach="fog" args={[theme.sky, 40, 120]} />
+      <fog attach="fog" args={[backdrop, 40, 120]} />
 
       {/* The "sun": the only light that casts shadows. The shadow camera is
           the box, seen from the light, inside which shadows are computed;
@@ -59,7 +69,7 @@ export function Stage({ theme, floorY }: StageProps) {
       {/* The table top. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, floorY, 0]} receiveShadow>
         <planeGeometry args={[400, 400]} />
-        <meshStandardMaterial color={theme.table} roughness={0.85} />
+        <meshStandardMaterial color={table} roughness={0.85} />
       </mesh>
     </>
   );

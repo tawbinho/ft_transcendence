@@ -31,12 +31,18 @@ describe('Board3DView', () => {
     expect(props.game).toEqual({ board: model.board, current: 2, lastMove: null, winningLine: null });
   });
 
-  it('gives the board a 4:3 box that stays on screen', () => {
+  it('fills the box it is put in, instead of choosing a size of its own', () => {
     renderWithProviders(<Board3DView model={model} theme="classic" />);
 
-    const { className } = received.mock.calls[0]?.[0];
-    expect(className).toContain('aspect-[4/3]');
-    expect(className).toContain('max-h-[70vh]');
+    expect(received.mock.calls[0]?.[0].className).toContain('size-full');
+  });
+
+  it("paints the room in the page's stage colour, so the canvas blends in", () => {
+    document.documentElement.style.setProperty('--c-surface-2', ' #1b2336');
+    renderWithProviders(<Board3DView model={model} theme="classic" />);
+    document.documentElement.style.removeProperty('--c-surface-2');
+
+    expect(received.mock.calls[0]?.[0].backdrop).toBe('#1b2336');
   });
 
   it('describes how to play when the board can be played', () => {
