@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AccentPicker } from '@/components/AccentPicker';
 import { Card, OptionGroup } from '@/components/ui';
 import { loadLastSettings, saveLastSettings } from '@/features/game/lastSettings';
 import { BOARD_THEMES, type BoardTheme } from '@/features/game/settings';
 import { ColorSchemeSelect } from '@/layout/ColorSchemeSelect';
 import { LanguageSelect } from '@/layout/LanguageSelect';
 
-/** Language, light or dark, and the board colors new games start with. All kept on this device. */
+/** Language, light or dark, accent color, and the board colors new games start with. All kept on this device. */
 export function PreferencesSection() {
   const { t } = useTranslation();
   const [theme, setTheme] = useState<BoardTheme>(() => loadLastSettings().theme);
@@ -25,6 +26,7 @@ export function PreferencesSection() {
           <LanguageSelect showLabel />
           <ColorSchemeSelect showLabel />
         </div>
+        <AccentPicker />
       </Card>
 
       <Card className="flex flex-col gap-4">

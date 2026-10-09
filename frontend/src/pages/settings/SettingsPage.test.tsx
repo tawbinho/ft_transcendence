@@ -10,7 +10,11 @@ import { renderRoute } from '@/test/render';
 
 const alice = makeUser();
 
-afterEach(() => window.localStorage.clear());
+afterEach(() => {
+  window.localStorage.clear();
+  // The accent test puts the chosen accent on <html>.
+  delete document.documentElement.dataset.accent;
+});
 
 async function openSettings(path: string, answers: FakeAnswers = {}, user: User = alice) {
   const api = fakeApi({ ...headerAnswers, 'GET /blocks': [], ...answers });
@@ -203,6 +207,19 @@ describe('preferences section', () => {
       winLength: 5,
       theme: 'ocean',
     });
+    await expectNoA11yViolations(container);
+  });
+
+  it('lets the member pick an accent color, saved on this device', async () => {
+    const { events, container } = await openSettings('/settings/preferences');
+
+    expect(screen.getByRole('group', { name: 'Accent color' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Blue' })).toBeChecked();
+    await events.click(screen.getByText('Violet'));
+
+    expect(screen.getByRole('radio', { name: 'Violet' })).toBeChecked();
+    expect(document.documentElement.dataset.accent).toBe('violet');
+    expect(readStorage('accent')).toBe('violet');
     await expectNoA11yViolations(container);
   });
 });
