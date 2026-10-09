@@ -76,7 +76,8 @@ export function LocalOverview({
               <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-muted">{t('localTournament.nextMatch')}</h2>
                 <p className="text-2xl font-extrabold break-words">
-                  {nextPlayers[0]} <span className="text-muted">{t('localTournament.vs')}</span> {nextPlayers[1]}
+                  <bdi>{nextPlayers[0]}</bdi> <span className="text-muted">{t('localTournament.vs')}</span>{' '}
+                  <bdi>{nextPlayers[1]}</bdi>
                 </p>
               </div>
               <Button size="lg" onClick={() => onPlay(next)}>
