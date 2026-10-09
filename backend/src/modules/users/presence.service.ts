@@ -1,0 +1,52 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity.js';
+
+// A user is online while they were seen in the last minute. The app sends a
+// request at least every 30 seconds while a tab is visible, so a player with
+// the app open never drops out. (When WebSockets exist, "has an open socket"
+// replaces this.)
+export const ONLINE_WINDOW_MS = 60_000;
+
+// We write "seen" to the database at most this often per user, so a busy
+// page does not turn every request into an UPDATE.
+const TOUCH_EVERY_MS = 30_000;
+
+// Pure: is this "last seen" date recent enough to count as online?
+export function isOnline(lastSeenAt: Date | null, now = Date.now()): boolean {
+  return lastSeenAt !== null && now - lastSeenAt.getTime() < ONLINE_WINDOW_MS;
+}
+
+// WHY THIS FILE EXISTS
+// Presence: who is online. The session guard calls touch() on every request
+// of a logged-in user; views call isOnline() on the stored date.
+@Injectable()
+export class PresenceService {
+  private readonly logger = new Logger(PresenceService.name);
+
+  // userId -> when we last wrote it. Lives in memory, so it resets when the
+  // server restarts (one extra write, harmless) and is per server instance.
+  private readonly lastWrite = new Map<string, number>();
+
+  constructor(
+    @InjectRepository(User) private readonly users: Repository<User>,
+  ) {}
+
+  // Records "this user is here now". Never throws and never makes the request
+  // wait: presence is nice to have, it must not break a real action.
+  touch(userId: string): void {
+    const now = Date.now();
+    const previous = this.lastWrite.get(userId) ?? 0;
+    if (now - previous < TOUCH_EVERY_MS) return;
+    this.lastWrite.set(userId, now);
+
+    void this.users
+      .update({ id: userId }, { lastSeenAt: new Date(now) })
+      .catch((error: unknown) => {
+        // Let the next request retry instead of waiting 30 more seconds.
+        this.lastWrite.delete(userId);
+        this.logger.warn(`Could not record presence: ${String(error)}`);
+      });
+  }
+}

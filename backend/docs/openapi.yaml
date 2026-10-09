@@ -750,8 +750,7 @@ paths:
       summary: Search players
       description: 'The viewer is in the results too, with `friendship: self`. The Players page keeps the filters
         in its URL and sends the search 300 ms after the last key press.'
-      x-status: new
-      x-demo-feature: users
+      x-status: implemented
       parameters:
       - name: search
         in: query
