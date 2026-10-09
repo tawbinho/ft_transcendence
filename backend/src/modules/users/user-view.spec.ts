@@ -18,6 +18,8 @@ function row(overrides: Partial<PlayerRow> = {}): PlayerRow {
     wins: 3,
     losses: 2,
     draws: 1,
+    friendship: 'none',
+    blocked: false,
     ...overrides,
   };
 }
@@ -48,6 +50,10 @@ describe('toPlayerListItem', () => {
       false,
     );
     expect(toPlayerListItem(row(), ME, NOW).online).toBe(false);
+  });
+
+  it('passes on the friendship of the pair', () => {
+    expect(toPlayerListItem(row({ friendship: 'request_received' }), ME, NOW).friendship).toBe('request_received');
   });
 
   it('shows the viewer as self and online', () => {
@@ -86,10 +92,11 @@ describe('toProfile', () => {
     });
   });
 
-  it('carries the stats and says nobody is blocked yet', () => {
-    const profile = toProfile(row(), ME, NOW);
+  it('carries the stats, the friendship and the blocked flag', () => {
+    const profile = toProfile(row({ friendship: 'friends', blocked: true }), ME, NOW);
     expect(profile.stats).toEqual({ played: 6, wins: 3, losses: 2, draws: 1 });
-    expect(profile.blocked).toBe(false);
+    expect(profile.friendship).toBe('friends');
+    expect(profile.blocked).toBe(true);
   });
 
   it('does not leak the email', () => {

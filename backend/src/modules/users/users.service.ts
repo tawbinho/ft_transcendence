@@ -7,6 +7,7 @@ import { User } from './entities/user.entity.js';
 import { AppError } from '../../common/errors/app-error.js';
 import type { ListProfileMatchesQuery } from './dto/list-profile-matches.query.js';
 import {
+  type Friendship,
   toPlayerListItem,
   toProfile,
   toProfileMatch,
@@ -46,12 +47,28 @@ const STATS_JOIN = `
          GROUP BY mp.user_id
        ) s ON s.user_id = u.id`;
 
+// How the viewer relates to each player: the friendship row of the pair (the
+// two ids are stored smaller first, so LEAST and GREATEST find it whichever
+// side sent the request). `viewer` is the SQL placeholder of the viewer's id,
+// for example "$1::uuid".
+const friendJoin = (viewer: string): string => `
+  LEFT JOIN friendships f
+         ON f.user_low_id = LEAST(u.id, ${viewer})
+        AND f.user_high_id = GREATEST(u.id, ${viewer})`;
+
 // The columns both queries select for a player.
-const PLAYER_COLUMNS = `
+const playerColumns = (viewer: string): string => `
   u.id, u.display_name, u.avatar_url, u.last_seen_at, u.created_at,
   COALESCE(s.wins, 0) AS wins,
   COALESCE(s.losses, 0) AS losses,
-  COALESCE(s.draws, 0) AS draws`;
+  COALESCE(s.draws, 0) AS draws,
+  CASE WHEN u.id = ${viewer} THEN 'self'
+       WHEN f.user_low_id IS NULL THEN 'none'
+       WHEN f.status = 'accepted' THEN 'friends'
+       WHEN f.requester_id = ${viewer} THEN 'request_sent'
+       ELSE 'request_received' END AS friendship,
+  EXISTS (SELECT 1 FROM blocks b
+           WHERE b.blocker_id = ${viewer} AND b.blocked_id = u.id) AS blocked`;
 
 // One raw row as Postgres returns it (COUNT is bigint, so it comes as text).
 interface PlayerSqlRow {
@@ -63,6 +80,8 @@ interface PlayerSqlRow {
   wins: string;
   losses: string;
   draws: string;
+  friendship: Friendship;
+  blocked: boolean;
 }
 
 function toPlayerRow(row: PlayerSqlRow): PlayerRow {
@@ -75,6 +94,8 @@ function toPlayerRow(row: PlayerSqlRow): PlayerRow {
     wins: Number(row.wins),
     losses: Number(row.losses),
     draws: Number(row.draws),
+    friendship: row.friendship,
+    blocked: row.blocked,
   };
 }
 
@@ -137,6 +158,10 @@ export class UsersService {
       return `$${params.length}`;
     };
 
+    // The viewer's id is the FIRST parameter: the friendship columns and the
+    // filters below all refer to it.
+    const viewer = `${param(viewerId)}::uuid`;
+
     if (query.search) {
       // % and _ are wildcards in LIKE: escape them so "50%" searches for "50%".
       const escaped = query.search.replace(/[\\%_]/g, '\\$&');
@@ -146,24 +171,24 @@ export class UsersService {
       // The viewer counts as online to themselves (see toPlayerListItem).
       // COALESCE: a player never seen has last_seen_at NULL, and in SQL a
       // comparison with NULL is "unknown", which NOT would keep unknown.
-      const recent = `(u.id = ${param(viewerId)} OR COALESCE(u.last_seen_at > now() - ${param(ONLINE_WINDOW_MS)} * interval '1 millisecond', FALSE))`;
+      const recent = `(u.id = ${viewer} OR COALESCE(u.last_seen_at > now() - ${param(ONLINE_WINDOW_MS)} * interval '1 millisecond', FALSE))`;
       where.push(query.online ? recent : `NOT ${recent}`);
     }
     if (query.friends) {
-      // Friendships are not built yet, so nobody is a friend.
-      where.push('FALSE');
+      where.push("f.status = 'accepted'");
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
     const total = await this.users.query<{ count: string }[]>(
-      `SELECT COUNT(*) AS count FROM users u ${whereSql}`,
+      `SELECT COUNT(*) AS count FROM users u ${friendJoin(viewer)} ${whereSql}`,
       params,
     );
 
     const rows = await this.users.query<PlayerSqlRow[]>(
-      `SELECT ${PLAYER_COLUMNS}
+      `SELECT ${playerColumns(viewer)}
          FROM users u
          ${STATS_JOIN}
+         ${friendJoin(viewer)}
          ${whereSql}
         ORDER BY ${ORDER_BY[query.sort ?? 'name']}
         LIMIT ${param(limit)} OFFSET ${param(offset)}`,
@@ -187,11 +212,12 @@ export class UsersService {
     displayName: string,
   ): Promise<ProfileView> {
     const rows = await this.users.query<PlayerSqlRow[]>(
-      `SELECT ${PLAYER_COLUMNS}
+      `SELECT ${playerColumns('$2::uuid')}
          FROM users u
          ${STATS_JOIN}
+         ${friendJoin('$2::uuid')}
         WHERE u.display_name = $1`,
-      [displayName],
+      [displayName, viewerId],
     );
     if (!rows[0]) throw this.notFound();
     return toProfile(toPlayerRow(rows[0]), viewerId);

@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, type EntityManager, Repository } from 'typeorm';
 import { AppError } from '../../common/errors/app-error.js';
 import { UsersService } from '../users/users.service.js';
+import { BlocksService } from '../friends/blocks.service.js';
 import type {
   CreateMatchDto,
   MatchSettingsDto,
@@ -58,6 +59,7 @@ export class MatchesService {
     private readonly players: Repository<MatchPlayer>,
     @InjectRepository(MatchMove) private readonly moves: Repository<MatchMove>,
     private readonly users: UsersService,
+    private readonly blocks: BlocksService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -89,6 +91,10 @@ export class MatchesService {
           'You cannot invite yourself',
           400,
         );
+      }
+      // Nobody can invite a player who blocked them, or whom they blocked.
+      if (await this.blocks.isBlockedBetween(userId, invited.id)) {
+        throw new AppError('BLOCKED', 'You cannot invite this player', 403);
       }
       invitedUserId = invited.id;
     }

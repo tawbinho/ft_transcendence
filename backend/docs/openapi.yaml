@@ -22,7 +22,7 @@ info:
     - Every route is under `/api`, on the same origin as the app (an HTTPS proxy sends `/api` and `/socket.io` to the backend, everything else to the frontend).
     - Login is the httpOnly `session` cookie. Every route needs it except signup, login, 2FA verify, logout and `GET /auth/me`. Without a valid session: `401 UNAUTHORIZED`.
     - Success: any 2xx with `{ "data": ... }` (`{ "data": null }` when there is nothing to return). Failure: `{ "error": { "code", "message" } }`.
-    - A body or query that breaks a rule: `400 VALIDATION_ERROR`. An id in a path that is not a UUID should be `VALIDATION_ERROR` too (today the backend answers `BAD_REQUEST`).
+    - A body or query that breaks a rule: `400 VALIDATION_ERROR`. An id in a path that is not a UUID is `VALIDATION_ERROR` too.
     - Ids are UUID strings. Dates are ISO 8601 in UTC.
     - Long lists take `limit` (1 to 50, default 20) and `offset` (default 0) and answer `{ items, total, limit, offset }`.
     - Rate limit: 100 requests a minute per client address and per route; less on signup (5), login (10), 2FA (5) and creating a match (20). Over: `429 RATE_LIMITED`.
@@ -42,11 +42,11 @@ tags:
 - name: matches
   description: Online games. Implemented, except `live` (new) and the spectator change on `GET /matches/{id}`.
 - name: users
-  description: Player search, profiles, display name and avatar. All implemented (`friendship` is only `self` or `none`, and `blocked` is always false, until friends and blocks exist).
+  description: Player search, profiles, display name and avatar. All implemented.
 - name: friends
-  description: Friend requests and friends. New (demo feature `friends`).
+  description: Friend requests and friends. Implemented (the `friends:update` socket event waits for the WebSockets gateway).
 - name: chat
-  description: Private messages, match invitations, read receipts, typing, and blocking. New (demo feature `chat`).
+  description: Private messages, match invitations, read receipts, typing, and blocking. Blocking is implemented; the rest is new (demo feature `chat`).
 - name: tournaments
   description: 'Online single-elimination tournaments with 4 or 8 places. Implemented: list, create, read, cancel,
     join, leave (`rounds` is always empty). New: `start` (the bracket, the matches and advancing winners), still
@@ -389,8 +389,8 @@ paths:
       operationId: createMatch
       summary: Create a match
       description: 'Creates a `waiting` match and puts the caller in it, in seat 1 or 2 chosen at random. With `opponentDisplayName`
-        only that player can join; otherwise anyone who has the match id can. Rate limit: 20 per minute. Once blocking
-        exists, inviting a player who blocked you, or whom you blocked, answers `BLOCKED`.'
+        only that player can join; otherwise anyone who has the match id can. Rate limit: 20 per minute. Inviting a player
+        who blocked you, or whom you blocked, answers `BLOCKED`.'
       x-status: implemented
       requestBody:
         required: false
@@ -421,7 +421,7 @@ paths:
                   code: VALIDATION_ERROR
                   message: See the error code table
         '403':
-          description: 'NEW, once blocking exists. Codes: `BLOCKED`.'
+          description: 'The invited player blocked you, or you blocked them. Codes: `BLOCKED`.'
           content:
             application/json:
               schema:
@@ -562,7 +562,7 @@ paths:
                   code: MATCH_NOT_FOUND
                   message: See the error code table
         '400':
-          description: 'The id is not a UUID (today the backend answers `BAD_REQUEST`). Codes: `VALIDATION_ERROR`.'
+          description: 'The id is not a UUID. Codes: `VALIDATION_ERROR`.'
           content:
             application/json:
               schema:
@@ -1010,8 +1010,7 @@ paths:
       - friends
       operationId: getFriends
       summary: Friends and friend requests
-      x-status: new
-      x-demo-feature: friends
+      x-status: implemented
       responses:
         '200':
           description: Success
@@ -1037,8 +1036,7 @@ paths:
       description: 'Sends a friend request, or accepts theirs if they already sent one. Idempotent: to a friend,
         or to a player who already has the viewer''s request, it changes nothing and answers the current `friendship`.
         Sends `friends:update` to both players.'
-      x-status: new
-      x-demo-feature: friends
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/UserId'
       responses:
@@ -1094,8 +1092,7 @@ paths:
       summary: Remove a friend, cancel or decline a request
       description: 'Removes the friend, cancels the viewer''s request, or declines theirs. Idempotent: with nothing
         to remove it answers `none`. Sends `friends:update` to both players.'
-      x-status: new
-      x-demo-feature: friends
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/UserId'
       responses:
@@ -1370,8 +1367,7 @@ paths:
       - chat
       operationId: listBlocks
       summary: The players I blocked
-      x-status: new
-      x-demo-feature: chat
+      x-status: implemented
       responses:
         '200':
           description: Success
@@ -1399,8 +1395,7 @@ paths:
       description: Also ends any friendship or friend request between the two and sends `friends:update` to both.
         While either player blocks the other, messages, friend requests and match invitations between them answer
         `BLOCKED`; earlier messages stay. Idempotent.
-      x-status: new
-      x-demo-feature: chat
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/UserId'
       responses:
@@ -1438,8 +1433,7 @@ paths:
       operationId: unblockPlayer
       summary: Unblock a player
       description: Idempotent.
-      x-status: new
-      x-demo-feature: chat
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/UserId'
       responses:

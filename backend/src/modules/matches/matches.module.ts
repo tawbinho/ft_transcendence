@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module.js';
+import { FriendsModule } from '../friends/friends.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { MatchMove } from './entities/match-move.entity.js';
 import { MatchPlayer } from './entities/match-player.entity.js';
@@ -14,6 +15,7 @@ import { MatchesService } from './matches.service.js';
   imports: [
     TypeOrmModule.forFeature([Match, MatchPlayer, MatchMove]),
     UsersModule, // for UsersService (finding an invited player by name)
+    FriendsModule, // for BlocksService (no invitations between blocked players)
     AuthModule, // for SessionGuard (every route needs a logged-in user)
   ],
   controllers: [MatchesController],

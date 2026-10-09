@@ -159,11 +159,27 @@ All `/api/tournaments` routes need a logged-in user.
 | `PUT  /api/users/me/avatar`        | upload my picture: form file `avatar` (PNG, JPEG or WebP, 2 MB) |
 | `DELETE /api/users/me/avatar`      | back to the default avatar                          |
 | `GET  /api/avatars/:file`          | a stored picture (the file itself, no login needed) |
+| `GET  /api/friends`                | my friends, requests sent to me, requests I sent    |
+| `PUT  /api/friends/:userId`        | send a friend request, or accept theirs             |
+| `DELETE /api/friends/:userId`      | remove a friend, cancel or decline a request        |
+| `GET  /api/blocks`                 | the players I blocked                               |
+| `PUT  /api/blocks/:userId`         | block a player (also ends any friendship)           |
+| `DELETE /api/blocks/:userId`       | unblock                                             |
 
 Needs a logged-in user, and every logged-in user can read every profile and
 history. Each player comes with `online` and their `stats` (played, wins,
 losses, draws). Error codes: `USER_NOT_FOUND`, `DISPLAY_NAME_TAKEN`,
 `AVATAR_TOO_LARGE`, `AVATAR_INVALID_TYPE`.
+
+**Friends and blocks.** One row per pair of players in `friendships` (the two
+ids are stored smaller first, so a request in either direction meets in the same
+row; a CHECK enforces it). `PUT /friends/:id` sends a request, or accepts the
+one the other player already sent; asking twice, or both players asking at the
+same moment, is safe. Declining, cancelling and removing all delete the row.
+Blocking ends any friendship, and while EITHER player blocks the other, friend
+requests and match invitations between them answer `BLOCKED`. Error codes:
+`CANNOT_FRIEND_SELF`, `BLOCKED`, `USER_NOT_FOUND`. An id that is not a UUID
+answers `VALIDATION_ERROR`.
 
 **Profile pictures.** The file type is decided from the file's first bytes, not
 from the type the browser declares. A picture is stored under a new random
@@ -221,7 +237,7 @@ codes: `TOURNAMENT_NOT_FOUND`, `TOURNAMENT_NOT_OPEN`, `TOURNAMENT_FULL`,
 the last minute: the session guard writes `users.last_seen_at` (at most every
 30 seconds per user). WebSockets will replace this later. The wins, losses and
 draws of the search are counted from the finished matches on every request,
-never stored. `friendship` is only `self` or `none` until friends exist.
+never stored. 
 
 **Not built yet:** starting a tournament, the bracket, the matches it creates
 and advancing winners (`rounds` is always empty, and players are always

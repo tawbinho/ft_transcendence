@@ -5,8 +5,7 @@ import { isOnline } from './presence.service.js';
 // (PlayerListItem in backend/docs/openapi.yaml). PURE: no database, no Nest,
 // so it is easy to test.
 
-// How the viewer relates to another player. Friends do not exist yet, so only
-// `self` and `none` are produced for now.
+// How the viewer relates to another player.
 export type Friendship =
   | 'self'
   | 'none'
@@ -24,6 +23,10 @@ export interface PlayerRow {
   wins: number;
   losses: number;
   draws: number;
+  // The viewer's relation to this player and whether they blocked them. The
+  // database works both out (see playerColumns in users.service.ts).
+  friendship: Friendship;
+  blocked: boolean;
 }
 
 export interface ProfileStatsView {
@@ -65,7 +68,7 @@ export function toPlayerListItem(
     online: row.id === viewerId || isOnline(row.lastSeenAt, now),
     createdAt: row.createdAt,
     stats: toStats(row),
-    friendship: row.id === viewerId ? 'self' : 'none',
+    friendship: row.id === viewerId ? 'self' : row.friendship,
   };
 }
 
@@ -81,7 +84,7 @@ export interface ProfileView {
   lastSeenAt: Date | null;
   stats: ProfileStatsView;
   friendship: Friendship;
-  // The viewer blocked this player. Blocking is not built yet.
+  // The viewer blocked this player.
   blocked: boolean;
 }
 
@@ -99,8 +102,8 @@ export function toProfile(
     createdAt: row.createdAt,
     lastSeenAt: online ? null : row.lastSeenAt,
     stats: toStats(row),
-    friendship: row.id === viewerId ? 'self' : 'none',
-    blocked: false,
+    friendship: row.id === viewerId ? 'self' : row.friendship,
+    blocked: row.blocked,
   };
 }
 

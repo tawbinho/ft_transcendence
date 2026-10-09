@@ -39,7 +39,7 @@ export class PlayerListItemResponse {
 
   @ApiProperty({
     enum: ['self', 'none', 'friends', 'request_sent', 'request_received'],
-    description: 'Only `self` and `none` for now: friends are not built yet',
+    description: 'How the viewer relates to this player',
   })
   friendship: string;
 }
@@ -86,12 +86,12 @@ export class ProfileResponse {
 
   @ApiProperty({
     enum: ['self', 'none', 'friends', 'request_sent', 'request_received'],
-    description: 'Only `self` and `none` for now: friends are not built yet',
+    description: 'How the viewer relates to this player',
   })
   friendship: string;
 
   @ApiProperty({
-    description: 'The viewer blocked this player (always false for now)',
+    description: 'The viewer blocked this player',
   })
   blocked: boolean;
 }

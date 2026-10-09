@@ -17,7 +17,9 @@ import { AppError } from '../errors/app-error.js';
 
 // Fallback codes for errors that did not come from our own AppError.
 const CODE_BY_STATUS: Record<number, string> = {
-  400: 'BAD_REQUEST',
+  // A 400 from Nest itself is always a request that breaks a rule (an id that
+  // is not a UUID, a malformed body...), so it shares the validation code.
+  400: 'VALIDATION_ERROR',
   401: 'UNAUTHORIZED',
   403: 'FORBIDDEN',
   404: 'NOT_FOUND',
