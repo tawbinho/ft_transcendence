@@ -1,8 +1,19 @@
+/**
+ * How much of a date to write. Arabic numeric dates ("09/10/2026") mix digit and
+ * right-to-left order and are hard to read, so Arabic always writes the month
+ * out ("9 أكتوبر 2026"); other languages use the style asked for.
+ */
+function dateStyle(language: string, style: 'medium' | 'short'): 'long' | 'medium' | 'short' {
+  return language === 'ar' ? 'long' : style;
+}
+
 /** A date and time in the reader's language, e.g. "8 Oct 2026, 14:05". */
 export function formatDateTime(iso: string, language: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+  return new Intl.DateTimeFormat(language, { dateStyle: dateStyle(language, 'medium'), timeStyle: 'short' }).format(
+    date,
+  );
 }
 
 export function formatPercent(ratio: number, language: string): string {
@@ -13,7 +24,7 @@ export function formatPercent(ratio: number, language: string): string {
 export function formatDate(iso: string, language: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat(language, { dateStyle: 'medium' }).format(date);
+  return new Intl.DateTimeFormat(language, { dateStyle: dateStyle(language, 'medium') }).format(date);
 }
 
 /** Chat timestamps: only the time for today, the day and time before. */
@@ -23,7 +34,7 @@ export function formatMessageTime(iso: string, language: string, now = new Date(
   const today = date.toDateString() === now.toDateString();
   return new Intl.DateTimeFormat(
     language,
-    today ? { timeStyle: 'short' } : { dateStyle: 'short', timeStyle: 'short' },
+    today ? { timeStyle: 'short' } : { dateStyle: dateStyle(language, 'short'), timeStyle: 'short' },
   ).format(date);
 }
 

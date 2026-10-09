@@ -1,4 +1,4 @@
-import { formatMessageTime, formatRelative } from './format';
+import { formatDate, formatDateTime, formatMessageTime, formatRelative } from './format';
 
 describe('formatRelative', () => {
   const now = Date.parse('2026-10-08T12:00:00Z');
@@ -25,5 +25,15 @@ describe('formatMessageTime', () => {
     const now = new Date(2026, 9, 8, 18, 0);
     expect(formatMessageTime(new Date(2026, 9, 8, 14, 5).toISOString(), 'en', now)).toMatch(/^2:05\sPM$/);
     expect(formatMessageTime(new Date(2026, 9, 6, 14, 5).toISOString(), 'en', now)).toMatch(/10\/6\/26/);
+  });
+});
+
+describe('dates in Arabic', () => {
+  it('write the month out instead of numbers separated by slashes', () => {
+    const iso = new Date(2026, 9, 9, 11, 35).toISOString();
+    expect(formatDate(iso, 'ar')).toMatch(/أكتوبر/);
+    expect(formatDateTime(iso, 'ar')).toMatch(/أكتوبر/);
+    expect(formatMessageTime(iso, 'ar', new Date(2026, 9, 12))).toMatch(/أكتوبر/);
+    expect(formatDate(iso, 'ar')).not.toMatch(/\//);
   });
 });
