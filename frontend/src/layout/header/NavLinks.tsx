@@ -18,8 +18,9 @@ export function NavTextLink({ item, counts, menu = false }: { item: NavItem; cou
       to={item.to}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex items-center gap-2 rounded-lg px-3 font-semibold transition',
-        menu ? 'h-11' : 'h-10',
+        'flex items-center rounded-lg px-3 font-semibold transition',
+        // In the phone menu the icon gap matches the account links under them (menuItemClass).
+        menu ? 'h-11 gap-3' : 'h-10 gap-2',
         active ? 'bg-primary/12 text-primary' : cn('hover:bg-surface-2 hover:text-fg', menu ? 'text-fg' : 'text-muted'),
       )}
     >
