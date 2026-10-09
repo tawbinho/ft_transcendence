@@ -11,9 +11,9 @@ export const historyMessages = {
     streak: 'Current streak',
     bestStreak: 'Best win streak',
     streakOf: {
-      won: 'Current win streak',
-      lost: 'Current losing streak',
-      draw: 'Current draw streak',
+      won: 'Winning streak',
+      lost: 'Losing streak',
+      draw: 'Drawing streak',
     },
     none: '—',
     filterLabel: 'Show',

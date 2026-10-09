@@ -39,7 +39,7 @@ export function HistoryStats() {
     [t('history.losses'), String(stats.losses)],
     [t('history.draws'), String(stats.draws)],
     [t('history.winRate'), stats.winRate === null ? t('history.none') : formatPercent(stats.winRate, i18n.language)],
-    // A number like the other tiles; the label says whether the streak is of wins, losses or draws.
+    // A number like the other tiles; the label says whether the streak is of wins, losses or draws, and stays short so tiles keep one line.
     [
       stats.streak ? t(`history.streakOf.${stats.streak.outcome}`) : t('history.streak'),
       String(stats.streak?.length ?? 0),

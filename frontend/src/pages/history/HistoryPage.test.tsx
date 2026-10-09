@@ -54,7 +54,7 @@ describe('history page', () => {
     fakeApi({ ...quietApi, 'GET /matches/mine': listOf([lost, wonToo, won]) });
     renderRoute('/matches', { user: makeUser() });
 
-    const label = await screen.findByText('Current losing streak');
+    const label = await screen.findByText('Losing streak');
     expect(label.nextElementSibling).toHaveTextContent(/^1$/);
   });
 
