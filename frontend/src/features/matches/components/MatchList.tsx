@@ -30,12 +30,16 @@ function StatusBadge({ match }: { match: MatchSummary }) {
 /** A finished match with moves to show can be replayed. */
 const canReplay = (match: MatchSummary) => match.status === 'finished' && match.moveCount > 0;
 
-/** The viewer's matches, one row each: the row opens the match page, its Replay link the replay. */
+/**
+ * The viewer's matches, one row each: the row opens the match page, its Replay link the replay.
+ * The list is shown full width (History) and in a narrow card (the home page), so its rows follow
+ * the width of the list (`@container` and the `@md:` / `@2xl:` classes), not the width of the screen.
+ */
 export function MatchList({ matches }: { matches: readonly MatchSummary[] }) {
   const { t, i18n } = useTranslation();
 
   return (
-    <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
+    <ul className="@container divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
       {matches.map((match) => {
         const opponent = opponentOf(match)?.displayName;
         return (
@@ -45,9 +49,9 @@ export function MatchList({ matches }: { matches: readonly MatchSummary[] }) {
               cols={match.settings.cols}
               rows={match.settings.rows}
               theme={toBoardTheme(match.settings.theme)}
-              className="hidden sm:block"
+              className="hidden @md:block"
             />
-            <div className="grid min-w-0 flex-1 gap-x-4 gap-y-0.5 sm:grid-cols-[minmax(0,1fr)_8rem_10rem]">
+            <div className="grid min-w-0 flex-1 gap-x-4 gap-y-0.5 @2xl:grid-cols-[minmax(0,1fr)_8rem_10rem]">
               <Link
                 to={paths.match(match.id)}
                 aria-label={opponent ? t('history.open', { name: opponent }) : t('history.noOpponent')}
@@ -63,7 +67,7 @@ export function MatchList({ matches }: { matches: readonly MatchSummary[] }) {
                 {formatDateTime(match.createdAt, i18n.language)}
               </time>
             </div>
-            <div className="flex flex-none flex-col items-end gap-2 sm:flex-row sm:items-center">
+            <div className="flex flex-none flex-col items-end gap-2 @md:flex-row @md:items-center">
               <StatusBadge match={match} />
               {canReplay(match) && (
                 <Link
