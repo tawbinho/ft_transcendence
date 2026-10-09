@@ -443,9 +443,10 @@ button.board-column:focus-visible {
 
 /* ---------------------------------------------------------------------------
    Scroll fade: a row that scrolls sideways fades out at an edge that still has
-   hidden content (see lib/useScrollEdges). Set --fade-start or --fade-end to a
-   length to turn that edge on; both are 0 by default. In the components layer so
-   that a utility such as [--fade-end:2rem] wins over the defaults.
+   hidden content (see lib/useScrollEdges; ScrollFade and TabLinks use it). Set
+   --fade-start or --fade-end to a length to turn that edge on; both are 0 by
+   default. In the components layer so that a utility such as [--fade-end:2rem]
+   wins over the defaults.
    --------------------------------------------------------------------------- */
 @layer components {
   .scroll-fade {

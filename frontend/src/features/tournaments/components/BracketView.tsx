@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CrownIcon } from '@/components/icons';
-import { Avatar } from '@/components/ui';
+import { Avatar, ScrollFade } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import type { Slot } from '../bracket';
-import { ScrollFade } from './ScrollFade';
 import { roundName } from '../view';
 
 /** A player as the bracket shows them: a name, and their avatar for online tournaments. */

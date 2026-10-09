@@ -12,6 +12,7 @@ export { OptionGroup, type Option } from './OptionGroup';
 export { Pagination } from './Pagination';
 export { ProgressBar } from './ProgressBar';
 export { RangeField } from './RangeField';
+export { ScrollFade } from './ScrollFade';
 export { SelectField } from './SelectField';
 export { Skeleton } from './Skeleton';
 export { PageSpinner, Spinner } from './Spinner';
