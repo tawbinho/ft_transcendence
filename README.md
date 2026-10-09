@@ -149,6 +149,13 @@ All `/api/matches` routes need a logged-in user.
 
 All `/api/tournaments` routes need a logged-in user.
 
+| Route                              | Description                                         |
+| ---------------------------------- | --------------------------------------------------- |
+| `GET  /api/users`                  | search players: `search`, `online`, `friends`, `sort` (`name`, `wins`, `newest`), `limit`, `offset` |
+
+Needs a logged-in user. Each player comes with `online` and their `stats`
+(played, wins, losses, draws).
+
 **Login uses database sessions.** Signup and login set one httpOnly cookie,
 `session`, holding a random token (valid `SESSION_TTL_DAYS`, 7 by default).
 The `sessions` table stores only the SHA-256 hash of that token, so a leaked
@@ -193,9 +200,15 @@ Cancelling deletes it. Every change runs in a transaction that locks the
 tournament row, so two players cannot take the last place together. Error
 codes: `TOURNAMENT_NOT_FOUND`, `TOURNAMENT_NOT_OPEN`, `TOURNAMENT_FULL`,
 `ALREADY_JOINED`, `NOT_JOINED`, `CREATOR_CANNOT_LEAVE`, `NOT_CREATOR`.
+**Presence.** A player is online if they made a request while logged in during
+the last minute: the session guard writes `users.last_seen_at` (at most every
+30 seconds per user). WebSockets will replace this later. The wins, losses and
+draws of the search are counted from the finished matches on every request,
+never stored. `friendship` is only `self` or `none` until friends exist.
+
 **Not built yet:** starting a tournament, the bracket, the matches it creates
 and advancing winners (`rounds` is always empty, and players are always
-reported offline until presence exists). The full API design, including these
+reported offline in a tournament's player list). The full API design, including these
 parts, is in `backend/docs/openapi.yaml`.
 
 **Rate limits** (per IP, per minute): 100 requests overall; login 10; signup 5;

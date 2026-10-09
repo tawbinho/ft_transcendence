@@ -38,6 +38,13 @@ export class User {
   @Column({ type: 'text', default: 'en' })
   locale: string;
 
+  // The last time this user did anything while logged in. This is how
+  // "online" works before WebSockets exist: seen in the last minute = online.
+  // The session guard refreshes it (at most once every 30 seconds).
+  // null: never seen since this column exists.
+  @Column({ name: 'last_seen_at', type: 'timestamptz', nullable: true })
+  lastSeenAt: Date | null;
+
   // Filled by the database when the row is inserted.
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

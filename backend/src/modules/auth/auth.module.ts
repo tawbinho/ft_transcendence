@@ -30,6 +30,8 @@ import { TwoFactorService } from './two-factor/two-factor.service.js';
   ],
   // Other modules import AuthModule to use @UseGuards(SessionGuard), and the
   // WebSocket gateway will use SessionsService to authenticate a connection.
-  exports: [SessionGuard, SessionsService],
+  // UsersModule is re-exported because SessionGuard needs PresenceService, and a
+  // guard is built inside the module that uses it.
+  exports: [SessionGuard, SessionsService, UsersModule],
 })
 export class AuthModule {}
