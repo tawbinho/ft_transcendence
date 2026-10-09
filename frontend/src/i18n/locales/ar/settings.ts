@@ -47,6 +47,6 @@ export const settingsMessages: SettingsMessages = {
     confirmOff: 'تعطيل',
     enabled: 'المصادقة الثنائية مفعّلة.',
     disabled: 'المصادقة الثنائية معطّلة.',
-    unknownHint: 'لا نعرف بعد إن كانت مفعّلة، لذلك نعرض الخيارين. يتحقق الخادم من الرمز.',
+    alreadyOn: 'مفعّلة بالفعل؟ عطّلها',
   },
 };

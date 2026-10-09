@@ -48,7 +48,6 @@ export const settingsMessages: SettingsMessages = {
     confirmOff: 'Désactiver',
     enabled: 'L’authentification à deux facteurs est activée.',
     disabled: 'L’authentification à deux facteurs est désactivée.',
-    unknownHint:
-      'Nous ne savons pas encore s’il est activé : les deux choix sont proposés. Le serveur vérifie votre code.',
+    alreadyOn: 'Déjà activée ? La désactiver',
   },
 };

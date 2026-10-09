@@ -126,7 +126,6 @@ describe('security section', () => {
     expect(screen.getByText('On')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Turn off' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Turn on' })).not.toBeInTheDocument();
-    expect(screen.queryByText(/We cannot tell yet/)).not.toBeInTheDocument();
     await expectNoA11yViolations(container);
   });
 
@@ -138,12 +137,12 @@ describe('security section', () => {
     expect(screen.queryByRole('button', { name: 'Turn off' })).not.toBeInTheDocument();
   });
 
-  it('offers both, with a hint, when the backend does not say', async () => {
+  it('offers “Turn on” and a quieter “Already on?” when the backend does not say', async () => {
     const { container } = await openSettings('/settings/security');
 
     expect(screen.getByRole('button', { name: 'Turn on' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Turn off' })).toBeInTheDocument();
-    expect(screen.getByText(/We cannot tell yet/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Already on? Turn it off' })).toBeInTheDocument();
+    expect(screen.queryByText(/We cannot tell yet/)).not.toBeInTheDocument();
     await expectNoA11yViolations(container);
   });
 

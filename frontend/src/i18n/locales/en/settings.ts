@@ -45,7 +45,7 @@ export const settingsMessages = {
     confirmOff: 'Turn off',
     enabled: 'Two-factor authentication is on.',
     disabled: 'Two-factor authentication is off.',
-    unknownHint: 'We cannot tell yet whether it is on, so both choices are shown. The server checks your code.',
+    alreadyOn: 'Already on? Turn it off',
   },
 };
 

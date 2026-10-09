@@ -12,8 +12,9 @@ type Step = { kind: 'idle' } | { kind: 'setup'; setup: TwoFactorSetup } | { kind
 /**
  * Turns two-factor authentication on (QR code, then a first code) or off
  * (a code). When the user says whether it is on, only the fitting action is
- * shown. The backend does not say yet: until it does, both actions are offered
- * with a hint, and what the server answers is remembered for this visit.
+ * shown. The backend does not say yet: until it does, "Turn on" is the main
+ * button and a quiet "Already on? Turn it off" sits beside it, and what the
+ * server answers is remembered for this visit.
  */
 export function TwoFactorPanel({ user }: { user: User }) {
   const { t } = useTranslation();
@@ -85,9 +86,6 @@ export function TwoFactorPanel({ user }: { user: User }) {
         )}
       </div>
       <p className="text-muted">{t('twoFactor.body')}</p>
-      {status === undefined && step.kind === 'idle' && (
-        <p className="text-sm text-muted">{t('twoFactor.unknownHint')}</p>
-      )}
 
       {notice && <Alert tone="success">{notice}</Alert>}
       {setupError && <Alert tone="danger">{errorMessage(setupError)}</Alert>}
@@ -101,13 +99,13 @@ export function TwoFactorPanel({ user }: { user: User }) {
           )}
           {status !== false && (
             <Button
-              variant="secondary"
+              variant={status === undefined ? 'ghost' : 'secondary'}
               onClick={() => {
                 setNotice(null);
                 reset({ kind: 'disable' });
               }}
             >
-              {t('twoFactor.turnOff')}
+              {status === undefined ? t('twoFactor.alreadyOn') : t('twoFactor.turnOff')}
             </Button>
           )}
         </div>
