@@ -11,6 +11,51 @@ export const homeMessages = {
     online: { title: 'Online', body: 'Create a match, send the link, and play a friend from anywhere.' },
     customTitle: 'Your board, your rules',
     customBody: 'Choose from 5 to 10 columns and 5 to 9 rows, connect 3, 4 or 5, and pick a color theme.',
+    onlineGuestTitle: 'Sign up to play online',
+    points: {
+      title: 'And there is more',
+      tournaments: { title: 'Tournaments', body: 'Run a bracket with friends on one screen, or join an online one.' },
+      community: {
+        title: 'Friends and chat',
+        body: 'Add friends, chat with them and watch matches as they are played.',
+      },
+    },
+    greeting: {
+      morning: 'Good morning, {{name}}',
+      afternoon: 'Good afternoon, {{name}}',
+      evening: 'Good evening, {{name}}',
+    },
+    dashboardSubtitle: 'Pick up where you left off.',
+    quick: {
+      title: 'Start a game',
+      online: 'New online match',
+      computer: 'Against the computer',
+      local: 'Same screen',
+      tournaments: 'Tournaments',
+    },
+    yourTurn: {
+      title: 'Your turn',
+      all: 'All matches',
+      empty: 'No match is waiting for your move.',
+      others: 'Matches in progress: {{count}}.',
+      versus: 'Against {{name}}',
+      move: 'Your move',
+    },
+    recent: { title: 'Recent results', all: 'All matches', empty: 'Your finished matches will appear here.' },
+    friendsOnline: {
+      title: 'Friends online',
+      all: 'All friends',
+      empty: 'None of your friends is online right now.',
+      noFriends: 'Add friends to see when they are online.',
+      challenge: 'Challenge',
+      challengeName: 'Challenge {{name}}',
+    },
+    live: {
+      title: 'Live matches',
+      watch: 'Watch',
+      count: 'Matches being played right now: {{count}}',
+      none: 'No match is being played right now.',
+    },
   },
 };
 
