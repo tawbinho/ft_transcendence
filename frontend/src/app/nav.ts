@@ -125,3 +125,23 @@ export function sectionForPath(pathname: string): NavLabel | null {
 export function hasAnyCount(counts: Record<CountSource, number>): boolean {
   return counts.chat + counts.friends > 0;
 }
+
+// The order of the links in the phone menu, group by group.
+const MENU_ORDER: NavLabel[] = [
+  'nav.play',
+  'nav.tournaments',
+  'nav.watch',
+  'nav.players',
+  'nav.friends',
+  'nav.chat',
+  'nav.history',
+];
+
+export const NAV_GROUPS: NavGroup[] = ['play', 'community', 'you'];
+
+/** The links of one heading of the phone menu, in menu order. */
+export function menuItems(group: NavGroup, isMember: boolean): NavItem[] {
+  return navItemsFor(isMember)
+    .filter((item) => item.group === group)
+    .sort((a, b) => MENU_ORDER.indexOf(a.label) - MENU_ORDER.indexOf(b.label));
+}

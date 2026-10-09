@@ -19,9 +19,13 @@ export function getColorScheme(): ColorScheme {
   return isColorScheme(saved) ? saved : 'system';
 }
 
+/** The theme a preference gives right now: "system" follows the operating system. */
+export function resolveColorScheme(scheme: ColorScheme, systemIsDark: boolean): 'light' | 'dark' {
+  return scheme === 'dark' || (scheme === 'system' && systemIsDark) ? 'dark' : 'light';
+}
+
 export function applyColorScheme(scheme: ColorScheme = getColorScheme()): void {
-  const dark = scheme === 'dark' || (scheme === 'system' && Boolean(darkQuery()?.matches));
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.documentElement.dataset.theme = resolveColorScheme(scheme, Boolean(darkQuery()?.matches));
 }
 
 export function setColorScheme(scheme: ColorScheme): void {
@@ -49,4 +53,21 @@ export function useColorScheme(): [ColorScheme, (scheme: ColorScheme) => void] {
   }, [scheme]);
 
   return [scheme, setColorScheme];
+}
+
+function subscribeToSystem(notify: () => void) {
+  const query = darkQuery();
+  query?.addEventListener('change', notify);
+  return () => query?.removeEventListener('change', notify);
+}
+
+/** The theme on screen, light or dark, even while the preference is "system". */
+export function useResolvedTheme(): 'light' | 'dark' {
+  const [scheme] = useColorScheme();
+  const systemIsDark = useSyncExternalStore(
+    subscribeToSystem,
+    () => Boolean(darkQuery()?.matches),
+    () => false,
+  );
+  return resolveColorScheme(scheme, systemIsDark);
 }

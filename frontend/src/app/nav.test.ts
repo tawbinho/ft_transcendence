@@ -1,4 +1,4 @@
-import { NAV_ITEMS, hasAnyCount, navItemsFor, sectionForPath } from './nav';
+import { NAV_ITEMS, hasAnyCount, menuItems, navItemsFor, sectionForPath } from './nav';
 
 const labelsActiveOn = (pathname: string) =>
   NAV_ITEMS.filter((item) => item.isActive(pathname)).map((item) => item.label);
@@ -77,5 +77,28 @@ describe('hasAnyCount', () => {
     expect(hasAnyCount({ chat: 0, friends: 0 })).toBe(false);
     expect(hasAnyCount({ chat: 2, friends: 0 })).toBe(true);
     expect(hasAnyCount({ chat: 0, friends: 1 })).toBe(true);
+  });
+});
+
+describe('the phone menu groups', () => {
+  const labels = (group: 'play' | 'community' | 'you', isMember: boolean) =>
+    menuItems(group, isMember).map((item) => item.label);
+
+  it('lists Play, Tournaments and Watch under Play', () => {
+    expect(labels('play', true)).toEqual(['nav.play', 'nav.tournaments', 'nav.watch']);
+  });
+
+  it('lists Players, Friends and Chat under Community for a member', () => {
+    expect(labels('community', true)).toEqual(['nav.players', 'nav.friends', 'nav.chat']);
+  });
+
+  it('shows a visitor only the links a visitor may see', () => {
+    expect(labels('play', false)).toEqual(['nav.play', 'nav.tournaments', 'nav.watch']);
+    expect(labels('community', false)).toEqual(['nav.players']);
+    expect(labels('you', false)).toEqual([]);
+  });
+
+  it('puts History under You', () => {
+    expect(labels('you', true)).toEqual(['nav.history']);
   });
 });
