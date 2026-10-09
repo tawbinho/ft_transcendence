@@ -38,8 +38,9 @@ export default defineConfig(({ mode }) => {
     build: {
       target: 'es2022',
       sourcemap: true,
-      // The main chunk holds React and the texts of all three languages (about 500 kB); pages are loaded on demand.
-      chunkSizeWarningLimit: 700,
+      // The main chunk holds React and the texts of all three languages (about 550 kB); pages are loaded on demand.
+      // The optional 3D board (three.js, about 925 kB) is its own chunk, downloaded only when someone picks 3D.
+      chunkSizeWarningLimit: 1000,
     },
     test: {
       environment: 'jsdom',
