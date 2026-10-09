@@ -12,8 +12,9 @@ import { rankOf, winRate } from './ranking';
  */
 export function LeaderboardTable({ players, offset }: { players: PlayerListItem[]; offset: number }) {
   const { t, i18n } = useTranslation();
-  const head = 'px-3 py-2.5 text-start text-sm font-semibold text-muted';
-  const cell = 'px-3 py-3 tabular-nums';
+  // Less side padding on phones: the French "Victoires" does not fit a 64 px column with 12 px on each side.
+  const head = 'px-2 py-2.5 text-start text-sm font-semibold text-muted sm:px-3';
+  const cell = 'px-2 py-3 tabular-nums sm:px-3';
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface">
@@ -21,13 +22,13 @@ export function LeaderboardTable({ players, offset }: { players: PlayerListItem[
         <caption className="sr-only">{t('leaderboard.ranking')}</caption>
         <thead className="border-b border-border bg-surface-2">
           <tr>
-            <th scope="col" className={cn(head, 'w-14')}>
+            <th scope="col" className={cn(head, 'w-12 sm:w-14')}>
               {t('leaderboard.rank')}
             </th>
             <th scope="col" className={head}>
               {t('leaderboard.player')}
             </th>
-            <th scope="col" className={cn(head, 'w-16 sm:w-20')}>
+            <th scope="col" className={cn(head, 'w-[4.75rem] sm:w-20')}>
               {t('leaderboard.wins')}
             </th>
             <th scope="col" className={cn(head, 'hidden w-20 sm:table-cell')}>
@@ -52,7 +53,7 @@ export function LeaderboardTable({ players, offset }: { players: PlayerListItem[
                 <th scope="row" className={cn(cell, 'text-start font-bold')}>
                   {rankOf(offset, index)}
                 </th>
-                <td className="px-3 py-3">
+                <td className="px-2 py-3 sm:px-3">
                   <div className="flex min-w-0 items-center gap-2">
                     <PlayerLink user={player} presence />
                     {player.friendship === 'self' && <Badge tone="info">{t('profile.you')}</Badge>}
