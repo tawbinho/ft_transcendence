@@ -37,6 +37,8 @@ export const tournamentsMessages = {
     join: 'Join',
     leave: 'Leave',
     startNow: 'Start now',
+    startUnavailable: 'The server cannot start a tournament yet. Registration works; the matches will come later.',
+    fullWaiting: 'All places are taken, but the server cannot start the tournament yet, so it stays open.',
     needMorePlayers: 'At least {{min}} players are needed to start.',
     delete: 'Cancel tournament',
     deleteTitle: 'Cancel this tournament?',

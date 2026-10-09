@@ -1,3 +1,4 @@
+import { isApiError } from '@/lib/api/errors';
 import type { Bracket } from './bracket';
 import {
   MIN_TOURNAMENT_PLAYERS,
@@ -61,6 +62,19 @@ export function canStart(tournament: TournamentSummary, viewerId: string | undef
 /** Only the creator cancels, and only while registration is open. */
 export function canCancel(tournament: TournamentSummary, viewerId: string | undefined): boolean {
   return tournament.status === 'registering' && tournament.createdBy.id === viewerId;
+}
+
+/** Every place is taken. */
+export function isFull(tournament: TournamentSummary): boolean {
+  return tournament.playerCount >= tournament.size;
+}
+
+/**
+ * The server answered "no such route" to Start: it cannot start tournaments yet.
+ * A missing tournament has its own code (TOURNAMENT_NOT_FOUND), so it is not mistaken for this.
+ */
+export function isStartUnavailable(error: unknown): boolean {
+  return isApiError(error) && error.status === 404 && error.code !== 'TOURNAMENT_NOT_FOUND';
 }
 
 /** The pairing the viewer has to play now (its match exists and has no winner), if any. */

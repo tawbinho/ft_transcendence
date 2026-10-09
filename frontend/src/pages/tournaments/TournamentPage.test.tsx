@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react';
+import { config } from '@/config';
 import type { Tournament } from '@/features/tournaments/types';
 import { ApiError } from '@/lib/api/errors';
 import { expectNoA11yViolations } from '@/test/axe';
@@ -104,6 +105,65 @@ describe('registration', () => {
   });
 });
 
+describe('a server that cannot start tournaments yet', () => {
+  const three = makeTournament({
+    playerCount: 3,
+    players: [
+      makeSummary({ id: 'u1', displayName: 'alice' }),
+      makeSummary(),
+      makeSummary({ id: 'u3', displayName: 'carol' }),
+    ],
+  });
+
+  it('tells the creator so when Start now finds no route', async () => {
+    const { events } = open(three, alice, {
+      [`POST ${url}/start`]: new ApiError('NOT_FOUND', 'Cannot POST /api/tournaments/x/start', 404),
+    });
+
+    await events.click(await screen.findByRole('button', { name: 'Start now' }));
+
+    expect(await screen.findByText(/cannot start a tournament yet/)).toBeInTheDocument();
+    expect(screen.queryByText('This page or item does not exist.')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Start now' })).toBeEnabled();
+  });
+
+  it('says why a full tournament stays open', async () => {
+    const full = makeTournament({ playerCount: 4, joined: false, createdBy: { id: 'u9', displayName: 'zoe' } });
+    open(full, bob);
+
+    expect(await screen.findByText(/All places are taken/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Join' })).not.toBeInTheDocument();
+  });
+
+  it('does not say it for a tournament with room left', async () => {
+    open(three);
+
+    await screen.findByRole('button', { name: 'Start now' });
+    expect(screen.queryByText(/All places are taken/)).not.toBeInTheDocument();
+  });
+});
+
+describe('the players of a tournament', () => {
+  it('are plain names while tournaments are real and profiles are demo data', async () => {
+    open(makeTournament());
+
+    await screen.findByRole('heading', { level: 2, name: /Players/ });
+    expect(screen.getByText('bob')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /bob/ })).not.toBeInTheDocument();
+  });
+
+  it('link to their profile when profiles and tournaments come from the same place', async () => {
+    config.demoFeatures.delete('users');
+    try {
+      open(makeTournament());
+
+      expect(await screen.findByRole('link', { name: /bob/ })).toHaveAttribute('href', '/users/bob');
+    } finally {
+      config.demoFeatures.add('users');
+    }
+  });
+});
+
 describe('a running tournament', () => {
   it('shows a player the bracket, their match to play and who is in', async () => {
     const { container } = open(makeRunningTournament());
@@ -170,5 +230,13 @@ describe('a tournament that does not exist', () => {
       'href',
       '/tournaments',
     );
+  });
+
+  it('does not ask the server when the address is not a tournament id', async () => {
+    const api = fakeApi(quietApi);
+    renderRoute('/tournaments/not-a-uuid', { user: alice });
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Tournament not found' })).toBeInTheDocument();
+    expect(api.requests.some((request) => request.path.startsWith('/tournaments/'))).toBe(false);
   });
 });

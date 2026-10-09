@@ -39,6 +39,8 @@ export const tournamentsMessages: TournamentsMessages = {
     join: 'انضمام',
     leave: 'انسحاب',
     startNow: 'ابدأ الآن',
+    startUnavailable: 'لا يستطيع الخادم بدء بطولة بعد. التسجيل يعمل، وستأتي المباريات لاحقًا.',
+    fullWaiting: 'كل المقاعد محجوزة، لكن الخادم لا يستطيع بدء البطولة بعد، لذلك تبقى مفتوحة.',
     needMorePlayers: 'يلزم {{min}} لاعبين على الأقل للبدء.',
     delete: 'إلغاء البطولة',
     deleteTitle: 'إلغاء هذه البطولة؟',

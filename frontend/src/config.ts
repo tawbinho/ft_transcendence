@@ -41,3 +41,11 @@ export const config = {
 export function isDemo(feature: DemoFeature): boolean {
   return config.demoFeatures.has(feature);
 }
+
+/**
+ * True when two features come from the same place, both the demo server or both the backend. A link from one
+ * to the other leads to "not found": a real tournament player has no demo profile, and the other way round.
+ */
+export function sameWorld(first: DemoFeature, second: DemoFeature): boolean {
+  return isDemo(first) === isDemo(second);
+}

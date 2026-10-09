@@ -41,6 +41,10 @@ export const tournamentsMessages: TournamentsMessages = {
     join: 'S’inscrire',
     leave: 'Se désinscrire',
     startNow: 'Lancer maintenant',
+    startUnavailable:
+      'Le serveur ne peut pas encore lancer de tournoi. Les inscriptions fonctionnent ; les matchs viendront plus tard.',
+    fullWaiting:
+      'Toutes les places sont prises, mais le serveur ne peut pas encore lancer le tournoi : il reste ouvert.',
     needMorePlayers: 'Il faut au moins {{min}} joueurs pour commencer.',
     delete: 'Annuler le tournoi',
     deleteTitle: 'Annuler ce tournoi ?',

@@ -1,3 +1,4 @@
+import { ApiError } from '@/lib/api/errors';
 import { makeRunningTournament, SEMI_MATCH_ID } from '@/test/fixtures/runningTournament';
 import { makeTournament } from '@/test/fixtures/tournaments';
 import { createBracket, recordWinner } from './bracket';
@@ -8,6 +9,8 @@ import {
   canStart,
   countMatches,
   filterStatus,
+  isFull,
+  isStartUnavailable,
   pairingToPlay,
   parseFilter,
   roundName,
@@ -62,6 +65,26 @@ describe('registration buttons', () => {
     expect(canCancel(joined, 'u1')).toBe(true);
     expect(canCancel(joined, 'u2')).toBe(false);
     expect(canCancel({ ...joined, status: 'finished' }, 'u1')).toBe(false);
+  });
+});
+
+describe('a full tournament', () => {
+  it('has every place taken', () => {
+    expect(isFull(makeTournament({ playerCount: 4, size: 4 }))).toBe(true);
+    expect(isFull(makeTournament({ playerCount: 3, size: 4 }))).toBe(false);
+  });
+});
+
+describe('isStartUnavailable', () => {
+  it('is true when the server has no start route', () => {
+    expect(isStartUnavailable(new ApiError('NOT_FOUND', 'Cannot POST /api/tournaments/x/start', 404))).toBe(true);
+  });
+
+  it('is false for a missing tournament and for other failures', () => {
+    expect(isStartUnavailable(new ApiError('TOURNAMENT_NOT_FOUND', 'No such tournament', 404))).toBe(false);
+    expect(isStartUnavailable(new ApiError('NOT_ENOUGH_PLAYERS', 'Too few', 409))).toBe(false);
+    expect(isStartUnavailable(new Error('boom'))).toBe(false);
+    expect(isStartUnavailable(null)).toBe(false);
   });
 });
 
