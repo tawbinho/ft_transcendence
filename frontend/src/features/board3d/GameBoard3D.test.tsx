@@ -49,6 +49,19 @@ describe('GameBoard with the 3D board built in', () => {
       expect(window.localStorage.getItem('board-view')).toBe('2d');
     });
 
+    it('draws both boards in the same stage, so switching does not move anything', async () => {
+      const { container, events } = renderWithProviders(<GameBoard model={model} theme="classic" />);
+      const stage = container.querySelector('.board-stage');
+      expect(stage).toContainElement(board2D());
+      expect(stage).toHaveStyle({ '--cols': '7', '--rows': '6' });
+
+      await events.click(screen.getByRole('button', { name: '3D' }));
+
+      expect(await screen.findByText('The 3D board')).toBeInTheDocument();
+      expect(container.querySelector('.board-stage')).toBe(stage);
+      expect(stage).toContainElement(screen.getByText('The 3D board'));
+    });
+
     it('opens in 3D when the last visit ended in 3D', async () => {
       window.localStorage.setItem('board-view', '3d');
       renderWithProviders(<GameBoard model={model} theme="classic" />);

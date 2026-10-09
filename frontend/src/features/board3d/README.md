@@ -13,11 +13,11 @@ creates a `THREE.Mesh`). Games get a 2D / 3D switch above the board; the choice 
 | `Board3D.tsx`                  | The component: canvas, discs, column picking with the mouse, keyboard play            |
 | `Frame.tsx`                    | The frame: a 2D shape with holes, extruded into 3D, plus two feet                     |
 | `Disc.tsx`                     | A disc that falls with gravity and bounces, and the hover preview disc                |
-| `Stage.tsx`                    | Background, fog, lighting, the shadow-casting light, the table                        |
+| `Stage.tsx`                    | Background (the page's colour), fog, lighting, the shadow-casting light, the table    |
 | `CameraRig.tsx`                | Fits the camera to the board; drag to turn it                                         |
 | `Confetti.tsx`                 | The win celebration (one instanced mesh)                                              |
 | `layout.ts`                    | Every size, and where each hole is                                                    |
-| `themes.ts`                    | Colours for the four board themes                                                     |
+| `themes.ts`                    | Colours of the frame and discs for the four board themes                              |
 | `*.test.ts(x)`, `webglStub.ts` | Tests (they are deleted with the folder)                                              |
 
 ## How it is connected
@@ -27,6 +27,10 @@ draws its board through it) loads `Board3DView` lazily, so Three.js (about 250 k
 is downloaded only when someone switches to 3D. `GameBoard` shows the switch only when the browser supports WebGL 2.
 While the 3D code loads, the 2D board stays on screen; if 3D fails to load or crashes, the 2D board comes back and
 the switch is hidden for the rest of the visit.
+
+The 3D board does not choose its size or its background. It fills the box (the "stage", `boardStage.css`) that
+`GameBoard` puts both boards in, so switching between 2D and 3D moves nothing, and `Board3DView` gives it the
+page's `--c-surface-2` colour as the room's backdrop, so the canvas is light on a light page and dark on a dark one.
 
 ## Turn it off without deleting anything
 

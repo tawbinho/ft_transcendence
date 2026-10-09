@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import { readStorage, writeStorage } from '@/lib/storage';
 import { Board, type BoardProps } from './Board';
+import './boardStage.css';
 
 // The only link to the optional 3D board (src/features/board3d). It is loaded
 // lazily, so the 3D code is downloaded only when a game opens it, and not at
@@ -64,8 +65,18 @@ export function GameBoard(props: BoardProps) {
     available && readStorage(STORAGE_KEY) === '3d' && hasWebGL2() ? '3d' : '2d',
   );
 
+  // Both boards stand in the same box (boardStage.css), so switching between them moves nothing.
+  const stage = (board: React.ReactNode) => (
+    <div
+      className="board-stage"
+      style={{ '--cols': props.model.cols, '--rows': props.model.rows } as React.CSSProperties}
+    >
+      {board}
+    </div>
+  );
+
   const flat = <Board {...props} />;
-  if (!available || !Board3D) return flat;
+  if (!available || !Board3D) return stage(flat);
 
   function choose(next: View) {
     if (next === '3d' && !hasWebGL2()) {
@@ -94,20 +105,22 @@ export function GameBoard(props: BoardProps) {
           </button>
         ))}
       </div>
-      {view === '2d' ? (
-        flat
-      ) : (
-        <Board3DBoundary
-          fallback={flat}
-          onError={() => {
-            board3dFailed = true;
-            setAvailable(false);
-          }}
-        >
-          <React.Suspense fallback={flat}>
-            <Board3D {...props} />
-          </React.Suspense>
-        </Board3DBoundary>
+      {stage(
+        view === '2d' ? (
+          flat
+        ) : (
+          <Board3DBoundary
+            fallback={flat}
+            onError={() => {
+              board3dFailed = true;
+              setAvailable(false);
+            }}
+          >
+            <React.Suspense fallback={flat}>
+              <Board3D {...props} />
+            </React.Suspense>
+          </Board3DBoundary>
+        ),
       )}
     </div>
   );

@@ -8,7 +8,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import type { PerspectiveCamera } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-const MARGIN = 1.3; // leave 30% of free space around the board
+const MARGIN = 1.15; // leave 15% of free space around the board
 
 interface CameraRigProps {
   width: number; // size of what must stay in view
