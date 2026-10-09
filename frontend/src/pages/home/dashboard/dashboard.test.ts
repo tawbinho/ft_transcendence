@@ -1,4 +1,4 @@
-import { makeMatchSummary } from '@/test/fixtures/matches';
+import { makeMatchSummary } from '@/test/fixtures/matchSummary';
 import { makeSummary } from '@/test/fixtures/users';
 import type { MatchSummary } from '@/features/matches/types';
 import { greetingOf, isMyTurn, matchesWaitingForMe, onlineFriends } from './dashboard';

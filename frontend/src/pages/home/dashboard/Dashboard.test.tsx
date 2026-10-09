@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import { ApiError } from '@/lib/api/errors';
 import type { Friend } from '@/features/friends/types';
-import { makeMatchSummary } from '@/test/fixtures/matches';
+import { makeMatchSummary } from '@/test/fixtures/matchSummary';
 import { emptyPage, pageOf } from '@/test/fixtures/pages';
 import { makeSummary, makeUser } from '@/test/fixtures/users';
 import { fakeApi, type FakeAnswers } from '@/test/fakeApi';

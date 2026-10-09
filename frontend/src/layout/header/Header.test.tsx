@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { ApiError } from '@/lib/api/errors';
-import { makeConversation } from '@/test/fixtures/chat';
+import { makeConversation } from '@/test/fixtures/conversations';
 import { makeSummary, makeUser } from '@/test/fixtures/users';
 import { expectNoA11yViolations } from '@/test/axe';
 import { fakeApi } from '@/test/fakeApi';
