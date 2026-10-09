@@ -7,13 +7,21 @@ board.
 Built with React 19, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router and i18next; the optional 3D board
 uses Three.js through React Three Fiber.
 
+**Requirements:** Node.js 20.19 or newer (22 recommended; `.nvmrc` says 22). Node 18 is too old (six tests fail on
+it), so check `node -v` before running anything. With [nvm](https://github.com/nvm-sh/nvm), in the `frontend` folder:
+
+```sh
+nvm install   # installs the version in .nvmrc
+nvm use
+```
+
 **New to this code?** Read [`docs/how-it-works.md`](docs/how-it-works.md): how a page gets its data, where things live,
 why each tool was chosen, and the questions evaluators are likely to ask.
 
 ## Quick start
 
-You need Node.js 22.12 or newer (20.19 also works), and the stack of the repository running (`docker compose up` at
-the root) for everything that needs an account.
+You need Node.js (see Requirements above) and the stack of the repository running (`docker compose up` at the root)
+for everything that needs an account.
 
 ```sh
 cd frontend
