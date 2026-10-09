@@ -44,7 +44,7 @@ export const playMessages = {
     rows: 'Rows',
     winLength: 'Discs to connect',
     theme: 'Colors',
-    reset: 'Classic board',
+    reset: 'Reset to classic',
   },
   themes: {
     classic: { name: 'Classic', seat1: 'Red', seat2: 'Yellow' },

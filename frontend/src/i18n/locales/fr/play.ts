@@ -50,7 +50,7 @@ export const playMessages: PlayMessages = {
     rows: 'Rangées',
     winLength: 'Jetons à aligner',
     theme: 'Couleurs',
-    reset: 'Plateau classique',
+    reset: 'Rétablir le classique',
   },
   themes: {
     classic: { name: 'Classique', seat1: 'Rouge', seat2: 'Jaune' },

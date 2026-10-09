@@ -46,7 +46,7 @@ export const playMessages: PlayMessages = {
     rows: 'الصفوف',
     winLength: 'عدد الأقراص للفوز',
     theme: 'الألوان',
-    reset: 'اللوحة الكلاسيكية',
+    reset: 'استعادة الكلاسيكية',
   },
   themes: {
     classic: { name: 'كلاسيكي', seat1: 'أحمر', seat2: 'أصفر' },
