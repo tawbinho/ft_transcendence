@@ -143,6 +143,9 @@ export class MatchesService {
       return match.id;
     });
 
+    // Nobody watches a new match yet, but a computer opponent it was reserved
+    // for must hear about it (to join).
+    await this.broadcast(matchId);
     return this.get(userId, matchId);
   }
 
@@ -261,6 +264,14 @@ export class MatchesService {
       );
     } catch {
       // ignored on purpose
+    }
+    // Listeners run in the background: a slow one must not delay the request.
+    for (const listener of this.changedListeners) {
+      void Promise.resolve()
+        .then(() => listener(matchId))
+        .catch((error: unknown) => {
+          this.logger.warn(`Match changed listener failed: ${String(error)}`);
+        });
     }
   }
 
@@ -494,6 +505,17 @@ export class MatchesService {
   private readonly finishedListeners: Array<
     (matchId: string) => Promise<void> | void
   > = [];
+
+  // The same for ANY change of a match (created, joined, a move, the end): the
+  // computer opponent uses it to join a match it was invited to and to answer
+  // a move.
+  private readonly changedListeners: Array<
+    (matchId: string) => Promise<void> | void
+  > = [];
+
+  onMatchChanged(listener: (matchId: string) => Promise<void> | void): void {
+    this.changedListeners.push(listener);
+  }
 
   onMatchFinished(listener: (matchId: string) => Promise<void> | void): void {
     this.finishedListeners.push(listener);

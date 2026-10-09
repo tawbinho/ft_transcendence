@@ -286,8 +286,26 @@ at once. Only players who were connected by socket can be forfeited, so an app
 that polls never triggers it. The countdowns live in memory: a server restart
 drops them.
 
+**Computer opponents (AI).** Three bots exist as ordinary players, `AI_Easy`,
+`AI_Medium` and `AI_Hard`, created at startup (`users.is_bot`, no password: nobody
+can log in as them, they are always shown online, and `isBot` is true in the
+player list and profile). To play one, create a match with
+`"opponentDisplayName": "AI_Hard"`: the server joins for the bot, and after each
+of your moves the bot answers (after 0.5 to 1.2 s, like a human) through the
+same move code a person uses, so the rules, live events, history and stats all
+apply to it. It works on any board size and win length. How the AI chooses
+(`backend/src/modules/matches/ai/ai.ts`): it wins if it can, blocks your
+immediate threat, sometimes makes a careless move on purpose, and otherwise
+looks ahead with minimax (alpha-beta pruning, iterative deepening, a time
+limit, a line-counting score). The levels differ in depth (2, 4, up to 12 moves),
+time (150, 400, 900 ms) and mistakes (easy misses a threat 30% of the time and
+slips 40%, medium slips 12%, hard 4%), so even the hard level can be beaten.
+The AI thinks in a **worker thread**, so a long search never freezes the other
+players. After a server restart the bots pick up their waiting and running
+matches again.
+
 **Not built yet:** chat, the "your tournament match is ready" chat message, the
-list of live matches for spectators (`GET /matches/live`) and the server-side AI.
+list of live matches for spectators (`GET /matches/live`), and 2FA backup codes.
 The full API design, including these parts, is in `backend/docs/openapi.yaml`.
 
 **Rate limits** (per IP, per minute): 100 requests overall; login 10; signup 5;

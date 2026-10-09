@@ -389,7 +389,7 @@ paths:
       operationId: createMatch
       summary: Create a match
       description: 'Creates a `waiting` match and puts the caller in it, in seat 1 or 2 chosen at random. With `opponentDisplayName`
-        only that player can join; otherwise anyone who has the match id can. Rate limit: 20 per minute. Inviting a player
+        only that player can join; otherwise anyone who has the match id can. The computer opponents are players too: `opponentDisplayName: "AI_Hard"` makes the server join and answer every move by itself. Rate limit: 20 per minute. Inviting a player
         who blocked you, or whom you blocked, answers `BLOCKED`.'
       x-status: implemented
       requestBody:
@@ -2169,7 +2169,11 @@ components:
             $ref: '#/components/schemas/ProfileStats'
           friendship:
             $ref: '#/components/schemas/Friendship'
+          isBot:
+            type: boolean
+            description: A computer opponent (AI_Easy, AI_Medium, AI_Hard), not a person. Always online, cannot log in.
         required:
+        - isBot
         - createdAt
         - stats
         - friendship
@@ -2194,7 +2198,11 @@ components:
           blocked:
             type: boolean
             description: The viewer blocked this player
+          isBot:
+            type: boolean
+            description: A computer opponent (AI_Easy, AI_Medium, AI_Hard), not a person
         required:
+        - isBot
         - createdAt
         - lastSeenAt
         - stats
@@ -2460,7 +2468,7 @@ components:
           type: string
           minLength: 3
           maxLength: 20
-          description: Reserve the match for this player. Omit for a match anyone with the link can join
+          description: Reserve the match for this player. Omit for a match anyone with the link can join. Use `AI_Easy`, `AI_Medium` or `AI_Hard` to play the computer (online, over the same match routes).
     MakeMoveRequest:
       type: object
       properties:

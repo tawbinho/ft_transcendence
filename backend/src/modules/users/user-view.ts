@@ -27,6 +27,8 @@ export interface PlayerRow {
   // database works both out (see playerColumns in users.service.ts).
   friendship: Friendship;
   blocked: boolean;
+  // A computer opponent, not a person.
+  isBot: boolean;
 }
 
 export interface ProfileStatsView {
@@ -44,6 +46,7 @@ export interface PlayerListItemView {
   createdAt: Date;
   stats: ProfileStatsView;
   friendship: Friendship;
+  isBot: boolean;
 }
 
 export function toStats(row: PlayerRow): ProfileStatsView {
@@ -69,6 +72,7 @@ export function toPlayerListItem(
     createdAt: row.createdAt,
     stats: toStats(row),
     friendship: row.id === viewerId ? 'self' : row.friendship,
+    isBot: row.isBot,
   };
 }
 
@@ -86,6 +90,7 @@ export interface ProfileView {
   friendship: Friendship;
   // The viewer blocked this player.
   blocked: boolean;
+  isBot: boolean;
 }
 
 export function toProfile(
@@ -104,6 +109,7 @@ export function toProfile(
     stats: toStats(row),
     friendship: row.id === viewerId ? 'self' : row.friendship,
     blocked: row.blocked,
+    isBot: row.isBot,
   };
 }
 

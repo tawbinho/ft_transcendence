@@ -104,13 +104,13 @@ export class PresenceService {
     }
   }
 
-  // One UPDATE for everybody with an open socket: they are still here.
+  // One UPDATE for everybody with an open socket: they are still here. The
+  // computer opponents (bots) never open a socket but are always available, so
+  // they are kept "seen" too.
   async touchConnected(): Promise<void> {
-    const ids = [...this.connections.keys()];
-    if (ids.length === 0) return;
     await this.users.query(
-      'UPDATE users SET last_seen_at = now() WHERE id = ANY($1::uuid[])',
-      [ids],
+      'UPDATE users SET last_seen_at = now() WHERE id = ANY($1::uuid[]) OR is_bot',
+      [[...this.connections.keys()]],
     );
   }
 

@@ -34,6 +34,9 @@ export class PlayerListItemResponse {
   @ApiProperty({ type: Date })
   createdAt: Date;
 
+  @ApiProperty({ description: 'A computer opponent, not a person' })
+  isBot: boolean;
+
   @ApiProperty({ type: ProfileStatsResponse })
   stats: ProfileStatsResponse;
 
@@ -80,6 +83,9 @@ export class ProfileResponse {
     description: 'When they were last seen; null while online',
   })
   lastSeenAt: Date | null;
+
+  @ApiProperty({ description: 'A computer opponent, not a person' })
+  isBot: boolean;
 
   @ApiProperty({ type: ProfileStatsResponse })
   stats: ProfileStatsResponse;

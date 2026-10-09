@@ -38,6 +38,11 @@ export class User {
   @Column({ type: 'text', default: 'en' })
   locale: string;
 
+  // A computer opponent (AI_Easy, AI_Medium, AI_Hard), not a person. It has no
+  // password, so nobody can log in as it; the server plays its moves.
+  @Column({ name: 'is_bot', type: 'boolean', default: false })
+  isBot: boolean;
+
   // The last time this user did anything while logged in. This is how
   // "online" works before WebSockets exist: seen in the last minute = online.
   // The session guard refreshes it (at most once every 30 seconds).

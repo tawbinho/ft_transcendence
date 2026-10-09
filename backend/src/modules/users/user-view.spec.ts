@@ -20,6 +20,7 @@ function row(overrides: Partial<PlayerRow> = {}): PlayerRow {
     draws: 1,
     friendship: 'none',
     blocked: false,
+    isBot: false,
     ...overrides,
   };
 }
@@ -34,7 +35,13 @@ describe('toPlayerListItem', () => {
       createdAt: new Date('2025-12-01T00:00:00Z'),
       stats: { played: 6, wins: 3, losses: 2, draws: 1 },
       friendship: 'none',
+      isBot: false,
     });
+  });
+
+  it('says when a player is a computer', () => {
+    expect(toPlayerListItem(row({ isBot: true }), ME, NOW).isBot).toBe(true);
+    expect(toProfile(row({ isBot: true }), ME, NOW).isBot).toBe(true);
   });
 
   it('is online when seen less than a minute ago', () => {

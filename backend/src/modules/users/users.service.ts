@@ -58,7 +58,7 @@ const friendJoin = (viewer: string): string => `
 
 // The columns both queries select for a player.
 const playerColumns = (viewer: string): string => `
-  u.id, u.display_name, u.avatar_url, u.last_seen_at, u.created_at,
+  u.id, u.display_name, u.avatar_url, u.last_seen_at, u.created_at, u.is_bot,
   COALESCE(s.wins, 0) AS wins,
   COALESCE(s.losses, 0) AS losses,
   COALESCE(s.draws, 0) AS draws,
@@ -82,6 +82,7 @@ interface PlayerSqlRow {
   draws: string;
   friendship: Friendship;
   blocked: boolean;
+  is_bot: boolean;
 }
 
 function toPlayerRow(row: PlayerSqlRow): PlayerRow {
@@ -96,6 +97,7 @@ function toPlayerRow(row: PlayerSqlRow): PlayerRow {
     draws: Number(row.draws),
     friendship: row.friendship,
     blocked: row.blocked,
+    isBot: row.is_bot,
   };
 }
 
@@ -140,6 +142,16 @@ export class UsersService {
     passwordHash: string;
   }): Promise<User> {
     return this.users.save(this.users.create(data));
+  }
+
+  // Makes sure a computer opponent exists (called at startup, so safe to call
+  // again). It has no password: nobody can log in as it. Returns its user.
+  async ensureBot(displayName: string, email: string): Promise<User> {
+    const existing = await this.users.findOneBy({ email });
+    if (existing) return existing;
+    return this.users.save(
+      this.users.create({ displayName, email, passwordHash: null, isBot: true }),
+    );
   }
 
   // The Players page: search, filter, sort, paginate. The viewer is in the
