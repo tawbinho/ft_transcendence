@@ -1,6 +1,7 @@
 import {
   toTournament,
   toTournamentSummary,
+  type PairingData,
   type RegisteredPlayer,
   type TournamentData,
 } from './tournament-view.js';
@@ -33,8 +34,13 @@ function tournament(overrides: Partial<TournamentData> = {}): TournamentData {
 }
 
 const players: RegisteredPlayer[] = [
-  { userId: ALICE, displayName: 'alice', avatarUrl: null },
-  { userId: BOB, displayName: 'bob', avatarUrl: '/api/avatars/bob.webp' },
+  { userId: ALICE, displayName: 'alice', avatarUrl: null, lastSeenAt: null },
+  {
+    userId: BOB,
+    displayName: 'bob',
+    avatarUrl: '/api/avatars/bob.webp',
+    lastSeenAt: null,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -105,9 +111,14 @@ describe('toTournament', () => {
     expect(toTournament(tournament(), players, ALICE).rounds).toEqual([]);
   });
 
-  it('reports nobody online until presence exists', () => {
-    const view = toTournament(tournament(), players, ALICE);
-    expect(view.players.every((player) => player.online === false)).toBe(true);
+  it('reports who is online from the last seen date', () => {
+    const now = new Date('2026-01-01T12:00:00Z').getTime();
+    const seen: RegisteredPlayer[] = [
+      { ...players[0]!, lastSeenAt: new Date(now - 5_000) },
+      { ...players[1]!, lastSeenAt: new Date(now - 120_000) },
+    ];
+    const view = toTournament(tournament(), seen, ALICE, [], now);
+    expect(view.players.map((p) => p.online)).toEqual([true, false]);
   });
 
   it('keeps the summary fields too', () => {
@@ -123,5 +134,48 @@ describe('toTournament', () => {
     expect(view.players).toEqual([]);
     expect(view.playerCount).toBe(0);
     expect(view.joined).toBe(false);
+  });
+});
+
+describe('toTournament rounds', () => {
+  const pairing = (overrides: Partial<PairingData>): PairingData => ({
+    id: 'p',
+    round: 0,
+    position: 0,
+    player1Id: ALICE,
+    player2Id: BOB,
+    matchId: null,
+    winnerId: null,
+    bye: false,
+    ...overrides,
+  });
+
+  it('groups the pairings by round and orders them by position', () => {
+    const view = toTournament(tournament(), players, ALICE, [
+      pairing({ id: 'c', round: 1, position: 0, player1Id: null, player2Id: null }),
+      pairing({ id: 'b', round: 0, position: 1 }),
+      pairing({ id: 'a', round: 0, position: 0 }),
+    ]);
+    expect(view.rounds.map((r) => r.pairings.map((p) => p.id))).toEqual([
+      ['a', 'b'],
+      ['c'],
+    ]);
+  });
+
+  it('shows the players of a pairing, and null for an empty place', () => {
+    const view = toTournament(tournament(), players, ALICE, [
+      pairing({ player2Id: null, bye: true, winnerId: ALICE }),
+    ]);
+    const first = view.rounds[0]!.pairings[0]!;
+    expect(first.players[0]).toMatchObject({ id: ALICE, displayName: 'alice' });
+    expect(first.players[1]).toBeNull();
+    expect(first).toMatchObject({ bye: true, winnerId: ALICE });
+  });
+
+  it('carries the match of a pairing', () => {
+    const view = toTournament(tournament(), players, ALICE, [
+      pairing({ matchId: 'match-9' }),
+    ]);
+    expect(view.rounds[0]!.pairings[0]!.matchId).toBe('match-9');
   });
 });

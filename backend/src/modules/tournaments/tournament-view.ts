@@ -1,3 +1,4 @@
+import { isOnline } from '../users/presence.service.js';
 import type { TournamentStatus } from './tournament.constants.js';
 
 // WHY THIS FILE EXISTS
@@ -29,6 +30,19 @@ export interface RegisteredPlayer {
   userId: string;
   displayName: string;
   avatarUrl: string | null;
+  lastSeenAt: Date | null; // decides the online dot
+}
+
+// One pairing of the bracket, as loaded from the database.
+export interface PairingData {
+  id: string;
+  round: number;
+  position: number;
+  player1Id: string | null;
+  player2Id: string | null;
+  matchId: string | null;
+  winnerId: string | null;
+  bye: boolean;
 }
 
 // ---- What the API returns -------------------------------------------------
@@ -116,24 +130,54 @@ export function toTournament(
   data: TournamentData,
   players: RegisteredPlayer[],
   viewerId: string,
+  pairings: PairingData[] = [],
+  now = Date.now(),
 ): TournamentView {
+  const views = new Map<string, PlayerView>(
+    players.map((player) => [
+      player.userId,
+      {
+        id: player.userId,
+        displayName: player.displayName,
+        avatarUrl: player.avatarUrl,
+        online: isOnline(player.lastSeenAt, now),
+      },
+    ]),
+  );
+  const view = (id: string | null): PlayerView | null =>
+    id ? (views.get(id) ?? null) : null;
+
   return {
     ...toTournamentSummary(
       data,
       players.length,
       players.some((player) => player.userId === viewerId),
     ),
-    players: players.map((player) => ({
-      id: player.userId,
-      displayName: player.displayName,
-      avatarUrl: player.avatarUrl,
-      // Presence (who is online) is not built yet, so nobody is reported
-      // online. It will come from the users module.
-      online: false,
-    })),
-    // The bracket is built when the tournament starts, which is not built yet.
-    rounds: [],
+    players: players.map((player) => views.get(player.userId)!),
+    rounds: toRounds(pairings, view),
     startedAt: data.startedAt,
     endedAt: data.endedAt,
   };
+}
+
+// Groups the pairings into rounds (round 0 first), each in order of position.
+// Empty until the tournament starts.
+function toRounds(
+  pairings: PairingData[],
+  view: (id: string | null) => PlayerView | null,
+): RoundView[] {
+  const rounds: RoundView[] = [];
+  const ordered = [...pairings].sort(
+    (a, b) => a.round - b.round || a.position - b.position,
+  );
+  for (const pairing of ordered) {
+    (rounds[pairing.round] ??= { pairings: [] }).pairings.push({
+      id: pairing.id,
+      players: [view(pairing.player1Id), view(pairing.player2Id)],
+      matchId: pairing.matchId,
+      winnerId: pairing.winnerId,
+      bye: pairing.bye,
+    });
+  }
+  return rounds;
 }

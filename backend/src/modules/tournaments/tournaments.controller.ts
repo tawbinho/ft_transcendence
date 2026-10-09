@@ -122,6 +122,22 @@ export class TournamentsController {
     return this.tournaments.join(user.id, id);
   }
 
+  // POST /api/tournaments/:id/start: the "Start now" button (creator only).
+  @Post(':id/start')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Start before it is full',
+    description:
+      'Creator only, with at least 3 players. The players are shuffled into a bracket of 4 or 8 places (empty places are byes) and the first matches start at once. Errors: NOT_CREATOR, NOT_ENOUGH_PLAYERS, TOURNAMENT_NOT_OPEN.',
+  })
+  @ApiOkResponse({ type: TournamentResponse })
+  start(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<TournamentView> {
+    return this.tournaments.start(user.id, id);
+  }
+
   // POST /api/tournaments/:id/leave: the "Leave" button.
   @Post(':id/leave')
   @HttpCode(200)

@@ -83,6 +83,7 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 | `DB_NAME`                | `connect4` | database name                                           |
 | `TWO_FACTOR_KEY`         | none       | **required**, 64 hex chars, encrypts the 2FA secrets    |
 | `SESSION_TTL_DAYS`       | `7`        | how long a login lasts, optional                        |
+| `TOURNAMENT_TURN_TIMEOUT_SECONDS` | `180` | how long a tournament player may take to move before losing, optional |
 | `DISCONNECT_GRACE_SECONDS` | `30`     | how long a player may be disconnected from a running match before losing, optional |
 | `AVATAR_DIR`             | `./uploads/avatars` | where profile pictures are stored; Docker sets it to a volume |
 
@@ -147,6 +148,7 @@ All `/api/matches` routes need a logged-in user.
 | `GET  /api/tournaments/:id`        | one tournament with its registered players          |
 | `DELETE /api/tournaments/:id`      | cancel it (creator only, while registering)         |
 | `POST /api/tournaments/:id/join`   | take a place                                        |
+| `POST /api/tournaments/:id/start`  | start before it is full (creator only, 3 players or more) |
 | `POST /api/tournaments/:id/leave`  | give the place back                                 |
 
 All `/api/tournaments` routes need a logged-in user.
@@ -233,7 +235,28 @@ takes the first place; others join and leave while it is `registering`.
 Cancelling deletes it. Every change runs in a transaction that locks the
 tournament row, so two players cannot take the last place together. Error
 codes: `TOURNAMENT_NOT_FOUND`, `TOURNAMENT_NOT_OPEN`, `TOURNAMENT_FULL`,
-`ALREADY_JOINED`, `NOT_JOINED`, `CREATOR_CANNOT_LEAVE`, `NOT_CREATOR`.
+`ALREADY_JOINED`, `NOT_JOINED`, `CREATOR_CANNOT_LEAVE`, `NOT_CREATOR`,
+`NOT_ENOUGH_PLAYERS`.
+
+**Tournament bracket.** Taking the last place starts the tournament at once;
+the creator can also start it earlier with at least 3 players. The players are
+shuffled into a bracket of the next power of two (4 places for 3 or 4 players,
+8 for 5 to 8): empty places are byes, one at most per first-round pairing, and
+a player with a bye goes straight to the next round. The bracket is the
+`tournament_pairings` table, and `GET /tournaments/:id` returns it as `rounds`
+(round 0 first). As soon as both players of a pairing are known the server
+creates their match (both seated, already `in_progress`, seats at random, the
+tournament's board). The winner of pairing `i` of round `r` takes place `i % 2`
+of pairing `floor(i/2)` of round `r+1`; a **draw is replayed** with a new match
+for the same pairing; the final's winner ends the tournament (`finished`).
+Winners advance when a match ends by a win, a resignation or a disconnection,
+and every change sends `tournament:update`. In a tournament match the player
+whose turn it is **loses if no move is made for
+`TOURNAMENT_TURN_TIMEOUT_SECONDS`** (180 by default; the clock restarts after
+each move; ordinary matches have no clock). A sweep every 15 seconds checks
+the database, so a restart cannot lose a clock. That loss is recorded as
+`endReason: "disconnect"`.
+
 **Presence.** A player is online if they made a request while logged in during
 the last minute: the session guard writes `users.last_seen_at` (at most every
 30 seconds per user), and by the live connection (see below). The wins, losses and
@@ -263,10 +286,9 @@ at once. Only players who were connected by socket can be forfeited, so an app
 that polls never triggers it. The countdowns live in memory: a server restart
 drops them.
 
-**Not built yet:** starting a tournament, the bracket, the matches it creates
-and advancing winners (`rounds` is always empty, and players are always
-reported offline in a tournament's player list). The full API design, including these
-parts, is in `backend/docs/openapi.yaml`.
+**Not built yet:** chat, the "your tournament match is ready" chat message, the
+list of live matches for spectators (`GET /matches/live`) and the server-side AI.
+The full API design, including these parts, is in `backend/docs/openapi.yaml`.
 
 **Rate limits** (per IP, per minute): 100 requests overall; login 10; signup 5;
 2FA verify, enable and disable 5; creating a match or a tournament 20;

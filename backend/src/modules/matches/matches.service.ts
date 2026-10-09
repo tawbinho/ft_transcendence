@@ -1,5 +1,5 @@
 import { randomInt } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, type EntityManager, Repository } from 'typeorm';
 import { AppError } from '../../common/errors/app-error.js';
@@ -55,6 +55,8 @@ export interface MatchPage {
 // players can never take the same seat and a move can never be stored twice.
 @Injectable()
 export class MatchesService {
+  private readonly logger = new Logger(MatchesService.name);
+
   constructor(
     @InjectRepository(Match) private readonly matches: Repository<Match>,
     @InjectRepository(MatchPlayer)
@@ -341,7 +343,7 @@ export class MatchesService {
     matchId: string,
     col: number,
   ): Promise<MatchView> {
-    await this.dataSource.transaction(async (manager) => {
+    const finished = await this.dataSource.transaction(async (manager) => {
       const match = await this.lockMatch(manager, matchId);
       const players = await manager.find(MatchPlayer, { where: { matchId } });
       const me = players.find((player) => player.userId === userId);
@@ -407,16 +409,19 @@ export class MatchesService {
           );
         }
       }
+      // Did this move end the match (a win or a draw)?
+      return state.status !== 'playing';
     });
 
     await this.broadcast(matchId);
+    if (finished) await this.notifyFinished(matchId);
     return this.get(userId, matchId);
   }
 
   // Giving up. In a running match the other player wins. In a match still
   // waiting for an opponent it simply cancels the match.
   async resign(userId: string, matchId: string): Promise<MatchView> {
-    await this.dataSource.transaction(async (manager) => {
+    const ended = await this.dataSource.transaction(async (manager) => {
       const match = await this.lockMatch(manager, matchId);
       const players = await manager.find(MatchPlayer, { where: { matchId } });
       if (!players.some((player) => player.userId === userId))
@@ -431,7 +436,7 @@ export class MatchesService {
             endedAt: new Date(),
           },
         );
-        return;
+        return false; // a cancelled waiting match is not a result
       }
       if (match.status !== 'in_progress') {
         throw new AppError(
@@ -442,10 +447,66 @@ export class MatchesService {
       }
 
       await this.endByForfeit(manager, matchId, players, userId, 'resign');
+      return true;
     });
 
     await this.broadcast(matchId);
+    if (ended) await this.notifyFinished(matchId);
     return this.get(userId, matchId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Matches made by the server (tournaments)
+  // ---------------------------------------------------------------------------
+
+  // Creates a match between two players that STARTS AT ONCE: both seated (seats
+  // at random: moving first is an advantage), `in_progress`, nobody has to join.
+  // Runs inside the caller's transaction, so a tournament can create its
+  // matches and update its bracket atomically. Returns the match id.
+  async createStartedMatch(
+    manager: EntityManager,
+    settings: GameSettings & { theme: string },
+    playerAId: string,
+    playerBId: string,
+  ): Promise<string> {
+    const match = await manager.save(
+      manager.create(Match, {
+        cols: settings.cols,
+        rows: settings.rows,
+        winLength: settings.winLength,
+        theme: settings.theme,
+        invitedUserId: null,
+        status: 'in_progress',
+        startedAt: new Date(),
+      }),
+    );
+    const seatA = randomInt(1, 3);
+    await manager.insert(MatchPlayer, [
+      { matchId: match.id, seat: seatA, userId: playerAId, result: null },
+      { matchId: match.id, seat: seatA === 1 ? 2 : 1, userId: playerBId, result: null },
+    ]);
+    return match.id;
+  }
+
+  // Other modules can ask to be told when a match is OVER (won, drawn,
+  // resigned or forfeited): the tournaments module moves its bracket on.
+  // A listener that fails must not break the request that ended the match.
+  private readonly finishedListeners: Array<
+    (matchId: string) => Promise<void> | void
+  > = [];
+
+  onMatchFinished(listener: (matchId: string) => Promise<void> | void): void {
+    this.finishedListeners.push(listener);
+  }
+
+  private async notifyFinished(matchId: string): Promise<void> {
+    for (const listener of this.finishedListeners) {
+      try {
+        await listener(matchId);
+      } catch (error) {
+        this.logger.warn(`Match finished listener failed: ${String(error)}`);
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -480,7 +541,10 @@ export class MatchesService {
       await this.endByForfeit(manager, matchId, players, userId, 'disconnect');
       return true;
     });
-    if (ended) await this.broadcast(matchId);
+    if (ended) {
+      await this.broadcast(matchId);
+      await this.notifyFinished(matchId);
+    }
     return ended;
   }
 

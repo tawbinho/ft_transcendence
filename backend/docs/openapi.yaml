@@ -48,9 +48,9 @@ tags:
 - name: chat
   description: Private messages, match invitations, read receipts, typing, and blocking. Blocking is implemented; the rest is new (demo feature `chat`).
 - name: tournaments
-  description: 'Online single-elimination tournaments with 4 or 8 places. Implemented: list, create, read, cancel,
-    join, leave (`rounds` is always empty). New: `start` (the bracket, the matches and advancing winners), still
-    faked by the frontend demo feature `tournaments`.'
+  description: 'Online single-elimination tournaments with 4 or 8 places. All implemented: list, create, read, cancel,
+    join, leave, start, the bracket and advancing winners. Not built yet: the chat message that tells a player their match
+    is ready (it waits for chat).'
 security:
 - session: []
 paths:
@@ -1633,7 +1633,7 @@ paths:
       - tournaments
       operationId: joinTournament
       summary: Register
-      description: While `registering`. Taking the last place starts the tournament at once.
+      description: While `registering`. Taking the last place starts the tournament at once (the bracket and the first matches are created).
       x-status: implemented
       parameters:
       - $ref: '#/components/parameters/TournamentId'
@@ -1725,18 +1725,17 @@ paths:
       - tournaments
       operationId: startTournament
       summary: Start before it is full
-      description: 'NOT BUILT YET (the rest of the tournaments feature is: list, create, read, cancel, join, leave).
-        Creator only, with at least 3 players. At the start the players are shuffled into a bracket of the next
-        power of two (4 for 3 or 4 players, 8 for 5 to 8). The empty places are byes, one per first-round pairing,
-        and a player with a bye goes straight to round 2. As soon as both players of a pairing are known the server
-        creates their match: both seated, `in_progress` at once, seats at random, the tournament''s settings; it
-        sets the pairing''s `matchId` and adds a `system` chat message (`event: tournament_match`). The winner of
-        pairing `i` in round `r` moves to pairing `floor(i/2)` of round `r+1`, in place `i % 2`. A draw is replayed
-        with a new match. When the final has a winner the tournament is `finished`. Every change sends `tournament:update`.
-        Open decision: what happens to a match nobody plays (for example a player who does not move for some minutes
-        loses).'
-      x-status: new
-      x-demo-feature: tournaments
+      description: 'Creator only, with at least 3 players (`NOT_ENOUGH_PLAYERS` otherwise). Taking the last place also starts the
+        tournament, with the same rules. At the start the players are shuffled into a bracket of the next power of two (4 for
+        3 or 4 players, 8 for 5 to 8). The empty places are byes, one per first-round pairing, and a player with a bye
+        goes straight to round 2. As soon as both players of a pairing are known the server creates their match: both
+        seated, `in_progress` at once, seats at random, the tournament''s settings; it sets the pairing''s `matchId`.
+        The winner of pairing `i` in round `r` moves to pairing `floor(i/2)` of round `r+1`, in place `i % 2`. A draw is
+        replayed with a new match. When the final has a winner the tournament is `finished`. Every change sends
+        `tournament:update`. In a tournament match the player whose turn it is loses if no move is made for
+        `TOURNAMENT_TURN_TIMEOUT_SECONDS` (180 by default); the loss is recorded as `endReason: disconnect`.
+        Not built yet: the `system` chat message (`event: tournament_match`), which waits for chat.'
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/TournamentId'
       responses:

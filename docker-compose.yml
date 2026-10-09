@@ -30,6 +30,10 @@ services:
       DB_NAME: ${DB_NAME}
       TWO_FACTOR_KEY: ${TWO_FACTOR_KEY}
       AVATAR_DIR: /data/avatars
+      # Optional, with these defaults: how long a tournament player may take to
+      # move, and how long a player may be disconnected from a running match.
+      TOURNAMENT_TURN_TIMEOUT_SECONDS: ${TOURNAMENT_TURN_TIMEOUT_SECONDS:-180}
+      DISCONNECT_GRACE_SECONDS: ${DISCONNECT_GRACE_SECONDS:-30}
     # Not published to the host on purpose: the only way in from outside is
     # the HTTPS proxy below (the subject requires HTTPS for every connection
     # to the backend). `expose` only makes the port visible to other

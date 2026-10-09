@@ -27,7 +27,7 @@ export class TournamentPlayerResponse extends PlayerRefResponse {
 
   @ApiProperty({
     example: false,
-    description: 'Always false for now: presence is not built yet',
+    description: 'Seen in the last minute (or a live connection is open)',
   })
   online: boolean;
 }
@@ -104,7 +104,7 @@ export class TournamentResponse extends TournamentSummaryResponse {
   @ApiProperty({
     type: [RoundResponse],
     description:
-      'Empty until the tournament starts (starting is not built yet)',
+      'Empty until the tournament starts. rounds[0] is the first round',
   })
   rounds: RoundResponse[];
 

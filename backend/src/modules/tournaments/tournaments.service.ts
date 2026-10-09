@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, type EntityManager, Repository } from 'typeorm';
 import { AppError } from '../../common/errors/app-error.js';
@@ -8,13 +8,24 @@ import {
   DEFAULT_SETTINGS,
   type GameSettings,
 } from '../matches/engine/game.types.js';
+import { MatchPlayer } from '../matches/entities/match-player.entity.js';
 import { DEFAULT_THEME } from '../matches/match.constants.js';
+import { MatchesService } from '../matches/matches.service.js';
 import { EVENTS } from '../realtime/realtime.constants.js';
 import { RealtimeService } from '../realtime/realtime.service.js';
 import type { CreateTournamentDto } from './dto/create-tournament.dto.js';
 import type { ListTournamentsQuery } from './dto/list-tournaments.query.js';
+import {
+  buildBracket,
+  isFinal,
+  isReady,
+  placeWinner,
+  type Slot,
+} from './bracket.js';
+import { TournamentPairing } from './entities/tournament-pairing.entity.js';
 import { TournamentPlayer } from './entities/tournament-player.entity.js';
 import { Tournament } from './entities/tournament.entity.js';
+import { MIN_PLAYERS_TO_START } from './tournament.constants.js';
 import {
   toTournament,
   toTournamentSummary,
@@ -30,23 +41,35 @@ export interface TournamentPage {
 }
 
 // WHY THIS FILE EXISTS
-// The rules of a tournament: who may create, list, read, cancel it, and who may
-// join or leave it. Starting it and playing the bracket are NOT here yet.
+// The rules of a tournament: who may create, list, read, cancel it, who may join
+// or leave it, starting it (the bracket and its matches) and moving the bracket
+// on when a match ends.
 //
 // Every change to a tournament happens inside a database transaction that first
 // LOCKS the tournament row (SELECT ... FOR UPDATE). Two requests for the same
 // tournament are therefore handled one after the other, never at the same
 // time, so two players can never take the last place together.
 @Injectable()
-export class TournamentsService {
+export class TournamentsService implements OnModuleInit {
+  private readonly logger = new Logger(TournamentsService.name);
+
   constructor(
     @InjectRepository(Tournament)
     private readonly tournaments: Repository<Tournament>,
     @InjectRepository(TournamentPlayer)
     private readonly players: Repository<TournamentPlayer>,
+    @InjectRepository(TournamentPairing)
+    private readonly pairings: Repository<TournamentPairing>,
+    private readonly matches: MatchesService,
     private readonly realtime: RealtimeService,
     private readonly dataSource: DataSource,
   ) {}
+
+  // When a match ends, the bracket moves on (a winner advances, a draw is
+  // replayed, the final ends the tournament).
+  onModuleInit(): void {
+    this.matches.onMatchFinished((matchId) => this.advance(matchId));
+  }
 
   // ---------------------------------------------------------------------------
   // Create
@@ -158,14 +181,18 @@ export class TournamentsService {
       order: { joinedAt: 'ASC', userId: 'ASC' },
     });
 
+    const bracket = await this.pairings.find({ where: { tournamentId } });
+
     return toTournament(
       tournament,
       registered.map((row) => ({
         userId: row.userId,
         displayName: row.user.displayName,
         avatarUrl: row.user.avatarUrl,
+        lastSeenAt: row.user.lastSeenAt,
       })),
       userId,
+      bracket,
     );
   }
 
@@ -194,6 +221,11 @@ export class TournamentsService {
       }
 
       await manager.insert(TournamentPlayer, { tournamentId, userId });
+
+      // Taking the last place starts the tournament at once.
+      if (taken + 1 === tournament.size) {
+        await this.startBracket(manager, tournament);
+      }
     });
 
     this.announce(tournamentId);
@@ -227,6 +259,189 @@ export class TournamentsService {
 
     this.announce(tournamentId);
     return this.get(userId, tournamentId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Start
+  // ---------------------------------------------------------------------------
+
+  // The creator starts the tournament before it is full. Needs at least 3
+  // players: the empty places of the bracket become byes.
+  async start(userId: string, tournamentId: string): Promise<TournamentView> {
+    await this.dataSource.transaction(async (manager) => {
+      const tournament = await this.lockTournament(manager, tournamentId);
+      if (tournament.createdById !== userId) {
+        throw new AppError(
+          'NOT_CREATOR',
+          'Only the creator can start it',
+          403,
+        );
+      }
+      this.requireRegistering(tournament);
+
+      const registered = await manager.countBy(TournamentPlayer, {
+        tournamentId,
+      });
+      if (registered < MIN_PLAYERS_TO_START) {
+        throw new AppError(
+          'NOT_ENOUGH_PLAYERS',
+          `At least ${MIN_PLAYERS_TO_START} players are needed to start`,
+          409,
+        );
+      }
+      await this.startBracket(manager, tournament);
+    });
+
+    this.announce(tournamentId);
+    return this.get(userId, tournamentId);
+  }
+
+  // Builds the bracket from the registered players, creates the match of every
+  // pairing that is ready, and marks the tournament as running. Runs inside a
+  // transaction that holds the tournament lock (the caller's).
+  private async startBracket(
+    manager: EntityManager,
+    tournament: Tournament,
+  ): Promise<void> {
+    const registered = await manager.find(TournamentPlayer, {
+      where: { tournamentId: tournament.id },
+      order: { joinedAt: 'ASC', userId: 'ASC' },
+    });
+    const slots = buildBracket(registered.map((row) => row.userId));
+
+    // A pairing is ready when both players are known (byes can already fill a
+    // round-1 pairing): its match starts right away.
+    for (const slot of slots.filter(isReady)) {
+      slot.matchId = await this.createMatchFor(manager, tournament, slot);
+    }
+
+    await manager.insert(
+      TournamentPairing,
+      slots.map((slot) => ({ tournamentId: tournament.id, ...slot })),
+    );
+    await manager.update(
+      Tournament,
+      { id: tournament.id },
+      { status: 'running', startedAt: new Date() },
+    );
+  }
+
+  // A started match for a pairing, with the board of the tournament.
+  private createMatchFor(
+    manager: EntityManager,
+    tournament: Tournament,
+    slot: Slot,
+  ): Promise<string> {
+    return this.matches.createStartedMatch(
+      manager,
+      {
+        cols: tournament.cols,
+        rows: tournament.rows,
+        winLength: tournament.winLength,
+        theme: tournament.theme,
+      },
+      slot.player1Id!,
+      slot.player2Id!,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Advancing
+  // ---------------------------------------------------------------------------
+
+  // A match is over. If it was a tournament match, move the bracket on:
+  //  - a winner: they take their place in the next round (and that match starts
+  //    if the other player is known), or win the tournament after the final;
+  //  - a draw: the pairing is replayed with a new match.
+  // The tournament row is locked, so two matches ending at the same moment
+  // cannot both write to the same next pairing. Safe to call twice for the
+  // same match: the second time the pairing already has its winner.
+  private async advance(matchId: string): Promise<void> {
+    const found = await this.pairings.findOneBy({ matchId });
+    if (!found) return; // an ordinary match, not part of a tournament
+    const tournamentId = found.tournamentId;
+
+    await this.dataSource.transaction(async (manager) => {
+      const tournament = await this.lockTournament(manager, tournamentId);
+      if (tournament.status !== 'running') return;
+
+      // Read again now that we hold the lock: it may have moved on already.
+      const pairing = await manager.findOneBy(TournamentPairing, {
+        id: found.id,
+      });
+      if (!pairing || pairing.matchId !== matchId || pairing.winnerId) return;
+
+      const results = await manager.find(MatchPlayer, { where: { matchId } });
+      const winner = results.find((row) => row.result === 'win');
+      const drawn =
+        results.length === 2 && results.every((row) => row.result === 'draw');
+      if (!winner && !drawn) return; // not a result (cancelled)
+
+      if (!winner) {
+        // A tournament needs a winner: play it again, new seats.
+        const replay = await this.createMatchFor(manager, tournament, {
+          player1Id: pairing.player1Id,
+          player2Id: pairing.player2Id,
+        } as Slot);
+        await manager.update(
+          TournamentPairing,
+          { id: pairing.id },
+          { matchId: replay },
+        );
+        return;
+      }
+
+      const rows = await manager.find(TournamentPairing, {
+        where: { tournamentId },
+      });
+      const slots: Slot[] = rows.map((row) => ({
+        round: row.round,
+        position: row.position,
+        player1Id: row.player1Id,
+        player2Id: row.player2Id,
+        bye: row.bye,
+        winnerId: row.winnerId,
+        matchId: row.matchId,
+      }));
+      const idOf = new Map(
+        rows.map((row) => [`${row.round}:${row.position}`, row.id]),
+      );
+      const changed = placeWinner(
+        slots,
+        pairing.round,
+        pairing.position,
+        winner.userId,
+      );
+
+      // The next pairing may now have both players: start its match.
+      const next = changed[1];
+      if (next && isReady(next)) {
+        next.matchId = await this.createMatchFor(manager, tournament, next);
+      }
+      for (const slot of changed) {
+        await manager.update(
+          TournamentPairing,
+          { id: idOf.get(`${slot.round}:${slot.position}`)! },
+          {
+            player1Id: slot.player1Id,
+            player2Id: slot.player2Id,
+            winnerId: slot.winnerId,
+            matchId: slot.matchId,
+          },
+        );
+      }
+
+      // The final is won: the tournament is over.
+      if (isFinal(slots, changed[0]!)) {
+        await manager.update(
+          Tournament,
+          { id: tournamentId },
+          { status: 'finished', winnerId: winner.userId, endedAt: new Date() },
+        );
+      }
+    });
+
+    this.announce(tournamentId);
   }
 
   // ---------------------------------------------------------------------------

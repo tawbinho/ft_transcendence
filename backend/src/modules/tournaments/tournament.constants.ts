@@ -5,8 +5,8 @@
 
 // Where a tournament is in its life:
 //  registering  players can join and leave
-//  running      the bracket is being played (not built yet)
-//  finished     there is a winner (not built yet)
+//  running      the bracket is being played
+//  finished     the final has a winner
 // A cancelled tournament does not exist any more: cancelling deletes it.
 export const TOURNAMENT_STATUSES = [
   'registering',
@@ -24,6 +24,10 @@ export type TournamentSize = (typeof TOURNAMENT_SIZES)[number];
 // work. The name is trimmed BEFORE this is checked (see the DTO).
 export const TOURNAMENT_NAME_PATTERN =
   /^[\p{L}\p{N}][\p{L}\p{N} \-_'.]{2,29}$/u;
+
+// The creator may start the tournament before it is full with this many
+// players or more (fewer would not make a bracket).
+export const MIN_PLAYERS_TO_START = 3;
 
 // Stops a flood of requests; used by the controller.
 export const CREATE_LIMIT_PER_MINUTE = 20;
