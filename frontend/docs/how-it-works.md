@@ -8,7 +8,7 @@ says where to look in the code. The [README](../README.md) says how to run, test
 - [3. How a page gets its data](#3-how-a-page-gets-its-data)
 - [4. Stack and why](#4-stack-and-why)
 - [5. Area by area](#5-area-by-area)
-- [6. The 3D board: on, off, removed](#6-the-3d-board-on-off-removed)
+- [6. The 3D board and the page background: on, off, removed](#6-the-3d-board-and-the-page-background-on-off-removed)
 - [7. The demo server](#7-the-demo-server)
 - [8. Tests and checks](#8-tests-and-checks)
 - [9. Questions evaluators are likely to ask](#9-questions-evaluators-are-likely-to-ask)
@@ -20,7 +20,7 @@ says where to look in the code. The [README](../README.md) says how to run, test
    not a file, so the app itself decides what to show. This is a "single-page application": one HTML page, and
    JavaScript changes what is inside it.
 2. `index.html` loads the JavaScript built by Vite. A few inline lines first apply the saved light or dark mode and
-   accent color, so the page does not flash in the wrong colors.
+   accent color and page background, so the page does not flash in the wrong colors.
 3. `src/main.tsx` starts the app: it loads the translations (`src/i18n`), the styles, starts the demo server if some
    features still need it (section 7), and renders `App`.
 4. `src/app/App.tsx` wraps everything in two providers: the data cache (TanStack Query) and the router.
@@ -35,10 +35,11 @@ says where to look in the code. The [README](../README.md) says how to run, test
 
 ```text
 src/
-  app/          the shell: route table, addresses (paths.ts), guards, data cache, live updates, navigation links (nav.ts)
+  app/          the shell: route table, addresses (paths.ts), guards, data cache, live updates, navigation links
+                (nav.ts), places where optional features plug in (extensions.ts)
   pages/        one folder per area: home, auth, play, tournaments, profile, settings, community, watch, history, info
   features/     code shared by several areas, one folder per subject: game, matches, tournaments, users, friends,
-                chat, spectate, auth, account, board3d (the optional 3D board)
+                chat, spectate, auth, account, board3d (the optional 3D board), backdrop (the optional page background)
   components/   pieces used everywhere: ui/ (the design system), icons, logo, illustrations, PageHeader, ModeCard
   layout/       the frame of every page: header, menus, demo banner, footer
   i18n/         translations: locales/<en|fr|ar>/<area>.ts
@@ -140,11 +141,16 @@ Written here instead of taken from a library:
 - `app/nav.ts` is the one list of links: address, name, icon, whether visitors see it, whether it needs an account,
   which count it shows and when it is highlighted. The top bar, the phone menu and the login hint all read it.
 - `layout/header/` splits the bar into small files: `Header` (asks who is logged in and the counts), `DesktopNav`,
-  `MobileMenu`, `AccountMenu`, `SessionActions` (avatar menu, Log in and Sign up, or a Retry button), `ThemeToggle`,
-  `CountBadge`.
+  `MobileMenu`, `AccountMenu`, `LanguageMenu`, `SessionActions` (avatar menu, Log in and Sign up, or a Retry button),
+  `ThemeToggle`, `CountBadge`.
 - Page width rule (a comment in `layout/AppLayout.tsx`): every page's title starts at the left edge of the column
   (`max-w-6xl`). A form or a long text below it may be narrower, but stays against that edge: no `mx-auto`. Only short
   notices such as "page not found" are centered.
+- The two drop-down menus of the bar, the account menu and the language menu, are built the same way: a button with
+  `aria-expanded`, a panel in the same style (`header/menuStyles.ts`), Tab to move through it, and `useDismiss` for
+  Escape, a click outside and the focus going back to the button. Where there is room (Settings, the phone menu)
+  language and appearance are rows of buttons (`LanguagePicker`, `ColorSchemePicker`), like the accent color. Native
+  `<select>` is kept for form fields (sort order, the history filter on phones).
 - The phone menu dims the page behind it; a tap on the dim layer, Escape or a click outside closes it.
 - `features/auth/session.ts` turns the answer of `/auth/me` into four states: loading, visitor, member, failed. A
   member whose later check fails stays a member, because the cache keeps the last answer.
@@ -199,7 +205,7 @@ Written here instead of taken from a library:
   loss, a new level every 100 XP, and six badges that are simple comparisons. They can never disagree with the match
   history, and the page says how they are computed.
 - `/settings` has four tabs (`TabLinks`): Profile (picture, display name), Security (two-factor, log out), Preferences
-  (language, light or dark, accent color, board colors for new games) and Blocked players. `resolveSection` in
+  (language, light or dark, accent color, page background, board colors for new games) and Blocked players. `resolveSection` in
   `settings/sections.ts` reads the tab from the address; an unknown tab goes back to `/settings`.
 - Two-factor shows only the button that fits when the backend says whether it is on; it does not send that yet, so
   "Turn on" is the main button and a quiet "Already on? Turn it off" sits under it (section 10).
@@ -265,7 +271,7 @@ Written here instead of taken from a library:
 - Dialogs and menus close on Escape and give the focus back; icon-only buttons have a label (`IconButton`).
 - Animations stop when the system asks for reduced motion.
 
-## 6. The 3D board: on, off, removed
+## 6. The 3D board and the page background: on, off, removed
 
 What it is: `src/features/board3d/` draws the board with Three.js. It has no game rules: it draws the state it is
 given and calls `onPlay(column)`, so the engine (or the server) still decides every move. Its own
@@ -289,6 +295,22 @@ Remove it for good:
 
 `npm run typecheck`, `npm test` and `npm run build` pass after these three steps (checked). The `board3d` texts and
 the `VITE_BOARD_3D` lines can stay; they do no harm.
+
+### The page background, also optional (`features/backdrop/`)
+
+Members pick a background for every page in Settings > Preferences: plain (the default), a soft glow in the accent
+color, dots, a fine grid or a faint Connect Four board. The choice is saved on this device (key `backdrop`) and the
+name goes in `data-backdrop` on `<html>`, the same idea as the accent color. `backdrop.css` draws each one on a single
+fixed layer behind the page (`body::before`, `z-index: -1`), with CSS only and the color tokens, so it follows light
+and dark mode and the accent color, is mirrored in Arabic and never moves. `backdrop.test.ts` checks that every text
+color keeps a contrast of 4.5 to 1 on the strongest pixel of each background. Its own
+[README](../src/features/backdrop/README.md) explains each file.
+
+How it is connected: one line in `src/main.tsx`, `import '@/features/backdrop/register'`. The picker reaches Settings
+through `src/app/extensions.ts`, a short list that Settings reads (empty when the feature is absent).
+
+Remove it: `rm -r src/features/backdrop` and delete that one line in `src/main.tsx`. `npm run typecheck`, `npm test`
+and `npm run build` pass after that (checked). The lines about `backdrop` in `index.html` can stay.
 
 ## 7. The demo server
 
@@ -361,7 +383,8 @@ language menu reads that list).
 **How is accessibility checked?** axe-core in the tests and in the browser, keyboard play with announcements, focus
 management, a contrast test for every color pair (section 5, "Accessibility").
 
-**How do you remove the 3D view?** Three steps (section 6).
+**How do you remove the 3D view?** Three steps (section 6). **The page background?** Two: delete its folder and one
+line in `src/main.tsx` (section 6).
 
 **Can you make a small change now?** Places that change one behavior each:
 

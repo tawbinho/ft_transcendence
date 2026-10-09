@@ -80,7 +80,8 @@ src/
   pages/        One folder per area: home, auth, play, tournaments, profile, settings, community, watch, history,
                 info. One route component per address, with the pieces only that area uses next to it
   features/     Code shared by several areas, one folder per subject: api.ts (calls), types.ts (shapes),
-                hooks.ts (data), components/, and small tested helpers. board3d/ is the optional 3D board
+                hooks.ts (data), components/, and small tested helpers. board3d/ is the optional 3D board, backdrop/ the
+                optional page background
   components/   Shared components; ui/ is the design system (buttons, fields, dialogs, tabs...), plus icons,
                 the logo and illustrations
   layout/       Header, menus, demo banner, footer
@@ -136,6 +137,17 @@ in browsers with WebGL 2, and if the 3D board fails, the 2D board comes back.
   `npm uninstall three @react-three/fiber @types/three`. Type check, tests and build pass after these three steps.
 
 Details, and answers to the usual 3D questions, in [`src/features/board3d/README.md`](src/features/board3d/README.md).
+
+## The page background (optional)
+
+Members choose a background for every page in Settings > Preferences: plain (the default), a soft glow, dots, a fine
+grid or a faint game board. It is drawn with CSS only, saved on this device, and kept faint so text stays readable
+(a test checks the contrast). It lives in `src/features/backdrop/`; one line in `src/main.tsx` switches it on.
+
+- **Remove it**: delete `src/features/backdrop` and the line `import '@/features/backdrop/register';` in
+  `src/main.tsx`. Type check, tests and build pass after these two steps.
+
+Details in [`src/features/backdrop/README.md`](src/features/backdrop/README.md).
 
 ## Testing
 
