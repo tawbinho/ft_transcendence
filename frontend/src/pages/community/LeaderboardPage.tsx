@@ -65,8 +65,9 @@ function LeaderboardPlaces({
   const { t } = useTranslation();
   const { podium, rest } = splitPodium(players, page);
 
+  // Not wider than a table needs: across the whole page a player and their numbers are too far apart to read as a row.
   return (
-    <div className={cn('flex flex-col gap-4', faded && 'opacity-60')}>
+    <div className={cn('flex max-w-3xl flex-col gap-4', faded && 'opacity-60')}>
       {podium.length > 0 && <Podium players={podium} />}
       {rest.length > 0 && <LeaderboardTable players={rest} offset={offset + podium.length} />}
       <Pagination page={page} pages={pages} label={t('leaderboard.title')} onChange={onPageChange} />

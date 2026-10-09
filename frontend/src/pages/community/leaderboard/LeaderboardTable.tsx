@@ -45,7 +45,10 @@ export function LeaderboardTable({ players, offset }: { players: PlayerListItem[
           {players.map((player, index) => {
             const rate = winRate(player.stats);
             return (
-              <tr key={player.id} className={cn(player.friendship === 'self' && 'bg-primary/10')}>
+              <tr
+                key={player.id}
+                className={cn('transition hover:bg-surface-2', player.friendship === 'self' && 'bg-primary/10')}
+              >
                 <th scope="row" className={cn(cell, 'text-start font-bold')}>
                   {rankOf(offset, index)}
                 </th>

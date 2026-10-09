@@ -31,7 +31,8 @@ export function ProfileView({ player }: { player: Profile }) {
       <ProfileStats stats={player.stats} />
       <Achievements stats={player.stats} />
 
-      <section aria-labelledby="profile-matches" className="flex flex-col gap-4">
+      {/* A narrower list: across the whole page the opponent is too far from the result. */}
+      <section aria-labelledby="profile-matches" className="flex max-w-3xl flex-col gap-4">
         <h2 id="profile-matches" className="text-xl font-bold">
           {t('profile.matchesTitle')}
         </h2>
