@@ -54,7 +54,7 @@ export function BracketView({
           {rounds.map((pairings, round) => {
             const isFinal = round === rounds.length - 1;
             return (
-              <li key={round} className={cn('flex w-56 flex-1 flex-col', !isFinal || champion ? 'me-10' : '')}>
+              <li key={round} className={cn('flex min-w-56 flex-1 flex-col', !isFinal || champion ? 'me-10' : '')}>
                 <h3 className="mb-3 text-sm font-bold tracking-wide text-muted uppercase">
                   {t(`tournaments.${roundName(round, rounds.length)}`, { n: round + 1 })}
                 </h3>
