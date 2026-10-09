@@ -40,6 +40,18 @@ describe('Board3D', () => {
     expect(onDrop).toHaveBeenLastCalledWith(0);
   });
 
+  it('drops a disc into a column with the keys 1 to 9, and ignores a key past the last column', async () => {
+    const onDrop = vi.fn();
+    render(<Board3D game={{ board: empty }} onDrop={onDrop} label="3D board" />);
+    const events = userEvent.setup();
+
+    screen.getByRole('application').focus();
+    await events.keyboard('3');
+    expect(onDrop).toHaveBeenLastCalledWith(2);
+    await events.keyboard('9'); // the board has 7 columns
+    expect(onDrop).toHaveBeenCalledTimes(1);
+  });
+
   it('does nothing while disabled or when the column is full', async () => {
     const onDrop = vi.fn();
     const { rerender } = render(<Board3D game={{ board: withFullColumn }} onDrop={onDrop} />);

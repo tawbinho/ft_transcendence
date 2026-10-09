@@ -114,10 +114,16 @@ export function Board3D({
     if (autoFocus) container.current?.focus({ preventScroll: true });
   }, []);
 
-  // Arrow keys choose a column, Home and End jump to the first and last, Enter or Space drops the disc.
+  // Arrow keys choose a column, Home and End jump to the first and last, Enter or Space drops the disc,
+  // and keys 1 to 9 drop a disc straight into that column (like the 2D board).
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (!interactive) return;
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    if (/^[1-9]$/.test(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      const col = Number(event.key) - 1;
+      if (col >= cols) return;
+      setSelected(col);
+      play(col);
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
       const step = event.key === 'ArrowLeft' ? -1 : 1;
       setSelected((col) => (col === null ? Math.floor(cols / 2) : Math.min(cols - 1, Math.max(0, col + step))));
     } else if (event.key === 'Home' || event.key === 'End') {

@@ -73,4 +73,4 @@ React up to 19.3.
   view, `distance = (height / 2) / tan(fov / 2)`, for the height and for the width, and keeps the larger plus 30%.
 - **Without WebGL 2?** `GameBoard` does not offer 3D at all, and `Board3D` itself shows a text instead of crashing.
 - **Keyboard?** Focus the board, left and right arrows choose a column (Home and End jump to the first and last),
-  Enter or Space drops a disc. A hidden live region tells screen readers which column is chosen.
+  Enter or Space drops a disc, and the keys 1 to 9 drop one straight into that column (as on the 2D board). A hidden live region tells screen readers which column is chosen.
