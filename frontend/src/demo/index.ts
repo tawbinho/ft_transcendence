@@ -148,6 +148,9 @@ export function installDemoServer(features: ReadonlySet<DemoFeature>): void {
   });
 
   // The world moves on by itself: replies, moves, tournaments, presence.
+  // Run it once now, so a new demo world has its live matches from the first request
+  // (Home and Watch would otherwise disagree for the first second).
+  if (tick(world)) saveSoon();
   const timer = setInterval(() => {
     if (tick(world)) saveSoon();
   }, 1000);
