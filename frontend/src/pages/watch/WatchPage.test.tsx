@@ -80,3 +80,22 @@ describe('watch list', () => {
     expect(await screen.findByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 });
+
+describe('watch list and the home page', () => {
+  // The home card and this page read the same live list: they must never disagree.
+  it('lists as many matches as the live card on the home page counts', async () => {
+    const matches = ['a1', 'a2', 'a3', 'a4'].map((id) => live({ id }));
+    fakeApi({
+      ...quietApi,
+      'GET /matches/mine': pageOf([]),
+      'GET /matches/live': pageOf(matches),
+    });
+
+    const home = renderRoute('/', { user: makeUser() });
+    expect(await screen.findByText('Matches being played right now: 4')).toBeInTheDocument();
+    home.unmount();
+
+    renderRoute('/watch', { user: makeUser() });
+    expect(await screen.findAllByRole('article')).toHaveLength(4);
+  });
+});

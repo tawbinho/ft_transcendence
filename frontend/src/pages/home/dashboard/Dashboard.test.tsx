@@ -126,12 +126,26 @@ describe('the "Friends online" panel', () => {
 });
 
 describe('the "Live matches" panel', () => {
-  it('counts the matches being played', async () => {
-    fakeApi(answers({ 'GET /matches/live': { items: [makeMatchSummary()], total: 4, limit: 12, offset: 0 } }));
+  it('counts the matches being played and opens the first three', async () => {
+    const live = ['m1', 'm2', 'm3', 'm4'].map((id) => makeMatchSummary({ id, yourSeat: null }, 5));
+    fakeApi(answers({ 'GET /matches/live': { items: live, total: 4, limit: 12, offset: 0 } }));
     renderWithProviders(<Dashboard user={user} />, { user });
 
     expect(await panel('Live matches').findByText('Matches being played right now: 4')).toBeInTheDocument();
     expect(panel('Live matches').getByRole('link', { name: 'Watch' })).toHaveAttribute('href', '/watch');
+    const matches = panel('Live matches').getAllByRole('link', { name: 'alice vs bob' });
+    expect(matches.map((link) => link.getAttribute('href'))).toEqual(['/watch/m1', '/watch/m2', '/watch/m3']);
+  });
+
+  it('opens a match the member plays as a game, not as a spectator', async () => {
+    const mine = makeMatchSummary({ id: 'm-mine', yourSeat: 1 }, 5);
+    fakeApi(answers({ 'GET /matches/live': { items: [mine], total: 1, limit: 12, offset: 0 } }));
+    renderWithProviders(<Dashboard user={user} />, { user });
+
+    expect(await panel('Live matches').findByRole('link', { name: 'alice vs bob' })).toHaveAttribute(
+      'href',
+      '/matches/m-mine',
+    );
   });
 
   it('says when no match is being played', async () => {
