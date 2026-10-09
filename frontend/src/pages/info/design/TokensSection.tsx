@@ -37,7 +37,9 @@ export function TokensSection() {
           <li key={name} className="flex items-center gap-4">
             <span className={`size-14 flex-none border border-border bg-surface-2 ${className}`} />
             <span className="min-w-0 text-sm">
-              <code className="font-semibold">{name}</code>
+              <code dir="ltr" className="font-semibold">
+                {name}
+              </code>
               <span className="block text-muted">{t(`design.tokens.${use}`)}</span>
             </span>
           </li>
@@ -49,7 +51,9 @@ export function TokensSection() {
           <li key={name} className="flex items-center gap-4">
             <span className={`size-14 flex-none rounded-control bg-surface ${className}`} />
             <span className="min-w-0 text-sm">
-              <code className="font-semibold">{name}</code>
+              <code dir="ltr" className="font-semibold">
+                {name}
+              </code>
               <span className="block text-muted">{t(`design.tokens.${use}`)}</span>
             </span>
           </li>
@@ -59,7 +63,10 @@ export function TokensSection() {
       <TokenCard title={t('design.tokens.motion')}>
         {MOTION.map(({ name, value, use }) => (
           <li key={name} className="text-sm">
-            <code className="font-semibold">{name}</code> · {value}
+            <code dir="ltr" className="font-semibold">
+              {name}
+            </code>{' '}
+            · {value}
             <span className="block text-muted">{t(`design.tokens.${use}`)}</span>
           </li>
         ))}

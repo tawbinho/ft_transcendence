@@ -68,7 +68,9 @@ function ThemePalette({ theme }: { theme: Theme }) {
                 >
                   Aa
                 </span>
-                <code className="mt-1 block truncate text-xs text-muted">--c-{name}</code>
+                <code dir="ltr" className="mt-1 block truncate text-xs text-muted">
+                  --c-{name}
+                </code>
               </li>
             ))}
           </ul>

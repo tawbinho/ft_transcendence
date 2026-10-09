@@ -18,7 +18,9 @@ export function IconsSection() {
           className="flex min-w-0 flex-col items-center gap-2 rounded-xl border border-border bg-surface p-3 text-center"
         >
           <Icon className="text-2xl" />
-          <code className="max-w-full break-words text-xs text-muted">{name}</code>
+          <code dir="ltr" className="max-w-full break-words text-xs text-muted">
+            {name}
+          </code>
         </li>
       ))}
     </ul>

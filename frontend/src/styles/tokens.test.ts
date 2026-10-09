@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import { readFileSync } from 'node:fs';
+import { ACCENT_PREVIEW } from '@/lib/accent';
 
 const css = readFileSync('src/styles/index.css', 'utf8');
 
@@ -106,4 +107,17 @@ describe.each(['light', 'dark'] as const)('%s theme contrast', (theme) => {
       expect(contrast(toRgb(t['--c-primary-fg']!), toRgb(t[color]!)), `button on ${color}`).toBeGreaterThanOrEqual(MIN);
     }
   });
+});
+
+describe('accent previews', () => {
+  it.each(Object.entries(ACCENT_PREVIEW))(
+    '%s preview matches the primary colors of the stylesheet',
+    (accent, preview) => {
+      const light = accent === 'blue' ? themes.light : withAccent('light', accent);
+      const dark = accent === 'blue' ? themes.dark : withAccent('dark', accent);
+
+      expect(preview.light).toBe(light['--c-primary']);
+      expect(preview.dark).toBe(dark['--c-primary']);
+    },
+  );
 });

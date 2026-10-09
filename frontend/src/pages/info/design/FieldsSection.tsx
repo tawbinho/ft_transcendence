@@ -12,11 +12,9 @@ export function FieldsSection() {
   const [size, setSize] = useState(7);
   const [level, setLevel] = useState<Level>('normal');
 
-  const levels = (['easy', 'normal', 'hard'] as const).map((value) => ({
-    value,
-    label: t(`design.sample.${value}`),
-    description: t(`design.sample.${value}Hint`),
-  }));
+  const levels = (['easy', 'normal', 'hard'] as const).map((value) => ({ value, label: t(`design.sample.${value}`) }));
+  // Only the cards variant shows the descriptions.
+  const levelCards = levels.map((option) => ({ ...option, description: t(`design.sample.${option.value}Hint`) }));
 
   return (
     <DemoGrid>
@@ -51,7 +49,7 @@ export function FieldsSection() {
           <OptionGroup legend={t('design.sample.level')} options={levels} value={level} onChange={setLevel} />
           <OptionGroup
             legend={t('design.sample.level')}
-            options={levels}
+            options={levelCards}
             value={level}
             onChange={setLevel}
             variant="cards"

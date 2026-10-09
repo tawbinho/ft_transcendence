@@ -21,7 +21,9 @@ export function TypeSection() {
           <li key={role} className="flex flex-col gap-1 p-4 sm:flex-row sm:items-baseline sm:gap-6">
             <div className="shrink-0 text-sm text-muted sm:w-52">
               <p className="font-semibold text-fg">{t(`design.type.${role}`)}</p>
-              <code className="text-xs">{label}</code>
+              <code dir="ltr" className="text-xs">
+                {label}
+              </code>
             </div>
             <p className={`min-w-0 ${classes}`}>{t('design.type.sample')}</p>
           </li>

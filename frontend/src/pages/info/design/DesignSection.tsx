@@ -37,7 +37,7 @@ export function ComponentDemo({
       className={cn('min-w-0 rounded-card border border-border bg-surface p-5 shadow-card', wide && 'lg:col-span-2')}
     >
       <h3 className="font-bold">
-        <code>{name}</code>
+        <code dir="ltr">{name}</code>
       </h3>
       <p className="mt-1 text-sm text-muted">{description}</p>
       <div className="mt-4 flex flex-wrap items-center gap-3">{children}</div>
