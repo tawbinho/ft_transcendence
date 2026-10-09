@@ -108,7 +108,8 @@ export function Board3D({
 
   // Only on mount: later renders must not pull focus back from wherever the player went.
   useEffect(() => {
-    if (autoFocus) container.current?.focus();
+    // preventScroll: the page must not jump just because a new game started (same as the 2D board).
+    if (autoFocus) container.current?.focus({ preventScroll: true });
   }, []);
 
   // Arrow keys choose a column, Home and End jump to the first and last, Enter or Space drops the disc.
