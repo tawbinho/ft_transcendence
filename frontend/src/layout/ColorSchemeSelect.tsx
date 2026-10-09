@@ -28,7 +28,7 @@ export function ColorSchemeSelect({
         onChange={(event) => setScheme(event.target.value as ColorScheme)}
         className={cn(
           'rounded-lg border border-border bg-surface px-3 text-sm font-medium text-fg hover:bg-surface-2',
-          stacked ? 'h-11 w-full' : 'h-9',
+          stacked ? 'h-11 w-full' : 'field-sizing-content h-9',
         )}
       >
         {COLOR_SCHEMES.map((option) => (

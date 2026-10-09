@@ -34,7 +34,8 @@ export function LanguageSelect({
           onChange={(event) => isLanguage(event.target.value) && setLanguage(event.target.value)}
           className={cn(
             'appearance-none rounded-lg border border-border bg-surface ps-8 pe-3 text-sm font-medium text-fg hover:bg-surface-2',
-            stacked ? 'h-11 w-full' : 'h-9',
+            // Compact: as wide as the chosen language, not the longest one (browsers without field-sizing keep the longest).
+            stacked ? 'h-11 w-full' : 'field-sizing-content h-9',
           )}
         >
           {LANGUAGES.map(({ code, label }) => (
