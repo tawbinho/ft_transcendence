@@ -1,14 +1,19 @@
 # Frontend
 
 The web app of ft_transcendence: Connect Four on one screen, against the computer or online, with profiles, friends,
-chat, tournaments and a spectator mode, in English, French and Arabic.
+chat, tournaments, a leaderboard, replays and a spectator mode, in English, French and Arabic, with an optional 3D
+board.
 
-Built with React 19, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router and i18next.
+Built with React 19, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router and i18next; the optional 3D board
+uses Three.js through React Three Fiber.
+
+**New to this code?** Read [`docs/how-it-works.md`](docs/how-it-works.md): how a page gets its data, where things live,
+why each tool was chosen, and the questions evaluators are likely to ask.
 
 ## Quick start
 
-You need Node.js 20.19 or newer, and the stack of the repository running (`docker compose up` at the root) for
-everything that needs an account.
+You need Node.js 22.12 or newer (20.19 also works), and the stack of the repository running (`docker compose up` at
+the root) for everything that needs an account.
 
 ```sh
 cd frontend
@@ -18,7 +23,8 @@ npm run dev
 
 Then open http://localhost:5173. The development server forwards `/api` and `/socket.io` to the HTTPS proxy on
 https://localhost:8443, so logins, cookies and routes behave as in production. The home page, the games on one screen
-and against the computer, the same-screen tournament and the legal pages also work without the backend.
+and against the computer, the same-screen tournament, the design page and the legal pages also work without the
+backend.
 
 ## Scripts
 
@@ -28,153 +34,107 @@ and against the computer, the same-screen tournament and the legal pages also wo
 | `npm run build`        | Type-checks, then builds the production files into `dist/` |
 | `npm run preview`      | Serves `dist/` on http://localhost:4173                    |
 | `npm run typecheck`    | Type-checks only                                           |
-| `npm test`             | Runs the unit tests once                                   |
-| `npm run test:watch`   | Runs the unit tests again on every change                  |
+| `npm test`             | Runs the tests once                                        |
+| `npm run test:watch`   | Runs the tests again on every change                       |
 | `npm run format`       | Formats every file with Prettier                           |
 | `npm run format:check` | Checks the formatting without changing anything            |
 
-Before a commit: `npm run typecheck && npm test && npm run format:check`.
+Before a commit: `npm run format`, then `npm run typecheck && npm test && npm run format:check`.
 
 ## Settings
 
 Build-time settings, listed in `.env.example`. For `npm run dev`, copy it to `.env.local` (ignored by git) and change
-what you need. With Docker, pass them as build arguments.
+what you need. With Docker, pass them as build arguments (`args:` of the `frontend` service in the root
+`docker-compose.yml`).
 
 | Name                 | What it does                                                                                                                                           | Default                  |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
 | `VITE_DEMO_FEATURES` | Features answered by the in-browser demo server until the backend has their routes: `users`, `friends`, `chat`, `spectate`, `tournaments`. Empty: none | All five                 |
 | `VITE_REALTIME`      | `socket` to receive live updates over Socket.IO, once the backend has a gateway                                                                        | Polling only             |
+| `VITE_BOARD_3D`      | `off` leaves the 3D board and Three.js out of the build; anything else keeps the 2D / 3D switch                                                        | `on`                     |
 | `API_PROXY_TARGET`   | Development only: where `npm run dev` forwards `/api` and `/socket.io`                                                                                 | `https://localhost:8443` |
 
 ## Running with Docker
 
-The `Dockerfile` builds the app with Node, then serves `dist/` with nginx (`nginx.conf`): any path that is not a file
-answers `index.html`, so the app's router shows the page, and the built files are cached for a year since their names
-change with their content.
+`docker compose up` at the root of the repository starts everything, and the app is served on
+https://localhost:8443 (`HTTPS_PORT` in the root `.env`), next to the API.
 
-To start it with `docker compose up`, two files outside this folder need the lines below.
-
-In `docker-compose.yml`, a `frontend` service, and the proxy waits for it:
-
-```yaml
-services:
-  # db and backend stay as they are.
-
-  frontend:
-    build:
-      context: ./frontend
-      args:
-        VITE_DEMO_FEATURES: users,friends,chat,spectate,tournaments
-    restart: unless-stopped
-    expose:
-      - '80'
-
-  proxy:
-    # Everything else stays as it is; only frontend is added here.
-    depends_on:
-      - backend
-      - frontend
-```
-
-In `proxy/nginx.conf`, only `/api` and `/socket.io` go to the backend, and every other path goes to the app. Replace
-the line `location / {` with these two lines, and keep the block's content as it is:
-
-```nginx
-    # API calls and the live connection go to the backend.
-    location ~ ^/(api|socket\.io)/ {
-```
-
-Then add this block before the last `}` of `server`:
-
-```nginx
-    # Everything else is the app, served by the frontend container.
-    location / {
-        set $frontend http://frontend:80;
-        proxy_pass $frontend;
-        # HTTP/1.1, or the frontend's nginx does not compress its answers.
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-    }
-```
-
-The app is then served on https://localhost:8443 (`HTTPS_PORT` in the root `.env`), next to the API.
+The `Dockerfile` here builds the app with Node, then serves `dist/` with nginx (`nginx.conf`): any path that is not a
+file answers `index.html`, so the app's router shows the page, and the built files are cached for a year since their
+names change with their content. In front of it, the HTTPS proxy (`proxy/nginx.conf` at the root) sends `/api` and
+`/socket.io` to the backend and every other path to this container.
 
 ## How the code is organized
 
 ```text
 src/
-  app/          The shell: route table, data cache, login guards, live updates
-  components/   Shared components; ui/ is the design system (buttons, fields, dialogs...)
-  features/     One folder per domain: api.ts (calls), types.ts (shapes), hooks.ts (data), components/
-  pages/        One folder per area (play, tournaments, profile...); one component per URL inside it
-  layout/       Header, footer, menus, demo banner
-  lib/          Code without pages: the API client, live events, formatting, storage
-  i18n/         Translations (en, fr, ar) and the language switch
+  app/          The shell: route table, addresses, guards, data cache, live updates, navigation links
+  pages/        One folder per area: home, auth, play, tournaments, profile, settings, community, watch, history,
+                info. One route component per address, with the pieces only that area uses next to it
+  features/     Code shared by several areas, one folder per subject: api.ts (calls), types.ts (shapes),
+                hooks.ts (data), components/, and small tested helpers. board3d/ is the optional 3D board
+  components/   Shared components; ui/ is the design system (buttons, fields, dialogs, tabs...), plus icons,
+                the logo and illustrations
+  layout/       Header, menus, demo banner, footer
+  lib/          Code without pages: the API client, live events, formatting, storage, validation
+  i18n/         Translations, one file per area and language (locales/en, fr, ar), and the language switch
   demo/         The in-browser demo server (temporary, see below)
-  styles/       Tailwind setup, color palette, the board's look
-  test/         Test setup and shared test data
+  styles/       Tailwind setup, color tokens for light and dark, the board's look
+  test/         Test helpers and shared test data
 ```
+
+Where a file goes: used by one area only, next to its page in `pages/<area>/`; used by several areas, in
+`features/<subject>/`; used everywhere, in `components/`.
 
 A few rules keep it easy to follow:
 
-- Where a file goes: used by one area only, next to its page in `pages/<area>/`; used by several areas, in
-  `features/<domain>/`; used everywhere, in `components/`.
-- The four game screens (same screen, online match, spectator, same-screen tournament) are built from the same pieces in
-  `features/game/components/`: `GameLayout`, `PlayersBar`, `GameStatus`, `GameBoard` and `MoveAnnouncer`.
 - A page never calls `fetch`. It uses a feature's hooks, which call the feature's `api.ts`, which uses
-  `lib/api/http.ts`.
-- Data from the server lives in the TanStack Query cache, under keys defined per feature (`matchKeys`, `chatKeys`...).
-  A change updates or refreshes those keys, and every page showing that data follows.
-- Live events only write into that cache (`app/realtime.ts`): pages never know where an update came from.
-- The game rules (`features/game/engine`) are plain TypeScript, without React, with the same rules and error codes as
-  the backend's engine. Local games, the computer opponent and online matches all use them.
-- The computer opponent (`features/game/bot`) runs in a Web Worker, so the page never freezes while it thinks. Its
-  three levels search more or fewer moves ahead, and sometimes slip like a person would.
-
-### Talking to the backend
-
-`lib/api/http.ts` holds one `request` function: it adds `/api`, sends the session cookie, returns the `data` of the
-answer, and throws an `ApiError` carrying the backend's `code` when the answer is an error. `lib/errorMessage.ts` turns
-that code into a sentence in the reader's language. Any `401` logs the user out of the app (`app/queryClient.ts`).
-
-Every route, shape, error code and live event is described in [`docs/api-contract.md`](docs/api-contract.md), with what
-the backend still has to add.
-
-### Live updates
-
-Pages refresh their data by polling, on intervals listed in the API contract. With `VITE_REALTIME=socket`,
-`lib/realtime/socket.ts` also opens one Socket.IO connection after login. Its events go through `lib/realtime/bus.ts`
-to `app/realtime.ts`, which updates the cache, and polling slows down to every 30 seconds as a safety net.
+  `lib/api/http.ts`. Data from the server lives in the TanStack Query cache; after a change the matching keys are
+  refreshed and every page showing that data follows.
+- Every game screen (same screen, computer, online match, spectator, same-screen tournament) is built from the same
+  pieces in `features/game/components/`: `GameLayout`, `PlayersBar`, `GameStatus`, `GameBoard` and `MoveAnnouncer`.
+- The game rules (`features/game/engine`) are plain TypeScript, with the same rules and error codes as the backend's
+  engine. The computer opponent (`features/game/bot`) runs in a Web Worker, so the page never freezes while it thinks.
+- Decisions (texts, ranks, which buttons show) are plain functions in small `*.ts` files with tests; page components
+  compose.
+- Live events only write into the cache (`app/realtime.ts`): pages never know where an update came from.
 
 ### Translations and right-to-left
 
-`src/i18n/locales/en/` is the reference. It holds one file per area (`play.ts`, `profile.ts`...), and `fr/` and `ar/`
-have the same files with exactly the same keys: a test checks it, and TypeScript checks every key given to `t()`. A
-section of texts (such as `offline` or `chat`) lives in one file only. Arabic turns the whole page right-to-left (`dir="rtl"` on `<html>`), and
-layouts use logical properties (`ms-`, `me-`, `start`, `end`) so they mirror by themselves. Text written by players gets
-`dir="auto"`, so a message keeps its own direction whatever the page's.
-
-### Accessibility
-
-Every form field has a label and its error is linked to it. The board is played with the keyboard (arrow keys, Home,
-End, then Enter), and each move is announced to screen readers. Dialogs keep the focus inside them, and animations stop
-when the system asks for reduced motion.
+`src/i18n/locales/en/` is the reference: one file per area (`play.ts`, `profile.ts`...). `fr/` and `ar/` have the same
+files with exactly the same keys: a test checks it, and TypeScript checks every key given to `t()`. Arabic turns the
+whole page right-to-left (`dir="rtl"` on `<html>`), and layouts use logical properties (`ms-`, `me-`, `start`, `end`)
+so they mirror by themselves.
 
 ### The demo server
 
 `src/demo` answers, inside the browser, the routes the backend does not have yet (players, friends, chat, spectating,
-tournaments) with made-up players, saved in `localStorage`. It sits in front of the network (`setTransport` in
-`lib/api/http.ts`): requests for the features in `VITE_DEMO_FEATURES` are answered there, and everything else, like
-login and real matches, goes to the backend. A banner tells which pages use demo data, with a button to reset it.
+tournaments) with made-up players saved in `localStorage`. Requests for the features in `VITE_DEMO_FEATURES` are
+answered there; everything else, like login and real matches, goes to the backend. A banner says so, with a Reset
+button. When the backend serves every route, set `VITE_DEMO_FEATURES` to an empty value; the folder can then be
+deleted, with the lines that load it in `main.tsx` and `layout/DemoBanner.tsx`. Every route the backend still has to
+add is in [`docs/api-contract.md`](docs/api-contract.md).
 
-When the backend serves every route, set `VITE_DEMO_FEATURES` to an empty value. The folder can then be deleted, with
-the lines that load it in `main.tsx` and `layout/DemoBanner.tsx`.
+## The 3D board (optional)
+
+Every game screen has a 2D / 3D switch above the board (2D by default; the choice is saved in the browser). The 3D
+board lives in `src/features/board3d/`, and only one definition outside that folder knows about it, in
+`src/features/game/components/GameBoard.tsx`. Three.js is downloaded only when someone picks 3D. The switch shows only
+in browsers with WebGL 2, and if the 3D board fails, the 2D board comes back.
+
+- **Turn it off** without deleting anything: build with `VITE_BOARD_3D=off`.
+- **Remove it**: delete `src/features/board3d`, replace the `Board3D` definition in `GameBoard.tsx` with
+  `const Board3D: React.ComponentType<BoardProps> | null = null;`, then run
+  `npm uninstall three @react-three/fiber @types/three`. Type check, tests and build pass after these three steps.
+
+Details, and answers to the usual 3D questions, in [`src/features/board3d/README.md`](src/features/board3d/README.md).
 
 ## Testing
 
-`npm test` runs the unit tests with Vitest and Testing Library: the game engine and the computer opponent, brackets,
-the match model and statistics, form validation, the API client, the demo server, the translations, the shared
-components and the pages.
+`npm test` runs more than 800 tests with Vitest and Testing Library: the game engine and the computer opponent,
+brackets, rankings, achievements, form validation, the API client, the demo server, the translations, the shared
+components, and every page rendered and used like a person would (clicks, typing, keys). Most page tests also run
+axe-core for accessibility, and any console error or warning fails a test.
 
 Helpers in `src/test/` keep page tests short:
 
@@ -183,6 +143,13 @@ Helpers in `src/test/` keep page tests short:
 - `fakeApi({ 'GET /friends': {...} })` answers the requests of the test (an `ApiError` value makes a request fail).
   A request without an answer fails with a message that names it.
 - `expectNoA11yViolations(container)` runs axe-core on what was rendered.
-- A test fails when the page prints a console error or warning; `allowConsole()` (from `test/console`) allows it.
-- `app/routes.test.tsx` opens every page for a visitor and a member. The answers its fake API gives come from
+- `allowConsole()` (from `test/console`) lets a test print a console message it expects.
+- `app/routes.test.tsx` opens every page for a visitor and a member; its fake answers come from
   `test/fixtures/api/<area>.ts`.
+
+## Browsers
+
+Checked in Chromium (the engine of Chrome, which the subject requires): every page in English at 1280 and 390 pixels
+wide, in Arabic at 390, in light and dark mode, and the games in 3D, with no console message, no sideways scrolling
+and no serious accessibility issue (color contrast included). Firefox and Safari (or Edge) have not been checked yet; the
+browser support module needs that done by hand, with any limits written here.
