@@ -142,6 +142,10 @@ Written here instead of taken from a library:
 - `layout/header/` splits the bar into small files: `Header` (asks who is logged in and the counts), `DesktopNav`,
   `MobileMenu`, `AccountMenu`, `SessionActions` (avatar menu, Log in and Sign up, or a Retry button), `ThemeToggle`,
   `CountBadge`.
+- Page width rule (a comment in `layout/AppLayout.tsx`): every page's title starts at the left edge of the column
+  (`max-w-6xl`). A form or a long text below it may be narrower, but stays against that edge: no `mx-auto`. Only short
+  notices such as "page not found" are centered.
+- The phone menu dims the page behind it; a tap on the dim layer, Escape or a click outside closes it.
 - `features/auth/session.ts` turns the answer of `/auth/me` into four states: loading, visitor, member, failed. A
   member whose later check fails stays a member, because the cache keeps the last answer.
 - A visitor sent to `/login` from a member page reads "Log in to open Watch." (`features/auth/loginHint.ts`) and comes
@@ -160,6 +164,11 @@ Written here instead of taken from a library:
   after how many moves) comes from `offline/offlineText.ts`.
 - `MatchPage.tsx` only loads the online match and picks a screen from `pages/play/online/`: `JoinMatch`,
   `WaitingRoom`, `OnlineGame` (with `ResultActions`: rematch, replay, new match) or `Unavailable`.
+- Both boards stand in one box, the stage (`GameBoard.tsx` and `boardStage.css`): full column width, as high as the
+  board's shape or the screen allows, in the page's surface color. Switching between 2D and 3D therefore moves
+  nothing. The 3D scene reads the same color token as its backdrop, so it is light on a light page and dark on a
+  dark one. Size the parent, not the board: a class on `<Board>` cannot change its width (`AuthLayout` does it with a
+  20 rem box).
 - Keyboard: the board takes focus when a game starts; arrow keys move, Enter drops, and keys 1 to 9 drop in that column
   (`features/game/components/Board.tsx`).
 - A win shows confetti (`pages/play/components/Celebration.tsx`): 36 pieces placed by arithmetic, none for people
@@ -178,7 +187,9 @@ Written here instead of taken from a library:
   result. Coming back to an unfinished one shows "Resume your tournament?" first. A match left halfway is not saved:
   only results are.
 - `features/tournaments/components/BracketView.tsx` draws both kinds of tournament from one simple list of pairings;
-  on a phone the bracket scrolls inside its own box, never the page.
+  on a phone the bracket scrolls inside its own box, never the page. That box is `components/ui/ScrollFade.tsx`, the
+  same piece as the row of tabs uses (`TabLinks`): `lib/useScrollEdges.ts` tells which edge hides more content and the
+  `.scroll-fade` class draws the fade, so it follows the reading direction in Arabic.
 
 ### Profile and settings (`pages/profile/`, `pages/settings/`)
 
@@ -191,7 +202,7 @@ Written here instead of taken from a library:
   (language, light or dark, accent color, board colors for new games) and Blocked players. `resolveSection` in
   `settings/sections.ts` reads the tab from the address; an unknown tab goes back to `/settings`.
 - Two-factor shows only the button that fits when the backend says whether it is on; it does not send that yet, so
-  both buttons show with a short hint (section 10).
+  "Turn on" is the main button and a quiet "Already on? Turn it off" sits under it (section 10).
 
 ### Community (`pages/community/`, `features/chat/`, `features/friends/`)
 
@@ -213,8 +224,13 @@ Written here instead of taken from a library:
 - `pages/watch/useReplay.ts` holds the current move and the play timer; `ReplayControls` is only buttons, a slider and
   keys (left and right arrows, Home, End), and announces "Move 5 of 23".
 - `WatchMatchPage` follows a live match, and turns into a replay once the match is over.
-- `BoardShape` draws a small picture of a board from its size and colors, without positions (the list has none, and
-  fetching every match would hit the backend's rate limit).
+- `BoardShape` draws a small picture of a board from its size and colors. The live list has no positions, so each
+  card on the Watch page asks for its own match once (`useMatchPreview`, the same cache entry as the match page,
+  refreshed every 15 seconds) and passes the position as the optional `board` prop. That is at most 12 extra requests
+  per page, well under the backend's limit.
+- The live list asks again every 5 seconds, even when live events are on (`features/spectate/hooks.ts`): those events
+  only cover matches you play or watch, never a new match of other people. The demo world starts with a few live
+  matches, so Home and Watch show the same count from the first second.
 - History keeps its filter and page in the address (`historyQuery.ts`). Each row has one big link to the match and a
   Replay link above it (no link inside a link). Match rows follow the width of their list (`@container`), because the
   same list is shown full width in History and in a narrow card on the home page.
@@ -373,3 +389,6 @@ After a change: `npm run typecheck && npm test`.
   until live events replace polling. The app retries and keeps the logged-in user when it happens.
 - Tested in Chromium only. Firefox and Safari (or Edge) must be checked by hand for the browser support module.
 - On a 1280 by 900 screen the 3D board is a little taller than the window, so the page scrolls slightly in 3D.
+- On a 1280 by 800 laptop screen the game board starts about 400 px from the top (header, demo banner, title, players,
+  status, 2D / 3D switch), so the page scrolls about 160 px to see all of it. The board is already as large as the
+  screen allows; making it fit would need a smaller header and cards, not a smaller board.
