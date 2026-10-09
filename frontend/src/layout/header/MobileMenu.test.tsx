@@ -52,8 +52,8 @@ describe('the phone menu for a member', () => {
   it('ends with the language and appearance choices', async () => {
     const { events } = renderMenu(member);
     await openMenu(events);
-    expect(screen.getByRole('combobox', { name: 'Language' })).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Appearance' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Language' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Appearance' })).toBeInTheDocument();
   });
 
   it('shows the counts next to Friends and Chat', async () => {

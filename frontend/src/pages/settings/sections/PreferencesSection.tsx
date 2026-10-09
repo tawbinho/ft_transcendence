@@ -4,8 +4,8 @@ import { AccentPicker } from '@/components/AccentPicker';
 import { Card, OptionGroup } from '@/components/ui';
 import { loadLastSettings, saveLastSettings } from '@/features/game/lastSettings';
 import { BOARD_THEMES, type BoardTheme } from '@/features/game/settings';
-import { ColorSchemeSelect } from '@/layout/ColorSchemeSelect';
-import { LanguageSelect } from '@/layout/LanguageSelect';
+import { ColorSchemePicker } from '@/layout/ColorSchemePicker';
+import { LanguagePicker } from '@/layout/LanguagePicker';
 
 /** Language, light or dark, accent color, and the board colors new games start with. All kept on this device. */
 export function PreferencesSection() {
@@ -22,10 +22,8 @@ export function PreferencesSection() {
     <>
       <Card className="flex flex-col gap-4">
         <h2 className="text-lg font-bold">{t('account.appearance')}</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <LanguageSelect showLabel stacked />
-          <ColorSchemeSelect showLabel stacked />
-        </div>
+        <LanguagePicker />
+        <ColorSchemePicker />
         <AccentPicker />
       </Card>
 

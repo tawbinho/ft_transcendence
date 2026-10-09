@@ -5,8 +5,8 @@ import { NAV_GROUPS, hasAnyCount, menuItems, type NavGroup } from '@/app/nav';
 import { CloseIcon, MenuIcon } from '@/components/icons';
 import { IconButton } from '@/components/ui';
 import type { Session } from '@/features/auth/session';
-import { ColorSchemeSelect } from '../ColorSchemeSelect';
-import { LanguageSelect } from '../LanguageSelect';
+import { ColorSchemePicker } from '../ColorSchemePicker';
+import { LanguagePicker } from '../LanguagePicker';
 import { AccountLinks } from './AccountLinks';
 import { NavTextLink, type Counts } from './NavLinks';
 import { SessionActions } from './SessionActions';
@@ -91,9 +91,9 @@ export function MobileMenu({
               />
             ))}
           </nav>
-          <div className="mt-3 flex flex-wrap gap-x-6 gap-y-3 border-t border-border px-3 pt-4">
-            <LanguageSelect showLabel />
-            <ColorSchemeSelect showLabel />
+          <div className="mt-3 flex flex-col gap-4 border-t border-border px-3 pt-4">
+            <LanguagePicker />
+            <ColorSchemePicker />
           </div>
         </div>
       )}

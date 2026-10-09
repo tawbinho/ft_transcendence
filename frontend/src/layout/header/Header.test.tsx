@@ -55,7 +55,7 @@ describe('the bar for a member', () => {
     for (const name of ['Play', 'Tournaments', 'Watch', 'Players', 'History', 'Chat', 'Friends']) {
       expect(nav.getByRole('link', { name })).toBeInTheDocument();
     }
-    expect(screen.getAllByRole('combobox', { name: 'Language' })[0]).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Language: English' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Switch to the dark theme' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Account menu/ })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Log in' })).not.toBeInTheDocument();

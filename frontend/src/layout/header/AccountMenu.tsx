@@ -6,6 +6,7 @@ import { Avatar } from '@/components/ui';
 import type { User } from '@/features/auth/types';
 import { cn } from '@/lib/cn';
 import { AccountLinks } from './AccountLinks';
+import { menuPanelClass } from './menuStyles';
 import { useDismiss } from './useDismiss';
 
 /**
@@ -40,11 +41,7 @@ export function AccountMenu({ user }: { user: User }) {
         <span className="sr-only">{t('nav.accountMenu')}</span>
         <ChevronDownIcon className={cn('text-muted transition', open && 'rotate-180')} />
       </button>
-      <div
-        id={panelId}
-        hidden={!open}
-        className="absolute end-0 top-full z-40 mt-2 w-56 rounded-xl border border-border bg-surface p-1.5 shadow-lg"
-      >
+      <div id={panelId} hidden={!open} className={menuPanelClass}>
         <AccountLinks user={user} />
       </div>
     </div>

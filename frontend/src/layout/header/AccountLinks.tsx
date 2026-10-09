@@ -5,9 +5,7 @@ import { paths } from '@/app/paths';
 import { LogOutIcon, SlidersIcon, UserIcon } from '@/components/icons';
 import { useLogout } from '@/features/auth/hooks';
 import type { User } from '@/features/auth/types';
-
-export const accountItemClass =
-  'flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-start font-semibold text-fg hover:bg-surface-2 [&>svg]:text-muted';
+import { menuItemClass } from './menuStyles';
 
 /** My profile, Settings and Log out: the list of the avatar menu, also used in the phone menu. */
 export function AccountLinks({ user, before }: { user: User; before?: ReactNode }) {
@@ -16,20 +14,20 @@ export function AccountLinks({ user, before }: { user: User; before?: ReactNode 
   return (
     <ul className="flex flex-col gap-0.5">
       <li>
-        <Link to={paths.profile(user.displayName)} className={accountItemClass}>
+        <Link to={paths.profile(user.displayName)} className={menuItemClass}>
           <UserIcon />
           {t('nav.profile')}
         </Link>
       </li>
       {before}
       <li>
-        <Link to={paths.settings()} className={accountItemClass}>
+        <Link to={paths.settings()} className={menuItemClass}>
           <SlidersIcon />
           {t('nav.settings')}
         </Link>
       </li>
       <li>
-        <button type="button" className={accountItemClass} disabled={logout.isPending} onClick={() => logout.mutate()}>
+        <button type="button" className={menuItemClass} disabled={logout.isPending} onClick={() => logout.mutate()}>
           <LogOutIcon />
           {t('nav.logout')}
         </button>

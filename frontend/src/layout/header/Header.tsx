@@ -6,8 +6,8 @@ import { sessionOf } from '@/features/auth/session';
 import { useCurrentUser } from '@/features/auth/hooks';
 import { useUnreadCount } from '@/features/chat/hooks';
 import { useIncomingRequestCount } from '@/features/friends/hooks';
-import { LanguageSelect } from '../LanguageSelect';
 import { DesktopNav } from './DesktopNav';
+import { LanguageMenu } from './LanguageMenu';
 import { MobileMenu } from './MobileMenu';
 import { NavIconLink } from './NavLinks';
 import { SessionActions } from './SessionActions';
@@ -39,7 +39,7 @@ export function Header() {
 
         <div className="hidden items-center gap-1 lg:flex">
           <ThemeToggle />
-          <LanguageSelect />
+          <LanguageMenu />
           <div className="ms-1 flex items-center gap-2">
             <SessionActions session={session} onRetry={retry} retrying={isRefetching} />
           </div>

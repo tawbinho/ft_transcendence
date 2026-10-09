@@ -192,10 +192,10 @@ describe('preferences section', () => {
     window.localStorage.setItem('board-settings', JSON.stringify({ cols: 9, rows: 8, winLength: 5, theme: 'classic' }));
     const { events, container } = await openSettings('/settings/preferences');
 
-    // The header has a language picker too; the page's own is inside <main>.
+    // The header has a language menu too; the page's own buttons are inside <main>.
     const page = within(screen.getByRole('main'));
-    expect(page.getByLabelText('Language')).toBeInTheDocument();
-    expect(page.getByLabelText('Appearance')).toBeInTheDocument();
+    expect(page.getByRole('radio', { name: 'English' })).toBeChecked();
+    expect(page.getByRole('group', { name: 'Appearance' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Classic/ })).toBeChecked();
     await events.click(screen.getByRole('radio', { name: /Ocean/ }));
 
