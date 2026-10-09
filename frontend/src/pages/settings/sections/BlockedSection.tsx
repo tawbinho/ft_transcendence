@@ -19,7 +19,7 @@ export function BlockedSection() {
       ) : blocks.error ? (
         <LoadError error={blocks.error} onRetry={() => void blocks.refetch()} retrying={blocks.isFetching} />
       ) : blocks.data.length === 0 ? (
-        <EmptyState>{t('account.blockedEmpty')}</EmptyState>
+        <EmptyState plain>{t('account.blockedEmpty')}</EmptyState>
       ) : (
         <ul className="divide-y divide-border rounded-xl border border-border">
           {blocks.data.map((player) => (
