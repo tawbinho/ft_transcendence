@@ -1,14 +1,13 @@
 import { canDrop, drop, replay, type Seat } from '@/features/game/engine';
 import type { BoardModel } from '@/features/game/components/Board';
+import { isUuid } from '@/lib/ids';
 import type { Match, MatchPlayer, MatchSummary } from './types';
 
 type MatchLike = Pick<Match | MatchSummary, 'status' | 'endReason' | 'players' | 'yourSeat' | 'winnerSeat'>;
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 /** Match ids are UUIDs: anything else in the URL cannot be a match. */
 export function isMatchId(value: string): boolean {
-  return UUID.test(value);
+  return isUuid(value);
 }
 
 /** How a match ended, seen by the viewer; null while it is not over. */
