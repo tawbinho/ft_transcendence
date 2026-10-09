@@ -31,7 +31,7 @@ export function LocalSetup({ onStart }: { onStart: (names: string[], settings: B
   return (
     <>
       <PageHeader title={t('localTournament.title')} subtitle={t('localTournament.subtitle')} />
-      <Card className="mx-auto max-w-3xl">
+      <Card className="max-w-3xl">
         <form onSubmit={submit} noValidate className="flex flex-col gap-7">
           <fieldset className="flex flex-col gap-4">
             <legend className="mb-1 text-lg font-bold">{t('localTournament.players')}</legend>

@@ -36,7 +36,7 @@ export function NewTournamentForm() {
   }
 
   return (
-    <Card className="mx-auto max-w-3xl">
+    <Card className="max-w-3xl">
       <form onSubmit={submit} noValidate className="flex flex-col gap-7">
         {create.error && <Alert tone="danger">{errorMessage(create.error)}</Alert>}
         <TextField

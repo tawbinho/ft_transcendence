@@ -18,7 +18,7 @@ export function WaitingRoom({ match }: { match: Match }) {
   const url = `${window.location.origin}${paths.match(match.id)}`;
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6">
+    <div className="flex max-w-2xl flex-col gap-6">
       <PageHeader title={t('online.waitingTitle')} subtitle={t('online.waitingBody')} className="mb-0" />
       <Card className="flex flex-col gap-5">
         <ShareLink url={url} />

@@ -22,7 +22,7 @@ export function ResumePrompt({
   return (
     <>
       <PageHeader title={t('localTournament.resumeTitle')} />
-      <Card className="mx-auto flex max-w-2xl flex-col gap-5">
+      <Card className="flex max-w-2xl flex-col gap-5">
         <p className="text-lg">{t('localTournament.resumeBody', { names: tournament.players.join(', ') })}</p>
         <div className="flex flex-col gap-2">
           <p className="text-sm text-muted">{progress}</p>
