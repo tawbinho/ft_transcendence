@@ -38,7 +38,7 @@ export function LocalSetup({ onStart }: { onStart: (names: string[], settings: B
             <p className="text-sm text-muted">
               {t('localTournament.playersHint', { min: LOCAL_MIN_PLAYERS, max: LOCAL_MAX_PLAYERS })}
             </p>
-            <ol className="grid gap-3 sm:grid-cols-2">
+            <ol className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {names.map((name, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <TextField
