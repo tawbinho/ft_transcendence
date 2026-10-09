@@ -1,17 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { paths } from '@/app/paths';
-import { EyeIcon } from '@/components/icons';
 import { LoadError } from '@/components/LoadError';
 import { PageHeader } from '@/components/PageHeader';
-import { Badge, buttonClass, EmptyState, PageSpinner, Pagination } from '@/components/ui';
-import { DiscIcon } from '@/features/game/components/DiscIcon';
-import { toBoardTheme } from '@/features/game/settings';
-import type { MatchSummary } from '@/features/matches/types';
+import { buttonClass, EmptyState, PageSpinner, Pagination } from '@/components/ui';
 import { LIVE_PAGE_SIZE, useLiveMatches } from '@/features/spectate/hooks';
 import { cn } from '@/lib/cn';
 import { pageCount, readPage } from '@/lib/pages';
 import { useUrlParams } from '@/lib/useUrlParams';
+import { LiveMatchCard } from './LiveMatchCard';
 
 /** Matches being played right now; open one to follow it live. */
 export function WatchPage() {
@@ -31,7 +27,7 @@ export function WatchPage() {
         <EmptyState
           action={
             <Link to="/play/online" className={buttonClass({ variant: 'secondary' })}>
-              {t('history.emptyAction')}
+              {t('watch.startMatch')}
             </Link>
           }
         >
@@ -55,50 +51,5 @@ export function WatchPage() {
         </div>
       )}
     </>
-  );
-}
-
-function LiveMatchCard({ match }: { match: MatchSummary }) {
-  const { t } = useTranslation();
-  const theme = toBoardTheme(match.settings.theme);
-  const playing = match.yourSeat !== null;
-  const names = match.players.map((player) => player.displayName).join(` ${t('online.vs')} `);
-
-  return (
-    <article className="flex h-full flex-col gap-4 rounded-2xl border border-border bg-surface p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-2">
-        <Badge tone="danger">
-          <span
-            className="me-1.5 inline-block size-2 rounded-full bg-current motion-safe:animate-pulse"
-            aria-hidden="true"
-          />
-          {t('watch.live')}
-        </Badge>
-        <span className="text-sm text-muted">
-          {t('game.moves')}: <span className="font-semibold tabular-nums text-fg">{match.moveCount}</span>
-        </span>
-      </div>
-      <h2 className="sr-only">{names}</h2>
-      <ul className="flex flex-col gap-2" aria-hidden="true">
-        {match.players.map((player) => (
-          <li key={player.seat} className="flex min-w-0 items-center gap-2 font-semibold">
-            <DiscIcon seat={player.seat} theme={theme} className="text-xl" />
-            <span className="truncate">{player.displayName}</span>
-          </li>
-        ))}
-      </ul>
-      <p className="text-sm text-muted">
-        {t('game.size', { cols: match.settings.cols, rows: match.settings.rows })} ·{' '}
-        {t('game.connect', { n: match.settings.winLength })}
-      </p>
-      <Link
-        to={playing ? paths.match(match.id) : paths.watch(match.id)}
-        className={buttonClass({ variant: playing ? 'primary' : 'secondary', className: 'mt-auto' })}
-        aria-label={playing ? t('watch.yourMatch') : t('watch.watchMatch', { names })}
-      >
-        <EyeIcon />
-        {playing ? t('watch.yourMatch') : t('watch.watch')}
-      </Link>
-    </article>
   );
 }
