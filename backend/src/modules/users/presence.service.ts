@@ -38,12 +38,32 @@ export class PresenceService {
     @InjectRepository(User) private readonly users: Repository<User>,
   ) {}
 
+  // Other modules can ask to be told when a user comes online or goes offline
+  // (the matches module uses it to forfeit a player who stays disconnected).
+  private readonly onlineListeners: Array<(userId: string) => void> = [];
+  private readonly offlineListeners: Array<(userId: string) => void> = [];
+
+  onUserOnline(listener: (userId: string) => void): void {
+    this.onlineListeners.push(listener);
+  }
+
+  onUserOffline(listener: (userId: string) => void): void {
+    this.offlineListeners.push(listener);
+  }
+
+  // Has this user at least one socket open right now?
+  isConnected(userId: string): boolean {
+    return this.connections.has(userId);
+  }
+
   // A socket opened. True when it is the user's FIRST one (they just came
   // online).
   connect(userId: string): boolean {
     const count = (this.connections.get(userId) ?? 0) + 1;
     this.connections.set(userId, count);
-    return count === 1;
+    if (count !== 1) return false;
+    this.notify(this.onlineListeners, userId);
+    return true;
   }
 
   // A socket closed. True when it was the user's LAST one (they went offline).
@@ -54,7 +74,22 @@ export class PresenceService {
       return false;
     }
     this.connections.delete(userId);
+    this.notify(this.offlineListeners, userId);
     return true;
+  }
+
+  // A listener that fails must not break the connection that triggered it.
+  private notify(
+    listeners: Array<(userId: string) => void>,
+    userId: string,
+  ): void {
+    for (const listener of listeners) {
+      try {
+        listener(userId);
+      } catch (error) {
+        this.logger.warn(`Presence listener failed: ${String(error)}`);
+      }
+    }
   }
 
   // Writes "seen now" at once, without the 30 s limit of touch(). Used when a

@@ -6,6 +6,7 @@ import { UsersModule } from '../users/users.module.js';
 import { MatchMove } from './entities/match-move.entity.js';
 import { MatchPlayer } from './entities/match-player.entity.js';
 import { Match } from './entities/match.entity.js';
+import { DisconnectForfeitService } from './disconnect-forfeit.service.js';
 import { MatchesController } from './matches.controller.js';
 import { MatchesService } from './matches.service.js';
 
@@ -19,7 +20,7 @@ import { MatchesService } from './matches.service.js';
     AuthModule, // for SessionGuard (every route needs a logged-in user)
   ],
   controllers: [MatchesController],
-  providers: [MatchesService],
+  providers: [MatchesService, DisconnectForfeitService],
   // The realtime gateway (and later matchmaking and tournaments) will call
   // the same service.
   exports: [MatchesService],

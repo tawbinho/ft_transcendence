@@ -2909,7 +2909,7 @@ components:
 x-realtime:
   description: 'Live updates over Socket.IO. They are HINTS: the app also polls, so a missed event only delays an
     update. The frontend uses them when built with `VITE_REALTIME=socket`; polling then slows to every 30 s. Built: the connection, `match:*`, `presence`, `friends:update`, `tournament:update`
-    (`x-status: implemented`). Not built yet: the `chat:*` events, and a player who disconnects from a running match.'
+    (`x-status: implemented`). A player whose last socket closes has `DISCONNECT_GRACE_SECONDS` (30) to reconnect, otherwise they lose the running match (`endReason: disconnect`). Not built yet: the `chat:*` events.'
   connection:
     library: Socket.IO v4
     url: 'Same origin as the app, path `/socket.io`, WebSocket transport only: `io({ withCredentials: true, transports:

@@ -83,6 +83,7 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 | `DB_NAME`                | `connect4` | database name                                           |
 | `TWO_FACTOR_KEY`         | none       | **required**, 64 hex chars, encrypts the 2FA secrets    |
 | `SESSION_TTL_DAYS`       | `7`        | how long a login lasts, optional                        |
+| `DISCONNECT_GRACE_SECONDS` | `30`     | how long a player may be disconnected from a running match before losing, optional |
 | `AVATAR_DIR`             | `./uploads/avatars` | where profile pictures are stored; Docker sets it to a volume |
 
 If a port is already used on your machine, change it in `.env`.
@@ -252,6 +253,15 @@ update. A user counts as online while they have a socket open (or made a
 request in the last minute), and the REST `online` value can lag the `presence`
 event by up to a minute after the last tab closes. The frontend only uses
 sockets when it is built with `VITE_REALTIME=socket`.
+
+**Leaving a running match.** When a player's LAST socket closes, each running
+match of theirs gets a countdown (`DISCONNECT_GRACE_SECONDS`, 30 by default).
+If they open a socket again in time (a page refresh, a network cut) the game
+goes on. Otherwise they lose, the match ends with `endReason: "disconnect"` and
+the opponent gets a `match:update`. The opponent also sees the `presence` event
+at once. Only players who were connected by socket can be forfeited, so an app
+that polls never triggers it. The countdowns live in memory: a server restart
+drops them.
 
 **Not built yet:** starting a tournament, the bracket, the matches it creates
 and advancing winners (`rounds` is always empty, and players are always

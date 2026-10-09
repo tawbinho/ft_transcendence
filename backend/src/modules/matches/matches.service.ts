@@ -441,22 +441,7 @@ export class MatchesService {
         );
       }
 
-      await manager.update(
-        Match,
-        { id: matchId },
-        {
-          status: 'finished',
-          endReason: 'resign',
-          endedAt: new Date(),
-        },
-      );
-      for (const player of players) {
-        await manager.update(
-          MatchPlayer,
-          { matchId, seat: player.seat },
-          { result: player.userId === userId ? 'loss' : 'win' },
-        );
-      }
+      await this.endByForfeit(manager, matchId, players, userId, 'resign');
     });
 
     await this.broadcast(matchId);
@@ -464,8 +449,68 @@ export class MatchesService {
   }
 
   // ---------------------------------------------------------------------------
+  // Disconnection
+  // ---------------------------------------------------------------------------
+
+  // The ids of the matches the user is playing right now.
+  async inProgressMatchIdsOf(userId: string): Promise<string[]> {
+    const rows = await this.matches
+      .createQueryBuilder('m')
+      .select('m.id', 'id')
+      .innerJoin(MatchPlayer, 'p', 'p.matchId = m.id')
+      .where('p.userId = :userId', { userId })
+      .andWhere("m.status = 'in_progress'")
+      .getRawMany<{ id: string }>();
+    return rows.map((row) => row.id);
+  }
+
+  // The player stayed away too long: they lose and the opponent wins. Called
+  // by a timer, so by now the match may already be over (resigned, or the
+  // other player left first): then nothing happens. Returns true if it ended.
+  async forfeitByDisconnect(userId: string, matchId: string): Promise<boolean> {
+    const ended = await this.dataSource.transaction(async (manager) => {
+      const match = await manager.findOne(Match, {
+        where: { id: matchId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (match?.status !== 'in_progress') return false;
+      const players = await manager.find(MatchPlayer, { where: { matchId } });
+      if (!players.some((player) => player.userId === userId)) return false;
+
+      await this.endByForfeit(manager, matchId, players, userId, 'disconnect');
+      return true;
+    });
+    if (ended) await this.broadcast(matchId);
+    return ended;
+  }
+
+  // ---------------------------------------------------------------------------
   // Internals
   // ---------------------------------------------------------------------------
+
+  // Ends a running match because `loserId` gave up (resign) or left
+  // (disconnect): the match is finished, the loser loses, the other wins.
+  // Must run inside a transaction that holds the match lock.
+  private async endByForfeit(
+    manager: EntityManager,
+    matchId: string,
+    players: MatchPlayer[],
+    loserId: string,
+    reason: 'resign' | 'disconnect',
+  ): Promise<void> {
+    await manager.update(
+      Match,
+      { id: matchId },
+      { status: 'finished', endReason: reason, endedAt: new Date() },
+    );
+    for (const player of players) {
+      await manager.update(
+        MatchPlayer,
+        { matchId, seat: player.seat },
+        { result: player.userId === loserId ? 'loss' : 'win' },
+      );
+    }
+  }
 
   // Loads the match row and LOCKS it until the transaction ends. Any other
   // transaction that wants the same match waits here. No relations are loaded
