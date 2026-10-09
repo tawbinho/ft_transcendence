@@ -56,6 +56,24 @@ describe('GameBoard with the 3D board built in', () => {
       expect(await screen.findByText('The 3D board')).toBeInTheDocument();
     });
 
+    it('stays in 2D and hides the switch when WebGL 2 cannot actually be started', async () => {
+      vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+      const { events } = renderWithProviders(<GameBoard model={model} theme="classic" />);
+
+      await events.click(screen.getByRole('button', { name: '3D' }));
+
+      expect(screen.queryByRole('group', { name: 'Board view' })).not.toBeInTheDocument();
+      expect(board2D()).toBeInTheDocument();
+      expect(window.localStorage.getItem('board-view')).toBeNull();
+    });
+
+    it('does not start WebGL just to show the switch', () => {
+      const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext');
+      renderWithProviders(<GameBoard model={model} theme="classic" />);
+
+      expect(getContext).not.toHaveBeenCalled();
+    });
+
     it('ignores a saved value it does not know', () => {
       window.localStorage.setItem('board-view', 'hologram');
       renderWithProviders(<GameBoard model={model} theme="classic" />);

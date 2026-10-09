@@ -17,9 +17,10 @@ const STORAGE_KEY = 'board-view';
 // Set when the 3D board crashed: no toggle for the rest of the visit.
 let board3dFailed = false;
 
-// The 3D board needs WebGL 2. jsdom (the tests) has no WebGL2RenderingContext at all.
+// The 3D board needs WebGL 2. Creating a context is what proves it works, but a
+// browser without a graphics card may print a console warning when it is asked
+// to, so this is only called when someone actually wants 3D.
 function hasWebGL2(): boolean {
-  if (!('WebGL2RenderingContext' in window)) return false;
   try {
     return document.createElement('canvas').getContext('webgl2') !== null;
   } catch {
@@ -54,13 +55,23 @@ class Board3DBoundary extends React.Component<
  */
 export function GameBoard(props: BoardProps) {
   const { t } = useTranslation();
-  const [available, setAvailable] = React.useState(() => Board3D !== null && !board3dFailed && hasWebGL2());
-  const [view, setView] = React.useState<View>(() => (readStorage(STORAGE_KEY) === '3d' ? '3d' : '2d'));
+  // The switch needs the 3D board in the build and a browser that knows WebGL 2 at all
+  // (jsdom, the tests' browser, does not).
+  const [available, setAvailable] = React.useState(
+    () => Board3D !== null && !board3dFailed && 'WebGL2RenderingContext' in window,
+  );
+  const [view, setView] = React.useState<View>(() =>
+    available && readStorage(STORAGE_KEY) === '3d' && hasWebGL2() ? '3d' : '2d',
+  );
 
   const flat = <Board {...props} />;
   if (!available || !Board3D) return flat;
 
   function choose(next: View) {
+    if (next === '3d' && !hasWebGL2()) {
+      setAvailable(false); // this browser cannot draw it: no switch for the rest of the visit
+      return;
+    }
     setView(next);
     writeStorage(STORAGE_KEY, next);
   }
