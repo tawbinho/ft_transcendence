@@ -14,12 +14,17 @@ export function QuickActions() {
   ];
 
   return (
-    <section aria-label={t('home.quick.title')} className="flex flex-wrap gap-3">
+    <section aria-label={t('home.quick.title')} className="grid gap-3 sm:flex sm:flex-wrap">
       {actions.map((action) => (
         <Link
           key={action.to}
           to={action.to}
-          className={buttonClass({ variant: action.primary ? 'primary' : 'secondary', size: 'lg' })}
+          className={buttonClass({
+            variant: action.primary ? 'primary' : 'secondary',
+            size: 'lg',
+            block: true,
+            className: 'sm:w-auto',
+          })}
         >
           <span aria-hidden="true" className="text-xl">
             {action.icon}

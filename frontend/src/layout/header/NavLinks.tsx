@@ -20,7 +20,7 @@ export function NavTextLink({ item, counts, menu = false }: { item: NavItem; cou
       className={cn(
         'flex items-center gap-2 rounded-lg px-3 font-semibold transition',
         menu ? 'h-11' : 'h-10',
-        active ? 'bg-primary/12 text-primary' : 'text-muted hover:bg-surface-2 hover:text-fg',
+        active ? 'bg-primary/12 text-primary' : cn('hover:bg-surface-2 hover:text-fg', menu ? 'text-fg' : 'text-muted'),
       )}
     >
       {menu && <Icon className="flex-none" />}

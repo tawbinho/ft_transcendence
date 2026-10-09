@@ -14,21 +14,22 @@ export function Dashboard({ user }: { user: User }) {
   const greeting = greetingOf(new Date().getHours());
 
   return (
-    <div className="flex flex-col gap-8">
+    <div>
       <PageHeader
-        className="mb-0"
         title={t(`home.greeting.${greeting}`, { name: user.displayName })}
         subtitle={t('home.dashboardSubtitle')}
       />
-      <QuickActions />
-      <div className="grid items-start gap-6 lg:grid-cols-2">
-        <div className="flex min-w-0 flex-col gap-6">
-          <YourTurnPanel />
-          <RecentResultsPanel />
-        </div>
-        <div className="flex min-w-0 flex-col gap-6">
-          <FriendsOnlinePanel />
-          <LiveMatchesPanel />
+      <div className="flex flex-col gap-8">
+        <QuickActions />
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          <div className="flex min-w-0 flex-col gap-6">
+            <YourTurnPanel />
+            <RecentResultsPanel />
+          </div>
+          <div className="flex min-w-0 flex-col gap-6">
+            <FriendsOnlinePanel />
+            <LiveMatchesPanel />
+          </div>
         </div>
       </div>
     </div>
