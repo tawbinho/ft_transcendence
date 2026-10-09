@@ -12,6 +12,16 @@ describe('BoardShape', () => {
     expect(container.querySelectorAll('circle')).toHaveLength(20);
   });
 
+  it('draws the discs of a position, row 0 at the bottom', () => {
+    // Seat 1 in the bottom-left corner, seat 2 on top of it.
+    const board = [[1, 2, 0, 0], ...Array.from({ length: 4 }, () => [0, 0, 0, 0])];
+    const { container } = render(<BoardShape cols={5} rows={4} theme="classic" board={board} />);
+    const fills = [...container.querySelectorAll('circle')].map((circle) => circle.style.fill);
+    expect(fills[15]).toBe('var(--disc-1)'); // bottom row, first column
+    expect(fills[10]).toBe('var(--disc-2)'); // one row above
+    expect(fills.filter((fill) => fill === 'var(--hole)')).toHaveLength(18);
+  });
+
   it('wears the theme of the match', () => {
     const { container } = render(<BoardShape cols={7} rows={6} theme="ocean" />);
     expect(container.querySelector('svg')).toHaveAttribute('data-board-theme', 'ocean');

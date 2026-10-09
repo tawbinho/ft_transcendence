@@ -6,6 +6,7 @@ import { Badge, buttonClass } from '@/components/ui';
 import { DiscIcon } from '@/features/game/components/DiscIcon';
 import { toBoardTheme } from '@/features/game/settings';
 import { BoardShape } from '@/features/matches/components/BoardShape';
+import { useMatchPreview } from '@/features/matches/hooks';
 import type { MatchSummary } from '@/features/matches/types';
 import { formatRelative } from '@/lib/format';
 
@@ -14,6 +15,8 @@ export function LiveMatchCard({ match }: { match: MatchSummary }) {
   const { t, i18n } = useTranslation();
   const theme = toBoardTheme(match.settings.theme);
   const yours = match.yourSeat !== null;
+  // The list has no positions: the match itself is asked for, to draw where the game stands.
+  const position = useMatchPreview(match.id).data?.game.board;
   const names = match.players.map((player) => player.displayName).join(` ${t('online.vs')} `);
 
   return (
@@ -33,7 +36,13 @@ export function LiveMatchCard({ match }: { match: MatchSummary }) {
 
       <h2 className="sr-only">{names}</h2>
       <div className="flex items-center gap-4" aria-hidden="true">
-        <BoardShape cols={match.settings.cols} rows={match.settings.rows} theme={theme} className="h-16" />
+        <BoardShape
+          cols={match.settings.cols}
+          rows={match.settings.rows}
+          theme={theme}
+          board={position}
+          className="h-16"
+        />
         <ul className="flex min-w-0 flex-1 flex-col gap-2">
           {match.players.map((player) => (
             <li key={player.seat} className="flex min-w-0 items-center gap-2 font-semibold">

@@ -35,7 +35,14 @@ export function WatchPage() {
         </EmptyState>
       ) : (
         <div className="flex flex-col gap-4">
-          <ul className={cn('grid gap-4 sm:grid-cols-2 lg:grid-cols-3', live.isPlaceholderData && 'opacity-60')}>
+          <ul
+            className={cn(
+              'grid gap-4 sm:grid-cols-2',
+              // Three across, unless that leaves one card alone on the last row (4, 7 or 10 matches).
+              live.data.items.length % 3 !== 1 && 'lg:grid-cols-3',
+              live.isPlaceholderData && 'opacity-60',
+            )}
+          >
             {live.data.items.map((match) => (
               <li key={match.id}>
                 <LiveMatchCard match={match} />

@@ -1,8 +1,9 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { ApiError } from '@/lib/api/errors';
 import { expectNoA11yViolations } from '@/test/axe';
 import { allowConsole } from '@/test/console';
 import { fakeApi } from '@/test/fakeApi';
+import { makeMatch } from '@/test/factories';
 import { makeMatchSummary } from '@/test/fixtures/matches';
 import { pageOf } from '@/test/fixtures/pages';
 import { makeUser } from '@/test/fixtures/users';
@@ -55,6 +56,23 @@ describe('watch list', () => {
     await screen.findByRole('heading', { level: 2 });
     expect(container.querySelectorAll('article svg[data-board-theme] circle')).toHaveLength(20);
     expect(container.querySelector('article svg[data-board-theme]')).toHaveAttribute('data-board-theme', 'ocean');
+  });
+
+  it('draws the discs played so far on the board of the card', async () => {
+    fakeApi({
+      ...quietApi,
+      'GET /matches/live': pageOf([live({ id: 'a1' })]),
+      'GET /matches/a1': makeMatch({ id: 'a1', yourSeat: null }, [3, 3, 2]),
+    });
+    const { container } = renderRoute('/watch', { user: makeUser() });
+
+    await screen.findByRole('heading', { level: 2 });
+    await waitFor(() => {
+      const fills = [...container.querySelectorAll<SVGCircleElement>('article svg circle')].map((c) => c.style.fill);
+      // Moves 1 and 3 are seat 1's, move 2 is seat 2's.
+      expect(fills.filter((fill) => fill === 'var(--disc-1)')).toHaveLength(2);
+      expect(fills.filter((fill) => fill === 'var(--disc-2)')).toHaveLength(1);
+    });
   });
 
   it('opens other people’s matches on the watch page', async () => {
