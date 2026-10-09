@@ -44,6 +44,7 @@ export function TournamentList() {
         <LoadError error={list.error} onRetry={() => void list.refetch()} retrying={list.isFetching} />
       ) : list.data.items.length === 0 ? (
         <EmptyState
+          illustration="trophy"
           action={
             <Link to="/tournaments/new" className={buttonClass({ variant: 'secondary' })}>
               {t('tournaments.create')}

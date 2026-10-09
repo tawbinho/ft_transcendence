@@ -32,7 +32,7 @@ export function LeaderboardPage() {
       ) : results.error ? (
         <LoadError error={results.error} onRetry={() => void results.refetch()} retrying={results.isFetching} />
       ) : results.data.items.length === 0 ? (
-        <EmptyState>{t('leaderboard.empty')}</EmptyState>
+        <EmptyState illustration="trophy">{t('leaderboard.empty')}</EmptyState>
       ) : (
         <LeaderboardPlaces
           players={results.data.items}
