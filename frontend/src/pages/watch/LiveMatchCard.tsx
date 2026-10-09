@@ -54,7 +54,7 @@ export function LiveMatchCard({ match }: { match: MatchSummary }) {
       </div>
 
       <p className="text-sm text-muted">
-        {t('game.size', { cols: match.settings.cols, rows: match.settings.rows })} ·{' '}
+        <span dir="ltr">{t('game.size', { cols: match.settings.cols, rows: match.settings.rows })}</span> ·{' '}
         {t('game.connect', { n: match.settings.winLength })} · {t('watch.movesPlayed', { count: match.moveCount })}
       </p>
 

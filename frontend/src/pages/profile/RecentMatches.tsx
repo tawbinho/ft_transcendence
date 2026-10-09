@@ -48,11 +48,8 @@ export function RecentMatches({ player }: { player: Profile }) {
                 <Badge tone={RESULT_TONES[match.result]}>{t(`profile.result.${match.result}`)}</Badge>
               </span>
               <span className="text-sm text-muted">
-                {t('profile.board', {
-                  cols: match.settings.cols,
-                  rows: match.settings.rows,
-                  n: match.settings.winLength,
-                })}
+                <span dir="ltr">{t('game.size', { cols: match.settings.cols, rows: match.settings.rows })}</span> ·{' '}
+                {t('game.connect', { n: match.settings.winLength })}
               </span>
               <span className="text-end text-sm text-muted sm:text-start">
                 <time dateTime={match.endedAt}>{formatDateTime(match.endedAt, i18n.language)}</time>

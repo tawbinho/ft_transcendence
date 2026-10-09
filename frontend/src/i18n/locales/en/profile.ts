@@ -38,7 +38,6 @@ export const profileMessages = {
     },
     versus: 'vs',
     openMatch: 'Open match against {{name}}',
-    board: '{{cols}} × {{rows}} · Connect {{n}}',
     result: { win: 'Won', loss: 'Lost', draw: 'Draw' },
   },
 };

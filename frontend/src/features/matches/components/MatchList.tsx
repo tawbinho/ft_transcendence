@@ -60,7 +60,8 @@ export function MatchList({ matches }: { matches: readonly MatchSummary[] }) {
                 {opponent ?? <span className="text-muted">{t('history.noOpponent')}</span>}
               </Link>
               <span className="text-sm text-muted">
-                {t('game.size', { cols: match.settings.cols, rows: match.settings.rows })} ·{' '}
+                {/* Numbers keep their order inside right-to-left text (Arabic), so the size reads 7 × 6 and not 6 × 7. */}
+                <span dir="ltr">{t('game.size', { cols: match.settings.cols, rows: match.settings.rows })}</span> ·{' '}
                 {t('game.connect', { n: match.settings.winLength })}
               </span>
               <time dateTime={match.createdAt} className="text-sm text-muted">

@@ -39,7 +39,6 @@ export const profileMessages: ProfileMessages = {
     },
     versus: 'ضد',
     openMatch: 'فتح المباراة ضد {{name}}',
-    board: '{{cols}} × {{rows}} · صِل {{n}}',
     result: { win: 'فوز', loss: 'خسارة', draw: 'تعادل' },
   },
 };

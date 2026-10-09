@@ -172,7 +172,8 @@ describe('recent matches', () => {
     expect(screen.getByText('Won')).toBeInTheDocument();
     expect(screen.getByText('Lost')).toBeInTheDocument();
     expect(screen.getByText('Draw')).toBeInTheDocument();
-    expect(screen.getAllByText('7 × 6 · Connect 4')).toHaveLength(3);
+    expect(screen.getAllByText('7 × 6')).toHaveLength(3);
+    expect(screen.getAllByText(/Connect 4/)).toHaveLength(3);
     // Someone else's matches are not links: only your own can be opened.
     expect(screen.queryByRole('link', { name: /Open match/ })).not.toBeInTheDocument();
     expect(screen.getByText('Page 1 of 3')).toBeInTheDocument();

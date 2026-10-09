@@ -40,7 +40,6 @@ export const profileMessages: ProfileMessages = {
     },
     versus: 'contre',
     openMatch: 'Ouvrir la partie contre {{name}}',
-    board: '{{cols}} × {{rows}} · Aligner {{n}}',
     result: { win: 'Gagnée', loss: 'Perdue', draw: 'Nul' },
   },
 };
