@@ -69,6 +69,7 @@ export const tournamentsMessages: TournamentsMessages = {
     playerName: 'اسم اللاعب {{n}}',
     addPlayer: 'إضافة لاعب',
     removePlayer: 'إزالة اللاعب {{n}}',
+    removePlayerNamed: 'إزالة {{name}}',
     start: 'إجراء القرعة',
     nextMatch: 'المباراة التالية',
     playMatch: 'العب هذه المباراة',

@@ -56,6 +56,14 @@ describe('same-screen tournament', () => {
     expect(screen.queryByRole('button', { name: 'Add a player' })).not.toBeInTheDocument();
   });
 
+  it('names the player a remove button removes once they have a name', async () => {
+    const { events } = renderRoute('/tournaments/local', { user: null });
+    await events.type(await screen.findByRole('textbox', { name: 'Name of player 4' }), 'Dan');
+
+    await events.click(screen.getByRole('button', { name: 'Remove Dan' }));
+    expect(screen.queryByRole('textbox', { name: 'Name of player 4' })).not.toBeInTheDocument();
+  });
+
   it('plays from the setup form to a champion', async () => {
     const { events, container } = renderRoute('/tournaments/local', { user: null });
     await events.click(await screen.findByRole('button', { name: 'Remove player 4' }));

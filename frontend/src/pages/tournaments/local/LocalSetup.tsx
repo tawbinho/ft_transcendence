@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CloseIcon, PlusIcon } from '@/components/icons';
 import { PageHeader } from '@/components/PageHeader';
-import { Button, Card, TextField } from '@/components/ui';
+import { Button, Card, IconButton, TextField } from '@/components/ui';
 import { BoardSettingsFields } from '@/features/game/components/BoardSettingsFields';
 import { loadLastSettings, saveLastSettings } from '@/features/game/lastSettings';
 import type { BoardSettings } from '@/features/game/settings';
@@ -51,14 +51,19 @@ export function LocalSetup({ onStart }: { onStart: (names: string[], settings: B
                     error={submitted && errors[index] ? t(errors[index]) : null}
                   />
                   {names.length > LOCAL_MIN_PLAYERS && (
-                    <Button
-                      variant="ghost"
-                      className="mt-7 size-11 flex-none p-0"
+                    // Same height as the input, and it names the player it removes.
+                    <IconButton
+                      variant="secondary"
+                      className="mt-7"
+                      label={
+                        name.trim()
+                          ? t('localTournament.removePlayerNamed', { name: name.trim() })
+                          : t('localTournament.removePlayer', { n: index + 1 })
+                      }
                       onClick={() => setNames(names.filter((_, i) => i !== index))}
                     >
                       <CloseIcon />
-                      <span className="sr-only">{t('localTournament.removePlayer', { n: index + 1 })}</span>
-                    </Button>
+                    </IconButton>
                   )}
                 </li>
               ))}

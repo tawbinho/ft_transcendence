@@ -71,6 +71,7 @@ export const tournamentsMessages: TournamentsMessages = {
     playerName: 'Nom du joueur {{n}}',
     addPlayer: 'Ajouter un joueur',
     removePlayer: 'Retirer le joueur {{n}}',
+    removePlayerNamed: 'Retirer {{name}}',
     start: 'Tirer le tableau',
     nextMatch: 'Prochain match',
     playMatch: 'Jouer ce match',
