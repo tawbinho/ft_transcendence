@@ -67,13 +67,20 @@ export function MatchList({ matches }: { matches: readonly MatchSummary[] }) {
                 {formatDateTime(match.createdAt, i18n.language)}
               </time>
             </div>
-            <div className="flex flex-none flex-col items-end gap-2 @md:flex-row @md:items-center">
-              <StatusBadge match={match} />
+            {/* A fixed-width cluster: the result pills line up in one column, with or without a Replay link. */}
+            <div className="flex flex-none flex-col items-end gap-2 @md:grid @md:w-[13.5rem] @md:grid-cols-[6rem_1fr] @md:items-center @md:gap-2">
+              <span className="@md:justify-self-start">
+                <StatusBadge match={match} />
+              </span>
               {canReplay(match) && (
                 <Link
                   to={paths.watch(match.id)}
                   aria-label={t('history.replayMatch', { name: opponent ?? '?' })}
-                  className={buttonClass({ variant: 'secondary', size: 'sm', className: 'relative z-10' })}
+                  className={buttonClass({
+                    variant: 'secondary',
+                    size: 'sm',
+                    className: 'relative z-10 justify-self-end',
+                  })}
                 >
                   <PlayIcon />
                   {t('history.replay')}

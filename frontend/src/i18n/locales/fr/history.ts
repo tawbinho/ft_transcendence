@@ -12,9 +12,11 @@ export const historyMessages: HistoryMessages = {
     winRate: 'Taux de victoire',
     streak: 'Série en cours',
     bestStreak: 'Meilleure série de victoires',
-    streakWon: '{{count}} gagnée(s)',
-    streakLost: '{{count}} perdue(s)',
-    streakDraw: '{{count}} nulle(s)',
+    streakOf: {
+      won: 'Série de victoires en cours',
+      lost: 'Série de défaites en cours',
+      draw: 'Série de nuls en cours',
+    },
     none: '—',
     filterLabel: 'Afficher',
     filters: {

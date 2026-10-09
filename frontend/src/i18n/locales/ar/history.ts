@@ -12,9 +12,11 @@ export const historyMessages: HistoryMessages = {
     winRate: 'نسبة الفوز',
     streak: 'السلسلة الحالية',
     bestStreak: 'أطول سلسلة انتصارات',
-    streakWon: 'فوز × {{count}}',
-    streakLost: 'خسارة × {{count}}',
-    streakDraw: 'تعادل × {{count}}',
+    streakOf: {
+      won: 'سلسلة الفوز الحالية',
+      lost: 'سلسلة الخسارة الحالية',
+      draw: 'سلسلة التعادل الحالية',
+    },
     none: '—',
     filterLabel: 'عرض',
     filters: {

@@ -33,31 +33,29 @@ export function HistoryStats() {
 
   const stats = computeStats(finished.data.items);
   const recent = recentResults(finished.data.items, RECENT_COUNT);
-  const streak = stats.streak
-    ? t(
-        stats.streak.outcome === 'won'
-          ? 'history.streakWon'
-          : stats.streak.outcome === 'lost'
-            ? 'history.streakLost'
-            : 'history.streakDraw',
-        { count: stats.streak.length },
-      )
-    : t('history.none');
-
   const tiles: [string, string][] = [
     [t('history.played'), String(stats.played)],
     [t('history.wins'), String(stats.wins)],
     [t('history.losses'), String(stats.losses)],
     [t('history.draws'), String(stats.draws)],
     [t('history.winRate'), stats.winRate === null ? t('history.none') : formatPercent(stats.winRate, i18n.language)],
-    [t('history.streak'), streak],
+    // A number like the other tiles; the label says whether the streak is of wins, losses or draws.
+    [
+      stats.streak ? t(`history.streakOf.${stats.streak.outcome}`) : t('history.streak'),
+      String(stats.streak?.length ?? 0),
+    ],
     [t('history.bestStreak'), String(stats.bestWinStreak)],
   ];
 
   return (
     <div className="flex flex-col gap-3">
       <StatTiles tiles={tiles} className="lg:grid-cols-7" />
-      {stats.winRate !== null && <ProgressBar value={stats.winRate * 100} label={t('history.winRateBar')} />}
+      {stats.winRate !== null && (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-sm text-muted">{t('history.winRateBar')}</p>
+          <ProgressBar value={stats.winRate * 100} label={t('history.winRateBar')} />
+        </div>
+      )}
       {recent.length > 0 && (
         <div className="flex flex-col gap-2">
           <p className="text-sm text-muted">

@@ -49,6 +49,15 @@ describe('history page', () => {
     await expectNoA11yViolations(container);
   });
 
+  it('shows the current streak as a number, named for what it is a streak of', async () => {
+    const wonToo = makeMatchSummary({ id: 'won-2' });
+    fakeApi({ ...quietApi, 'GET /matches/mine': listOf([lost, wonToo, won]) });
+    renderRoute('/matches', { user: makeUser() });
+
+    const label = await screen.findByText('Current losing streak');
+    expect(label.nextElementSibling).toHaveTextContent(/^1$/);
+  });
+
   it('links a finished match to its replay, and a waiting one to nothing but its page', async () => {
     fakeApi({ ...quietApi, 'GET /matches/mine': listOf([won, waiting]) });
     renderRoute('/matches', { user: makeUser() });

@@ -10,9 +10,11 @@ export const historyMessages = {
     winRate: 'Win rate',
     streak: 'Current streak',
     bestStreak: 'Best win streak',
-    streakWon: '{{count}} won',
-    streakLost: '{{count}} lost',
-    streakDraw: '{{count}} drawn',
+    streakOf: {
+      won: 'Current win streak',
+      lost: 'Current losing streak',
+      draw: 'Current draw streak',
+    },
     none: '—',
     filterLabel: 'Show',
     filters: {

@@ -15,7 +15,7 @@ export interface HistoryView {
   page: number;
 }
 
-const isFilter = (value: string | null): value is HistoryFilter => FILTERS.includes(value as HistoryFilter);
+export const isFilter = (value: string | null): value is HistoryFilter => FILTERS.includes(value as HistoryFilter);
 
 /** The filter and page in the address; a missing or unknown value falls back to "all" and page 1. */
 export function readHistoryView(params: URLSearchParams): HistoryView {
