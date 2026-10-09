@@ -27,6 +27,17 @@ describe('demo server', () => {
     expect(fetch.mock.calls[0]?.[0]).toBe('/api/auth/me');
   });
 
+  it('asks the backend who is logged in once for requests made together, then remembers it', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => json(200, { data: me }));
+    vi.stubGlobal('fetch', fetch);
+    installDemoServer(new Set(['users']));
+
+    const lina = () => http.get('/users', { query: { search: 'lina' } });
+    await Promise.all([lina(), lina(), lina()]);
+    await lina();
+    expect(fetch.mock.calls.map((call) => call[0])).toEqual(['/api/auth/me']);
+  });
+
   it('lists the viewer among the players, with the results of their real matches', async () => {
     const won = {
       id: 'm1',
