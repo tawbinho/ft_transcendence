@@ -9,9 +9,10 @@ function LegalArticle({ title, document }: { title: string; document: LegalDocum
   const updated = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'long' }).format(new Date(LEGAL_UPDATED));
 
   return (
-    <article className="mx-auto max-w-3xl">
+    <article>
       <PageHeader title={title} subtitle={t('legal.updated', { date: updated })} />
-      <Card className="flex flex-col gap-6 leading-relaxed">
+      {/* max-w-2xl keeps a line at about 70 characters, which is easy to read. It starts at the page's left edge (see AppLayout). */}
+      <Card className="flex max-w-2xl flex-col gap-6 leading-relaxed">
         <p>{document.intro}</p>
         {document.sections.map((section) => (
           <section key={section.title} className="flex flex-col gap-2">

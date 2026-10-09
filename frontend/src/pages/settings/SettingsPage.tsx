@@ -29,13 +29,16 @@ export function SettingsPage() {
   ];
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <PageHeader title={t('account.title')} subtitle={t('account.subtitle')} className="mb-0" />
       <TabLinks label={t('account.sections')} tabs={tabs} />
-      {section === 'profile' && <ProfileSection user={user} />}
-      {section === 'security' && <SecuritySection user={user} />}
-      {section === 'preferences' && <PreferencesSection />}
-      {section === 'blocked' && <BlockedSection />}
+      {/* Forms are narrower than the page, but start at the same left edge as the title (see AppLayout). */}
+      <div className="flex max-w-3xl flex-col gap-6">
+        {section === 'profile' && <ProfileSection user={user} />}
+        {section === 'security' && <SecuritySection user={user} />}
+        {section === 'preferences' && <PreferencesSection />}
+        {section === 'blocked' && <BlockedSection />}
+      </div>
     </div>
   );
 }
