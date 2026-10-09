@@ -28,7 +28,7 @@ function hasWebGL2(): boolean {
   }
 }
 
-/** Shows the 3D board if loading or drawing it fails, so the game can always be played. */
+/** Shows the 2D board if loading or drawing the 3D board fails, so the game can always be played. */
 class Board3DBoundary extends React.Component<
   { fallback: React.ReactNode; onError: () => void; children: React.ReactNode },
   { failed: boolean }
