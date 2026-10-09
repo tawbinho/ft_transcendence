@@ -103,7 +103,9 @@ export const playMessages: PlayMessages = {
     size: '{{cols}} × {{rows}}',
     wonDetail: '{{n}} jetons alignés en {{moves}} coups.',
     drawDetail: 'Le plateau s’est rempli en {{moves}} coups.',
-    keysHint: 'Touches : ← → pour se déplacer, 1 à 9 pour lâcher un jeton.',
+    keysLabel: 'Touches :',
+    keysMove: 'pour se déplacer',
+    keysDrop: 'pour lâcher un jeton',
   },
   online: {
     createTitle: 'Nouvelle partie en ligne',

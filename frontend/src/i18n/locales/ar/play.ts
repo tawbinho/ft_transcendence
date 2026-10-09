@@ -99,7 +99,9 @@ export const playMessages: PlayMessages = {
     size: '{{cols}} × {{rows}}',
     wonDetail: 'اكتمل صف من {{n}} أقراص. عدد الحركات: {{moves}}.',
     drawDetail: 'امتلأت اللوحة. عدد الحركات: {{moves}}.',
-    keysHint: 'المفاتيح: ← → للتنقل، و1 إلى 9 لإسقاط قرص.',
+    keysLabel: 'المفاتيح:',
+    keysMove: 'للتنقل',
+    keysDrop: 'لإسقاط قرص',
   },
   online: {
     createTitle: 'مباراة جديدة عبر الإنترنت',

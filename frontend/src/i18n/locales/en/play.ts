@@ -97,7 +97,9 @@ export const playMessages = {
     size: '{{cols}} × {{rows}}',
     wonDetail: 'Connected {{n}} in {{moves}} moves.',
     drawDetail: 'The board filled up after {{moves}} moves.',
-    keysHint: 'Keys: ← → to move, 1 to 9 to drop a disc.',
+    keysLabel: 'Keys:',
+    keysMove: 'to move',
+    keysDrop: 'to drop a disc',
   },
   online: {
     createTitle: 'New online match',
