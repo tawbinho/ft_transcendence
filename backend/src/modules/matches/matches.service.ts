@@ -5,6 +5,8 @@ import { DataSource, In, type EntityManager, Repository } from 'typeorm';
 import { AppError } from '../../common/errors/app-error.js';
 import { UsersService } from '../users/users.service.js';
 import { BlocksService } from '../friends/blocks.service.js';
+import { EVENTS } from '../realtime/realtime.constants.js';
+import { RealtimeService } from '../realtime/realtime.service.js';
 import type {
   CreateMatchDto,
   MatchSettingsDto,
@@ -60,6 +62,7 @@ export class MatchesService {
     @InjectRepository(MatchMove) private readonly moves: Repository<MatchMove>,
     private readonly users: UsersService,
     private readonly blocks: BlocksService,
+    private readonly realtime: RealtimeService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -199,6 +202,7 @@ export class MatchesService {
       );
     });
 
+    await this.broadcast(matchId);
     return this.get(userId, matchId);
   }
 
@@ -206,19 +210,25 @@ export class MatchesService {
   // Read
   // ---------------------------------------------------------------------------
 
-  // The full state of one match. Only its players may read it; anyone else
-  // gets "not found", so nobody can discover which match ids exist.
+  // The full state of one match. Any logged-in user may read it (spectator
+  // mode): `yourSeat` is null for someone who does not play it. Joining,
+  // moving and resigning stay for the players.
   async get(userId: string, matchId: string): Promise<MatchView> {
+    return this.load(userId, matchId);
+  }
+
+  // Loads a match and builds its view for one viewer (null: nobody in
+  // particular, used for live events).
+  private async load(
+    viewerId: string | null,
+    matchId: string,
+  ): Promise<MatchView> {
     const match = await this.matches.findOneBy({ id: matchId });
-    const players = match
-      ? await this.players.find({
-          where: { matchId },
-          relations: { user: true },
-        })
-      : [];
-    if (!match || !players.some((player) => player.userId === userId)) {
-      throw this.notFound();
-    }
+    if (!match) throw this.notFound();
+    const players = await this.players.find({
+      where: { matchId },
+      relations: { user: true },
+    });
 
     const moves = await this.moves.find({
       where: { matchId },
@@ -233,8 +243,23 @@ export class MatchesService {
         result: p.result,
       })),
       moves,
-      userId,
+      viewerId,
     );
+  }
+
+  // Tells everybody watching this match that it changed. Live events are
+  // hints (the app also polls), so a failure here must never fail the request
+  // that already succeeded.
+  private async broadcast(matchId: string): Promise<void> {
+    try {
+      this.realtime.emitToMatch(
+        matchId,
+        EVENTS.matchUpdate,
+        await this.load(null, matchId),
+      );
+    } catch {
+      // ignored on purpose
+    }
   }
 
   // The matches the user plays or played, newest first, with optional status
@@ -384,6 +409,7 @@ export class MatchesService {
       }
     });
 
+    await this.broadcast(matchId);
     return this.get(userId, matchId);
   }
 
@@ -433,6 +459,7 @@ export class MatchesService {
       }
     });
 
+    await this.broadcast(matchId);
     return this.get(userId, matchId);
   }
 

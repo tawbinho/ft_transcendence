@@ -106,7 +106,7 @@ function playersView(players: PlayerData[]): PlayerView[] {
     .sort(bySeat);
 }
 
-function viewerSeat(players: PlayerData[], viewerId: string): number | null {
+function viewerSeat(players: PlayerData[], viewerId: string | null): number | null {
   return players.find((player) => player.userId === viewerId)?.seat ?? null;
 }
 
@@ -129,7 +129,9 @@ export function toMatchView(
   match: MatchData,
   players: PlayerData[],
   moves: MoveData[],
-  viewerId: string,
+  // null: no particular viewer (a live event goes to everybody watching, so
+  // `yourSeat` is null and each client keeps the seat it already knows).
+  viewerId: string | null,
 ): MatchView {
   // Replay the moves in order with the engine to get the board. If the saved
   // moves were ever corrupt, this throws, which is what we want: a loud error

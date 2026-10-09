@@ -532,11 +532,10 @@ paths:
       - matches
       operationId: getMatch
       summary: One match
-      description: 'CHANGE: today only the two players can read a match (anyone else gets `MATCH_NOT_FOUND`). Spectator
-        mode needs every logged-in user to read it, with `yourSeat: null` for those who do not play. Joining, moving
-        and resigning stay for players only. This also removes the 404 (a red line in the console) a player gets
-        when opening a shared match link before joining.'
-      x-status: change
+      description: 'Any logged-in user can read any match (spectator mode): `yourSeat` is null for someone who does not
+        play it. Joining, moving and resigning stay for the players only. This also removes the 404 (a red line in the
+        console) a player got when opening a shared match link before joining.'
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/MatchId'
       responses:
@@ -2909,7 +2908,8 @@ components:
       - id
 x-realtime:
   description: 'Live updates over Socket.IO. They are HINTS: the app also polls, so a missed event only delays an
-    update. The frontend uses them when built with `VITE_REALTIME=socket`; polling then slows to every 30 s.'
+    update. The frontend uses them when built with `VITE_REALTIME=socket`; polling then slows to every 30 s. Built: the connection, `match:*`, `presence`, `friends:update`, `tournament:update`
+    (`x-status: implemented`). Not built yet: the `chat:*` events, and a player who disconnects from a running match.'
   connection:
     library: Socket.IO v4
     url: 'Same origin as the app, path `/socket.io`, WebSocket transport only: `io({ withCredentials: true, transports:
@@ -2922,46 +2922,55 @@ x-realtime:
       again.'
   clientToServer:
     match:watch:
+      x-status: implemented
       payload:
         $ref: '#/components/schemas/RtMatchWatch'
       does: Adds the socket to the room of that match (players and spectators alike).
     match:unwatch:
+      x-status: implemented
       payload:
         $ref: '#/components/schemas/RtMatchWatch'
       does: Removes it.
   serverToClient:
     match:update:
+      x-status: implemented
       payload:
         $ref: '#/components/schemas/Match'
       sentTo: The room of the match
       when: 'Every change: join, move, resignation, end. One payload for the whole room: `yourSeat` in it is ignored,
         the app keeps the seat from its own `GET /matches/{id}`.'
     chat:message:
+      x-status: new
       payload:
         $ref: '#/components/schemas/RtChatMessage'
       sentTo: Both players
       when: A message is sent (so the sender's other tabs see it too).
     chat:typing:
+      x-status: new
       payload:
         $ref: '#/components/schemas/RtChatTyping'
       sentTo: The other player
       when: After `POST /chat/{userId}/typing`.
     chat:read:
+      x-status: new
       payload:
         $ref: '#/components/schemas/RtChatRead'
       sentTo: The other player
       when: After `POST /chat/{userId}/read`.
     presence:
+      x-status: implemented
       payload:
         $ref: '#/components/schemas/RtPresence'
       sentTo: Everyone, or at least friends and chat peers
       when: A user's first socket connects, or their last one disconnects. Set `lastSeenAt` when the last one goes.
     friends:update:
+      x-status: implemented
       payload:
         $ref: '#/components/schemas/RtEmpty'
       sentTo: Both players
       when: A friend request is sent, accepted, declined or cancelled, a friend is removed, or a block ends a friendship.
     tournament:update:
+      x-status: implemented
       payload:
         $ref: '#/components/schemas/RtTournamentUpdate'
       sentTo: Everyone

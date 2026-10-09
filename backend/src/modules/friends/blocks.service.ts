@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { AppError } from '../../common/errors/app-error.js';
+import { EVENTS } from '../realtime/realtime.constants.js';
+import { RealtimeService } from '../realtime/realtime.service.js';
 import { UsersService } from '../users/users.service.js';
 import { Block } from './entities/block.entity.js';
 import { Friendship } from './entities/friendship.entity.js';
@@ -17,6 +19,7 @@ export class BlocksService {
   constructor(
     @InjectRepository(Block) private readonly blocks: Repository<Block>,
     private readonly users: UsersService,
+    private readonly realtime: RealtimeService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -46,6 +49,8 @@ export class BlocksService {
         .execute();
       await manager.delete(Friendship, { userLowId: low, userHighId: high });
     });
+    // A block can end a friendship: both apps refetch.
+    this.realtime.emitToUsers([viewerId, otherId], EVENTS.friendsUpdate, {});
   }
 
   // Idempotent: unblocking a player you did not block changes nothing.

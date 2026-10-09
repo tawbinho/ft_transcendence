@@ -235,9 +235,23 @@ codes: `TOURNAMENT_NOT_FOUND`, `TOURNAMENT_NOT_OPEN`, `TOURNAMENT_FULL`,
 `ALREADY_JOINED`, `NOT_JOINED`, `CREATOR_CANNOT_LEAVE`, `NOT_CREATOR`.
 **Presence.** A player is online if they made a request while logged in during
 the last minute: the session guard writes `users.last_seen_at` (at most every
-30 seconds per user). WebSockets will replace this later. The wins, losses and
+30 seconds per user), and by the live connection (see below). The wins, losses and
 draws of the search are counted from the finished matches on every request,
 never stored. 
+
+**Live updates (Socket.IO).** The app opens a WebSocket on `/socket.io` (same
+origin, through the proxy). The server refuses the connection unless the
+`session` cookie belongs to a real login, and every 20 seconds it closes the
+sockets whose login ended (logout, expiry). Every tab of a user is in the room
+`user:<id>`. Events (names in `backend/src/modules/realtime/realtime.constants.ts`):
+`match:update` (the whole match, to everyone who sent `match:watch`, spectators
+included), `presence` (`{ userId, online }`, to everyone), `friends:update`
+(both players of a request or block) and `tournament:update` (`{ id }`, to
+everyone). They are hints: the app also polls, so a missed event only delays an
+update. A user counts as online while they have a socket open (or made a
+request in the last minute), and the REST `online` value can lag the `presence`
+event by up to a minute after the last tab closes. The frontend only uses
+sockets when it is built with `VITE_REALTIME=socket`.
 
 **Not built yet:** starting a tournament, the bracket, the matches it creates
 and advancing winners (`rounds` is always empty, and players are always

@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { AppError } from '../../common/errors/app-error.js';
+import { EVENTS } from '../realtime/realtime.constants.js';
+import { RealtimeService } from '../realtime/realtime.service.js';
 import { UsersService } from '../users/users.service.js';
 import { BlocksService } from './blocks.service.js';
 import { Friendship } from './entities/friendship.entity.js';
@@ -25,6 +27,7 @@ export class FriendsService {
     private readonly friendships: Repository<Friendship>,
     private readonly users: UsersService,
     private readonly blocks: BlocksService,
+    private readonly realtime: RealtimeService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -55,7 +58,7 @@ export class FriendsService {
     }
 
     const [low, high] = orderPair(viewerId, otherId);
-    return this.dataSource.transaction(async (manager) => {
+    const answer = await this.dataSource.transaction(async (manager) => {
       // Create the request if the pair has no row yet. If two players ask each
       // other at the same moment, the primary key lets only ONE insert win, and
       // the other one just goes on to the lock below.
@@ -88,6 +91,8 @@ export class FriendsService {
       );
       return 'friends';
     });
+    this.notifyBoth(viewerId, otherId);
+    return answer;
   }
 
   // Removes a friend, cancels my request, or declines theirs: all delete the
@@ -96,7 +101,14 @@ export class FriendsService {
     await this.requireOther(viewerId, otherId);
     const [low, high] = orderPair(viewerId, otherId);
     await this.friendships.delete({ userLowId: low, userHighId: high });
+    this.notifyBoth(viewerId, otherId);
     return 'none';
+  }
+
+  // Both players' apps refetch their friends (a request arrived, was accepted,
+  // was withdrawn...).
+  private notifyBoth(a: string, b: string): void {
+    this.realtime.emitToUsers([a, b], EVENTS.friendsUpdate, {});
   }
 
   private async requireOther(viewerId: string, otherId: string): Promise<void> {

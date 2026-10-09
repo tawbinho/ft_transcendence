@@ -90,6 +90,10 @@ describe('toMatchView', () => {
     ).toBeNull();
   });
 
+  it('has no seat for a live event, which has no particular viewer', () => {
+    expect(toMatchView(match(), players(), [], null).yourSeat).toBeNull();
+  });
+
   it('lists the players in seat order, even if they arrive reversed', () => {
     const view = toMatchView(match(), players().reverse(), [], ALICE);
     expect(view.players.map((p) => p.seat)).toEqual([1, 2]);

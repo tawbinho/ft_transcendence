@@ -9,6 +9,8 @@ import {
   type GameSettings,
 } from '../matches/engine/game.types.js';
 import { DEFAULT_THEME } from '../matches/match.constants.js';
+import { EVENTS } from '../realtime/realtime.constants.js';
+import { RealtimeService } from '../realtime/realtime.service.js';
 import type { CreateTournamentDto } from './dto/create-tournament.dto.js';
 import type { ListTournamentsQuery } from './dto/list-tournaments.query.js';
 import { TournamentPlayer } from './entities/tournament-player.entity.js';
@@ -42,6 +44,7 @@ export class TournamentsService {
     private readonly tournaments: Repository<Tournament>,
     @InjectRepository(TournamentPlayer)
     private readonly players: Repository<TournamentPlayer>,
+    private readonly realtime: RealtimeService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -76,6 +79,7 @@ export class TournamentsService {
       return tournament.id;
     });
 
+    this.announce(id);
     return this.get(userId, id);
   }
 
@@ -192,6 +196,7 @@ export class TournamentsService {
       await manager.insert(TournamentPlayer, { tournamentId, userId });
     });
 
+    this.announce(tournamentId);
     return this.get(userId, tournamentId);
   }
 
@@ -220,6 +225,7 @@ export class TournamentsService {
       await manager.delete(TournamentPlayer, { tournamentId, userId });
     });
 
+    this.announce(tournamentId);
     return this.get(userId, tournamentId);
   }
 
@@ -243,6 +249,7 @@ export class TournamentsService {
 
       await manager.delete(Tournament, { id: tournamentId });
     });
+    this.announce(tournamentId);
   }
 
   // ---------------------------------------------------------------------------
@@ -273,6 +280,13 @@ export class TournamentsService {
         409,
       );
     }
+  }
+
+  // Tells every connected app that this tournament changed (it refetches the
+  // tournament and the list). A cancelled tournament is announced too: the
+  // refetch finds it gone.
+  private announce(tournamentId: string): void {
+    this.realtime.emitToAll(EVENTS.tournamentUpdate, { id: tournamentId });
   }
 
   private notFound(): AppError {
