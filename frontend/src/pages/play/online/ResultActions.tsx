@@ -8,7 +8,7 @@ import { opponentOf } from '@/features/matches/model';
 import type { Match } from '@/features/matches/types';
 import { useErrorMessage } from '@/lib/errorMessage';
 
-/** What to do after an online match: a rematch with the same board, a new match, or the history. */
+/** What to do after an online match: a rematch with the same board, its replay, a new match, or the history. */
 export function ResultActions({ match }: { match: Match }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -32,6 +32,12 @@ export function ResultActions({ match }: { match: Match }) {
         <Button loading={rematch.isPending} onClick={startRematch}>
           {t('online.rematch')}
         </Button>
+      )}
+      {/* The watch page replays a finished match move by move. */}
+      {match.status === 'finished' && match.game.moveCount > 0 && (
+        <Link to={paths.watch(match.id)} className={buttonClass({ variant: 'secondary' })}>
+          {t('history.replay')}
+        </Link>
       )}
       <Link to="/play/online" className={buttonClass({ variant: 'secondary' })}>
         {t('online.newMatch')}

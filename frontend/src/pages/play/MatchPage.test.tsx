@@ -134,6 +134,7 @@ describe('MatchPage: finished', () => {
     expect(banner).toHaveClass('bg-success-soft');
     expect(within(banner as HTMLElement).getByText('Connected 4 in 7 moves.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Rematch' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Replay' })).toHaveAttribute('href', `/watch/${MATCH_ID}`);
     expect(screen.getByRole('link', { name: 'New match' })).toHaveAttribute('href', '/play/online');
     expect(screen.getByRole('link', { name: 'All my matches' })).toHaveAttribute('href', '/matches');
     // An old match opened from the history is not a party.
