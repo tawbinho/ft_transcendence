@@ -5,7 +5,7 @@ import { Alert, Button, Card, ConfirmDialog } from '@/components/ui';
 import { useUser } from '@/features/auth/hooks';
 import { useDeleteTournament, useTournamentAction } from '@/features/tournaments/hooks';
 import { MIN_TOURNAMENT_PLAYERS, type Tournament } from '@/features/tournaments/types';
-import { canCancel, canJoin, canLeave, canStart } from '@/features/tournaments/view';
+import { canCancel, canJoin, canLeave, canStart, isFull, isStartUnavailable } from '@/features/tournaments/view';
 import { useErrorMessage } from '@/lib/errorMessage';
 
 /** Join, leave, start early or cancel, while players register. Each button shows only when it can be used. */
@@ -30,7 +30,12 @@ export function Registration({ tournament }: { tournament: Tournament }) {
           {t('tournaments.registrationBody', { size: tournament.size, min: MIN_TOURNAMENT_PLAYERS })}
         </p>
       </div>
-      {error && <Alert tone="danger">{errorMessage(error)}</Alert>}
+      {/* The server may not start tournaments yet: say so clearly, and say why a full one still waits. */}
+      {isStartUnavailable(start.error) && !isFull(tournament) && (
+        <Alert tone="warning">{t('tournaments.startUnavailable')}</Alert>
+      )}
+      {isFull(tournament) && <Alert tone="warning">{t('tournaments.fullWaiting')}</Alert>}
+      {error && !isStartUnavailable(error) && <Alert tone="danger">{errorMessage(error)}</Alert>}
       <div className="flex flex-wrap gap-2">
         {canJoin(tournament) && (
           <Button loading={join.isPending} onClick={() => join.mutate()}>

@@ -189,6 +189,13 @@ Written here instead of taken from a library:
   are in `online/` and `local/` next to them.
 - Decisions are plain functions in `features/tournaments/view.ts`: `roundName` (Final, Semi-finals...), `canJoin`,
   `canLeave`, `canStart`, `canCancel` (which buttons show), `pairingToPlay`, `countMatches`.
+- Online registration (list, create, join, leave, cancel) talks to the real backend. Starting is not built there yet:
+  `isStartUnavailable` recognises the "no such route" answer to Start now and `Registration.tsx` says so, and a full
+  tournament that is still `registering` shows why it waits. Both messages disappear by themselves once the backend
+  starts tournaments, so nothing changes in the frontend then. `TournamentPage` checks the address with `isUuid`
+  (`lib/ids.ts`) before asking the server.
+- A player's name links to their profile only when tournaments and profiles come from the same place (`sameWorld` in
+  `config.ts`): a real player has no demo profile, and the other way round.
 - The same-screen tournament is saved in the browser (`useLocalTournament.ts`, key `local-tournament`) after every
   result. Coming back to an unfinished one shows "Resume your tournament?" first. A match left halfway is not saved:
   only results are.
@@ -314,11 +321,16 @@ and `npm run build` pass after that (checked). The lines about `backdrop` in `in
 
 ## 7. The demo server
 
-Some pages need backend routes that do not exist yet (players, friends, chat, spectating, tournaments; the list is in
+Some pages need backend routes that do not exist yet (players, friends, chat, spectating; the list is in
 [`api-contract.md`](api-contract.md)). Until they do, `src/demo/` answers those routes inside the browser with made-up
 players saved in `localStorage`. It sits in front of the network (`setTransport` in `lib/api/http.ts`): requests for
 the features listed in `VITE_DEMO_FEATURES` are answered there; everything else (login, two-factor, real matches) goes
 to the backend. A banner says that demo data is in use, with a Reset button.
+
+Online tournament registration (list, create, join, leave, cancel) is served by the backend, so `tournaments` is no
+longer in the default list (`DEFAULT_DEMO_FEATURES` in `src/config.ts`). The root `docker-compose.yml` writes the list
+out, so it must lose `tournaments` too; listing it again brings the demo tournaments back. Starting a tournament and
+its bracket still need the backend (see section 10).
 
 When the backend serves a feature, remove it from `VITE_DEMO_FEATURES`. When none is left, the `src/demo` folder can be
 deleted with the lines that load it in `main.tsx` and `layout/DemoBanner.tsx`.
@@ -402,7 +414,7 @@ After a change: `npm run typecheck && npm test`.
 
 ## 10. Known limits
 
-- Pages on demo data (players, friends, chat, spectating, online tournaments) need the backend routes listed in
+- Pages on demo data (players, friends, chat, spectating) need the backend routes listed in
   [`api-contract.md`](api-contract.md) before they count.
 - The backend does not yet send `twoFactorEnabled` with the user, so Settings shows both two-factor buttons with a hint.
 - Opening a shared match link before joining makes the browser print one "404" line in the console, because the backend

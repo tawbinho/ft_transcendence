@@ -1,8 +1,13 @@
-import { DEMO_FEATURES, parseDemoFeatures } from './config';
+import { DEFAULT_DEMO_FEATURES, parseDemoFeatures } from './config';
 
 describe('parseDemoFeatures', () => {
-  it('turns every demo feature on when VITE_DEMO_FEATURES is not set', () => {
-    expect(parseDemoFeatures(undefined)).toEqual([...DEMO_FEATURES]);
+  it('uses the features the backend does not serve yet when VITE_DEMO_FEATURES is not set', () => {
+    expect(parseDemoFeatures(undefined)).toEqual([...DEFAULT_DEMO_FEATURES]);
+    expect(parseDemoFeatures(undefined)).not.toContain('tournaments');
+  });
+
+  it('still lets tournaments be listed by hand', () => {
+    expect(parseDemoFeatures('tournaments')).toEqual(['tournaments']);
   });
 
   it('reads a comma-separated list and ignores unknown names', () => {

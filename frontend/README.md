@@ -55,12 +55,12 @@ Build-time settings, listed in `.env.example`. For `npm run dev`, copy it to `.e
 what you need. With Docker, pass them as build arguments (`args:` of the `frontend` service in the root
 `docker-compose.yml`).
 
-| Name                 | What it does                                                                                                                                           | Default                  |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
-| `VITE_DEMO_FEATURES` | Features answered by the in-browser demo server until the backend has their routes: `users`, `friends`, `chat`, `spectate`, `tournaments`. Empty: none | All five                 |
-| `VITE_REALTIME`      | `socket` to receive live updates over Socket.IO, once the backend has a gateway                                                                        | Polling only             |
-| `VITE_BOARD_3D`      | `off` leaves the 3D board and Three.js out of the build; anything else keeps the 2D / 3D switch                                                        | `on`                     |
-| `API_PROXY_TARGET`   | Development only: where `npm run dev` forwards `/api` and `/socket.io`                                                                                 | `https://localhost:8443` |
+| Name                 | What it does                                                                                                                                           | Default                        |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
+| `VITE_DEMO_FEATURES` | Features answered by the in-browser demo server until the backend has their routes: `users`, `friends`, `chat`, `spectate`, `tournaments`. Empty: none | users, friends, chat, spectate |
+| `VITE_REALTIME`      | `socket` to receive live updates over Socket.IO, once the backend has a gateway                                                                        | Polling only                   |
+| `VITE_BOARD_3D`      | `off` leaves the 3D board and Three.js out of the build; anything else keeps the 2D / 3D switch                                                        | `on`                           |
+| `API_PROXY_TARGET`   | Development only: where `npm run dev` forwards `/api` and `/socket.io`                                                                                 | `https://localhost:8443`       |
 
 ## Running with Docker
 
@@ -117,8 +117,9 @@ so they mirror by themselves.
 
 ### The demo server
 
-`src/demo` answers, inside the browser, the routes the backend does not have yet (players, friends, chat, spectating,
-tournaments) with made-up players saved in `localStorage`. Requests for the features in `VITE_DEMO_FEATURES` are
+`src/demo` answers, inside the browser, the routes the backend does not have yet (players, friends, chat, spectating)
+with made-up players saved in `localStorage`. Online tournament registration is served by the backend; list `tournaments`
+in `VITE_DEMO_FEATURES` to use the demo version again. Requests for the features in `VITE_DEMO_FEATURES` are
 answered there; everything else, like login and real matches, goes to the backend. A banner says so, with a Reset
 button. When the backend serves every route, set `VITE_DEMO_FEATURES` to an empty value; the folder can then be
 deleted, with the lines that load it in `main.tsx` and `layout/DemoBanner.tsx`. Every route the backend still has to

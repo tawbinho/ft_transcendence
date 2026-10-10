@@ -3,7 +3,7 @@ import { expectNoA11yViolations } from '@/test/axe';
 import { renderWithProviders } from '@/test/render';
 import { DemoBanner } from './DemoBanner';
 
-// The test setup turns every demo feature on, so the banner is shown.
+// The default demo features are on in tests, so the banner is shown.
 describe('the demo banner', () => {
   it('is one line, with the details hidden', () => {
     renderWithProviders(<DemoBanner />);
