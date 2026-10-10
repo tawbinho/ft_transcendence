@@ -11,6 +11,7 @@ import type {
   CreateMatchDto,
   MatchSettingsDto,
 } from './dto/create-match.dto.js';
+import type { ListLiveMatchesQuery } from './dto/list-live-matches.query.js';
 import type { ListMatchesQuery } from './dto/list-matches.query.js';
 import { drop, replay, validateSettings } from './engine/game.engine.js';
 import { GameRuleError } from './engine/game.errors.js';
@@ -297,9 +298,45 @@ export class MatchesService {
     if (query.status)
       builder.andWhere('m.status = :status', { status: query.status });
     const [matches, total] = await builder.getManyAndCount();
+    return this.toPage(matches, total, limit, offset, userId);
+  }
 
-    // Two more queries for the whole page (not one per match): the players
-    // and the number of moves of each match.
+  // ---------------------------------------------------------------------------
+  // Live matches (the Watch page)
+  // ---------------------------------------------------------------------------
+
+  // Every match being played right now, most recently started first. Any
+  // logged-in user can list them (spectator mode); `yourSeat` is the viewer's
+  // seat in the matches they play, null in the others. A spectator then opens
+  // one with GET /matches/:id.
+  async listLive(
+    userId: string,
+    query: ListLiveMatchesQuery,
+  ): Promise<MatchPage> {
+    const limit = query.limit ?? 20;
+    const offset = query.offset ?? 0;
+
+    const [matches, total] = await this.matches
+      .createQueryBuilder('m')
+      .where("m.status = 'in_progress'")
+      .orderBy('m.startedAt', 'DESC')
+      .addOrderBy('m.id', 'DESC')
+      .take(limit)
+      .skip(offset)
+      .getManyAndCount();
+    return this.toPage(matches, total, limit, offset, userId);
+  }
+
+  // Turns a page of match rows into the list the API sends. Two more queries
+  // for the whole page (not one per match): the players and the number of
+  // moves of each match. Shared by every list of matches.
+  private async toPage(
+    matches: Match[],
+    total: number,
+    limit: number,
+    offset: number,
+    viewerId: string,
+  ): Promise<MatchPage> {
     const ids = matches.map((match) => match.id);
     const players = ids.length
       ? await this.players.find({
@@ -333,7 +370,7 @@ export class MatchesService {
               result: p.result,
             })),
           moveCount.get(match.id) ?? 0,
-          userId,
+          viewerId,
         ),
       ),
       total,

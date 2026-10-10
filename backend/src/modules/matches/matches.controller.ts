@@ -23,6 +23,7 @@ import {
 } from '../../common/decorators/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { CreateMatchDto } from './dto/create-match.dto.js';
+import { ListLiveMatchesQuery } from './dto/list-live-matches.query.js';
 import { ListMatchesQuery } from './dto/list-matches.query.js';
 import { MakeMoveDto } from './dto/make-move.dto.js';
 import { MatchPageResponse, MatchResponse } from './dto/match.responses.js';
@@ -72,9 +73,30 @@ export class MatchesController {
     return this.matches.listMine(user.id, query);
   }
 
-  // GET /api/matches/:id: the full state. Only the players may read it.
+  // GET /api/matches/live: the Watch page. Declared BEFORE ':id' too, for the
+  // same reason as 'mine'.
+  @Get('live')
+  @ApiOperation({
+    summary: 'Matches being played now',
+    description:
+      'Every in-progress match, most recently started first. Any logged-in user can list them; `yourSeat` is null in the matches the viewer does not play. Open one with `GET /matches/:id`.',
+  })
+  @ApiOkResponse({ type: MatchPageResponse })
+  live(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ListLiveMatchesQuery,
+  ): Promise<MatchPage> {
+    return this.matches.listLive(user.id, query);
+  }
+
+  // GET /api/matches/:id: the full state. Any logged-in user may read it
+  // (spectator mode); `yourSeat` is null for someone who does not play it.
   @Get(':id')
-  @ApiOperation({ summary: 'The state of one match (players only)' })
+  @ApiOperation({
+    summary: 'The state of one match',
+    description:
+      'Any logged-in user can read any match (spectator mode). `yourSeat` is null for someone who does not play it.',
+  })
   @ApiOkResponse({ type: MatchResponse })
   get(
     @CurrentUser() user: AuthenticatedUser,

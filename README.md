@@ -136,7 +136,8 @@ including the `data` / `error` wrapper. The browser must send requests with
 | `POST /api/auth/2fa/backup-codes` | make 10 new backup codes, the old ones stop working (needs a valid code) |
 | `POST /api/matches`           | create a match (optional settings, optional invited player) |
 | `GET  /api/matches/mine`      | my matches, newest first (`status`, `limit`, `offset`) |
-| `GET  /api/matches/:id`       | the full state of a match (players only)       |
+| `GET  /api/matches/live`      | matches being played now, most recently started first (spectators) |
+| `GET  /api/matches/:id`       | the full state of a match (any logged-in user; `yourSeat` is null for a spectator) |
 | `POST /api/matches/:id/join`  | join a waiting match, the match starts         |
 | `POST /api/matches/:id/moves` | play a column, body `{ "col": 3 }`             |
 | `POST /api/matches/:id/resign`| give up, or cancel a match still waiting       |
@@ -318,9 +319,8 @@ The AI thinks in a **worker thread**, so a long search never freezes the other
 players. After a server restart the bots pick up their waiting and running
 matches again.
 
-**Not built yet:** chat, the "your tournament match is ready" chat message, the
-list of live matches for spectators (`GET /matches/live`).
-The full API design, including these parts, is in `backend/docs/openapi.yaml`.
+**Not built yet:** chat, and the "your tournament match is ready" chat message
+that goes with it. The full API design, including these parts, is in `backend/docs/openapi.yaml`.
 
 **Rate limits** (per IP, per minute): 100 requests overall; login 10; signup 5;
 2FA verify, enable and disable 5; creating a match or a tournament 20;

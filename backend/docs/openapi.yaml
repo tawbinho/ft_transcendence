@@ -40,7 +40,7 @@ tags:
 - name: auth
   description: Accounts, login, two-factor authentication. All implemented.
 - name: matches
-  description: Online games. Implemented, except `live` (new) and the spectator change on `GET /matches/{id}`.
+  description: Online games, with spectator mode (`live`, and `GET /matches/{id}` open to every logged-in user). All implemented.
 - name: users
   description: Player search, profiles, display name and avatar. All implemented.
 - name: friends
@@ -584,8 +584,7 @@ paths:
       description: Every `in_progress` match, most recently started first. `yourSeat` is the viewer's seat in the
         matches they play, null in the others. The Watch page lists these, then opens one with `GET /matches/{id}`.
         Declare this route BEFORE `/matches/{id}`.
-      x-status: new
-      x-demo-feature: spectate
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/Offset'
