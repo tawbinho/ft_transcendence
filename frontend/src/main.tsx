@@ -5,6 +5,7 @@ import '@/styles/index.css';
 import { App } from '@/app/App';
 import { config } from '@/config';
 import { applyColorScheme } from '@/lib/colorScheme';
+import '@/features/backdrop/register';
 
 applyColorScheme();
 

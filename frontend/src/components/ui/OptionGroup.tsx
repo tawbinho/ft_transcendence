@@ -14,6 +14,8 @@ interface OptionGroupProps<T extends string> {
   onChange: (value: T) => void;
   /** Lay options out as large cards instead of a compact segmented row. */
   variant?: 'segmented' | 'cards';
+  /** Cards per row: 3 (default, one per row on a phone) or 2 (also on a phone). */
+  columns?: 2 | 3;
   className?: string;
 }
 
@@ -24,6 +26,7 @@ export function OptionGroup<T extends string>({
   value,
   onChange,
   variant = 'segmented',
+  columns = 3,
   className,
 }: OptionGroupProps<T>) {
   const name = useId();
@@ -34,7 +37,7 @@ export function OptionGroup<T extends string>({
         className={cn(
           variant === 'segmented'
             ? 'flex flex-wrap gap-1 rounded-xl border border-border bg-surface-2 p-1'
-            : 'grid gap-2 sm:grid-cols-3',
+            : cn('grid gap-2', columns === 2 ? 'grid-cols-2' : 'sm:grid-cols-3'),
         )}
       >
         {options.map((option) => (

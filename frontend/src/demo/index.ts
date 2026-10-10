@@ -45,17 +45,27 @@ export function installDemoServer(features: ReadonlySet<DemoFeature>): void {
   const db: DemoDb = loadDb() ?? seedWorld();
   const network = sendOverNetwork;
 
-  // The logged-in user, asked from the real backend and remembered briefly.
+  // The logged-in user, asked from the real backend and remembered for 30 seconds.
+  // Pages poll several demo lists at once, so requests made together share one
+  // question (`asking`): the backend allows only 100 requests a minute per route.
   let cachedUser: { user: User; at: number } | null = null;
+  let asking: Promise<User | null> | null = null;
   let last: Session | null = null;
 
-  async function realViewer(): Promise<User | null> {
-    if (cachedUser && Date.now() - cachedUser.at < 10_000) return cachedUser.user;
+  async function askBackend(): Promise<User | null> {
     // A failure (rate limit, server error...) is thrown as the backend sent it:
     // it does not mean that nobody is logged in.
     const user = unwrap<User | null>(await network({ method: 'GET', path: '/auth/me' }));
     cachedUser = user ? { user, at: Date.now() } : null;
     return user;
+  }
+
+  function realViewer(): Promise<User | null> {
+    if (cachedUser && Date.now() - cachedUser.at < 30_000) return Promise.resolve(cachedUser.user);
+    asking ??= askBackend().finally(() => {
+      asking = null;
+    });
+    return asking;
   }
 
   function sessionFor(user: User): Session {
@@ -98,6 +108,7 @@ export function installDemoServer(features: ReadonlySet<DemoFeature>): void {
     // Logging in or out changes who the viewer is.
     if (request.path.startsWith('/auth/') && request.path !== '/auth/me') {
       cachedUser = null;
+      asking = null;
       last = null;
     }
 
@@ -137,6 +148,9 @@ export function installDemoServer(features: ReadonlySet<DemoFeature>): void {
   });
 
   // The world moves on by itself: replies, moves, tournaments, presence.
+  // Run it once now, so a new demo world has its live matches from the first request
+  // (Home and Watch would otherwise disagree for the first second).
+  if (tick(world)) saveSoon();
   const timer = setInterval(() => {
     if (tick(world)) saveSoon();
   }, 1000);

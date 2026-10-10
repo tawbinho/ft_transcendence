@@ -6,45 +6,113 @@
 /* ---------------------------------------------------------------------------
    Design tokens: every color the UI uses, for light and dark mode.
    Components use them through Tailwind classes such as bg-surface or text-muted.
+   Every text and background pair below keeps a contrast of at least 4.5:1
+   (styles/tokens.test.ts checks it).
+
+   [data-theme='light'] is listed next to :root so that a part of a page (the
+   /design page shows both themes side by side) can switch theme on its own.
    --------------------------------------------------------------------------- */
-:root {
-  --c-bg: #f4f6fb;
+:root,
+[data-theme='light'] {
+  --c-bg: #f3f5fc;
   --c-surface: #ffffff;
-  --c-surface-2: #eceff6;
-  --c-border: #d9deea;
-  --c-fg: #151a29;
-  --c-muted: #586078;
-  --c-primary: #2d55d6;
-  --c-primary-hover: #2246b8;
+  --c-surface-2: #e8ecf6;
+  --c-border: #d3d9e9;
+  --c-fg: #121a2f;
+  --c-muted: #4d5772;
+  --c-primary: #2b4fd8;
+  --c-primary-hover: #2140b3;
   --c-primary-fg: #ffffff;
-  --c-ring: #2d55d6;
-  --c-danger: #c22b3c;
+  --c-ring: #2b4fd8;
+  --c-danger: #c0283a;
+  --c-danger-hover: #a21f30;
+  --c-danger-fg: #ffffff;
   --c-danger-soft: #fdecef;
-  --c-success: #157a4c;
-  --c-success-soft: #e3f5ec;
-  --c-warning: #9a5800;
-  --c-warning-soft: #fff3dd;
+  --c-success: #13744a;
+  --c-success-soft: #e1f4ea;
+  --c-warning: #94530a;
+  --c-warning-soft: #fff2da;
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --c-bg: #0c1018;
-  --c-surface: #141a26;
-  --c-surface-2: #1b2232;
-  --c-border: #2a3246;
-  --c-fg: #e7eaf3;
-  --c-muted: #9aa3ba;
-  --c-primary: #7896ff;
-  --c-primary-hover: #91aaff;
+  --c-bg: #0b0f1a;
+  --c-surface: #131a29;
+  --c-surface-2: #1b2336;
+  --c-border: #2b354d;
+  --c-fg: #e8ebf5;
+  --c-muted: #a0a9c0;
+  --c-primary: #8ba5ff;
+  --c-primary-hover: #a6baff;
   --c-primary-fg: #0a0d14;
-  --c-ring: #91aaff;
-  --c-danger: #ff6b7d;
+  --c-ring: #a6baff;
+  --c-danger: #ff7385;
+  --c-danger-hover: #ff93a1;
+  --c-danger-fg: #1c0b0f;
   --c-danger-soft: #3b1820;
   --c-success: #4fcb8d;
   --c-success-soft: #12291e;
   --c-warning: #f2a93f;
   --c-warning-soft: #33240e;
   color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------------------
+   Accent colors. The member picks one (src/lib/accent.ts puts its name in
+   data-accent on <html>); it replaces the primary color in both themes.
+   Blue is the default and has no rule: it is the palette above.
+   The dark rules have two attributes, so they win over the light rules.
+   --------------------------------------------------------------------------- */
+[data-accent='violet'] {
+  --c-primary: #6a3fd1;
+  --c-primary-hover: #5731b0;
+  --c-ring: #6a3fd1;
+}
+[data-theme='dark'][data-accent='violet'] {
+  --c-primary: #b7a0ff;
+  --c-primary-hover: #cbbaff;
+  --c-ring: #cbbaff;
+}
+
+[data-accent='teal'] {
+  --c-primary: #096661;
+  --c-primary-hover: #07514d;
+  --c-ring: #096661;
+}
+[data-theme='dark'][data-accent='teal'] {
+  --c-primary: #3fd0c4;
+  --c-primary-hover: #6ae0d6;
+  --c-ring: #6ae0d6;
+}
+
+[data-accent='rose'] {
+  --c-primary: #b01d4f;
+  --c-primary-hover: #911640;
+  --c-ring: #b01d4f;
+}
+[data-theme='dark'][data-accent='rose'] {
+  --c-primary: #ff85ad;
+  --c-primary-hover: #ffa3c2;
+  --c-ring: #ffa3c2;
+}
+
+[data-accent='orange'] {
+  --c-primary: #934107;
+  --c-primary-hover: #7a3505;
+  --c-ring: #934107;
+}
+[data-theme='dark'][data-accent='orange'] {
+  --c-primary: #ffa24d;
+  --c-primary-hover: #ffb773;
+  --c-ring: #ffb773;
+}
+
+/* Motion: how long things take, shared by every transition. */
+:root {
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 400ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 @theme inline {
@@ -61,11 +129,24 @@
   --color-primary-fg: var(--c-primary-fg);
   --color-ring: var(--c-ring);
   --color-danger: var(--c-danger);
+  --color-danger-hover: var(--c-danger-hover);
+  --color-danger-fg: var(--c-danger-fg);
   --color-danger-soft: var(--c-danger-soft);
   --color-success: var(--c-success);
   --color-success-soft: var(--c-success-soft);
   --color-warning: var(--c-warning);
   --color-warning-soft: var(--c-warning-soft);
+
+  /* Corner radii: rounded-control for buttons and fields, rounded-card for panels. */
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
+
+  /* Shadows: shadow-card rests on the page, shadow-pop floats above it (menus, dialogs). */
+  --shadow-card: 0 1px 2px rgb(16 24 48 / 0.06), 0 1px 3px rgb(16 24 48 / 0.08);
+  --shadow-pop: 0 12px 32px -8px rgb(16 24 48 / 0.28), 0 2px 6px rgb(16 24 48 / 0.12);
+
+  --default-transition-duration: var(--duration-fast);
+  --default-transition-timing-function: var(--ease-out);
 }
 
 @layer base {
@@ -81,6 +162,17 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Short headings break evenly instead of leaving one word alone on a line. */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--c-primary) 28%, transparent);
+  }
+
   :focus-visible {
     outline: 3px solid var(--c-ring);
     outline-offset: 2px;
@@ -89,6 +181,11 @@
   input:focus-visible {
     outline: none;
   }
+}
+
+/* Arabic letters join each other, so extra letter spacing would break the words. */
+html[dir='rtl'] * {
+  letter-spacing: normal;
 }
 
 /* ---------------------------------------------------------------------------
@@ -341,5 +438,36 @@ button.board-column:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .typing-dots span {
     animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Scroll fade: a row that scrolls sideways fades out at an edge that still has
+   hidden content (see lib/useScrollEdges; ScrollFade and TabLinks use it). Set
+   --fade-start or --fade-end to a length to turn that edge on; both are 0 by
+   default. In the components layer so that a utility such as [--fade-end:2rem]
+   wins over the defaults.
+   --------------------------------------------------------------------------- */
+@layer components {
+  .scroll-fade {
+    --fade-start: 0px;
+    --fade-end: 0px;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 var(--fade-start),
+      #000 calc(100% - var(--fade-end)),
+      transparent
+    );
+  }
+
+  html[dir='rtl'] .scroll-fade {
+    mask-image: linear-gradient(
+      to left,
+      transparent,
+      #000 var(--fade-start),
+      #000 calc(100% - var(--fade-end)),
+      transparent
+    );
   }
 }

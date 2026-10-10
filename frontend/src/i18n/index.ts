@@ -52,6 +52,8 @@ void i18n.use(initReactI18next).init({
   initAsync: false,
   // React already escapes rendered text.
   interpolation: { escapeValue: false },
+  // Do not print the i18next sponsor notice in the browser console.
+  showSupportNotice: false,
 });
 
 applyToDocument(i18n.language);

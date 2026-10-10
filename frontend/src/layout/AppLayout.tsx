@@ -37,6 +37,12 @@ export function AppLayout() {
       )}
       <Header />
       <DemoBanner />
+      {/*
+        Page width rule: every page's title starts at this column's edge (max-w-6xl).
+        A form or a long text below it may be narrower, but it stays against the same
+        edge (no mx-auto), so titles line up from page to page. Only short notices,
+        such as "page not found", are centered.
+      */}
       <main
         id="main"
         ref={main}

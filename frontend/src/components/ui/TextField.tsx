@@ -24,7 +24,7 @@ export function TextField({ label, hint, error, className, required, ...props }:
         aria-invalid={error ? true : undefined}
         aria-describedby={[errorId, hintId].filter(Boolean).join(' ') || undefined}
         className={cn(
-          'h-11 rounded-xl border bg-surface px-3 text-fg placeholder:text-muted/70',
+          'h-11 rounded-control border bg-surface px-3 text-fg placeholder:text-muted/70',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
           error ? 'border-danger' : 'border-border',
         )}

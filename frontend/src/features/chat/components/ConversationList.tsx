@@ -34,6 +34,7 @@ export function ConversationList({ activeName }: { activeName?: string }) {
   if (conversations.data.length === 0) {
     return (
       <EmptyState
+        illustration="chat"
         action={
           <Link to="/friends" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
             {t('nav.friends')}

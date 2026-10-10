@@ -1,0 +1,31 @@
+export const authMessages = {
+  auth: {
+    loginTitle: 'Welcome back',
+    loginSubtitle: 'Log in to play online and keep your match history.',
+    signupTitle: 'Create your account',
+    signupSubtitle: 'Pick a display name: it is how other players find you.',
+    email: 'Email',
+    password: 'Password',
+    confirmPassword: 'Confirm password',
+    displayName: 'Display name',
+    displayNameHint: '3 to 20 letters, numbers, _ or -.',
+    passwordHint: 'At least 8 characters.',
+    loginAction: 'Log in',
+    signupAction: 'Create account',
+    noAccount: 'No account yet?',
+    haveAccount: 'Already have an account?',
+    twoFactorTitle: 'Two-factor authentication',
+    twoFactorBody: 'Enter the 6-digit code from your authenticator app.',
+    code: 'Authentication code',
+    verify: 'Verify',
+    backToLogin: 'Use a different account',
+    showPassword: 'Show',
+    hidePassword: 'Hide',
+    showPasswordLabel: 'Show password',
+    hidePasswordLabel: 'Hide password',
+    hintSection: 'Log in to open {{section}}.',
+    hintGeneric: 'Log in to continue.',
+  },
+};
+
+export type AuthMessages = typeof authMessages;

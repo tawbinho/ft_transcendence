@@ -31,7 +31,7 @@ export function RangeField({ label, value, min, max, onChange, disabled }: Range
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="w-full accent-[var(--c-primary)] disabled:opacity-50"
+        className="h-6 w-full cursor-pointer accent-[var(--c-primary)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
       />
     </div>
   );

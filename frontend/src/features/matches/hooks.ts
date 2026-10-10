@@ -40,6 +40,20 @@ export function useMatch(id: string, { paused = false }: { paused?: boolean } = 
   });
 }
 
+/**
+ * A match only to draw its position in a list (the list answers carry no
+ * positions). It does not watch the match live: it asks again every 15 seconds,
+ * and shares its cache entry with the match page.
+ */
+export function useMatchPreview(id: string) {
+  return useQuery({
+    queryKey: matchKeys.detail(id),
+    queryFn: ({ signal }) => matchesApi.get(id, signal),
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+  });
+}
+
 export function useMatchList(params: ListMatchesParams) {
   return useQuery({
     queryKey: matchKeys.list(params),

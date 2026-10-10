@@ -49,7 +49,7 @@ export function ConfirmDialog({
         event.preventDefault();
         onClose();
       }}
-      className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-border bg-surface p-0 text-fg shadow-xl backdrop:bg-black/50"
+      className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-card border border-border bg-surface p-0 text-fg shadow-pop backdrop:bg-black/50"
     >
       <div className="flex flex-col gap-3 p-6">
         <h2 id={titleId} className="text-lg font-bold">

@@ -31,7 +31,7 @@ export function BoardSettingsFields({
         </h2>
         <button
           type="button"
-          className="text-sm font-semibold text-primary hover:underline disabled:text-muted disabled:no-underline"
+          className="inline-flex min-h-6 items-center text-sm font-semibold text-primary hover:underline disabled:text-muted disabled:no-underline"
           disabled={
             value.cols === DEFAULT_BOARD_SETTINGS.cols &&
             value.rows === DEFAULT_BOARD_SETTINGS.rows &&
