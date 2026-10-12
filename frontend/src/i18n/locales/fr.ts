@@ -486,21 +486,6 @@ export const fr: Messages = {
     abandonTitle: 'Abandonner ce tournoi ?',
     abandonBody: 'Le tableau et ses résultats seront perdus.',
   },
-  demo: {
-    title: 'Données de démonstration.',
-    body: 'Ces parties utilisent des joueurs fictifs gardés dans ce navigateur, en attendant que le serveur les prenne en charge : {{features}}.',
-    features: {
-      users: 'joueurs et profils',
-      friends: 'amis',
-      chat: 'messages',
-      spectate: 'regarder des parties',
-      tournaments: 'tournois en ligne',
-    },
-    reset: 'Réinitialiser la démo',
-    resetTitle: 'Réinitialiser les données de démonstration ?',
-    resetBody:
-      'Les joueurs fictifs, les messages et les tournois repartent de zéro. Votre compte et vos vraies parties ne changent pas.',
-  },
   footer: {
     privacy: 'Politique de confidentialité',
     terms: 'Conditions d’utilisation',

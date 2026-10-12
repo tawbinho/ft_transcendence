@@ -46,11 +46,10 @@ tags:
 - name: friends
   description: Friend requests and friends. Implemented (the `friends:update` socket event waits for the WebSockets gateway).
 - name: chat
-  description: Private messages, match invitations, read receipts, typing, and blocking. Blocking is implemented; the rest is new (demo feature `chat`).
+  description: "Private messages, match invitations, read receipts, typing, and blocking. All implemented. Messages are stored once per conversation; a tournament match start writes a `system` message (event tournament_match) into the two players' conversation."
 - name: tournaments
   description: 'Online single-elimination tournaments with 4 or 8 places. All implemented: list, create, read, cancel,
-    join, leave, start, the bracket and advancing winners. Not built yet: the chat message that tells a player their match
-    is ready (it waits for chat).'
+    join, leave, start, the bracket and advancing winners, and the chat message that tells a player their match is ready.'
 security:
 - session: []
 paths:
@@ -1218,8 +1217,7 @@ paths:
       summary: My conversations
       description: One per player the viewer has at least one message with (system messages included), latest message
         first. Not paginated.
-      x-status: new
-      x-demo-feature: chat
+      x-status: implemented
       responses:
         '200':
           description: Success
@@ -1247,8 +1245,7 @@ paths:
       description: 'Without `before`: the latest `limit` messages. With `before` (the id of a message of THIS conversation):
         the `limit` messages just before it, which is how older messages load when the reader scrolls up. A `before`
         from another conversation is `VALIDATION_ERROR`.'
-      x-status: new
-      x-demo-feature: chat
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/UserId'
       - name: before
@@ -1304,8 +1301,7 @@ paths:
         created by the sender and reserved for this player (`POST /matches` with their `opponentDisplayName`); the
         message gets `kind: invite` and an empty `body`. Sends `chat:message` to both players, so the sender''s
         other tabs see it too.'
-      x-status: new
-      x-demo-feature: chat
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/UserId'
       requestBody:
@@ -1369,8 +1365,7 @@ paths:
       description: Marks every message that player sent so far as read and answers the time. The app calls it when
         a new message from the peer is on screen in a visible tab. Sends `chat:read` to that player, whose app then
         shows "Seen". `unread` counts the peer's messages sent after the viewer's last read time.
-      x-status: new
-      x-demo-feature: chat
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/UserId'
       responses:
@@ -1407,8 +1402,7 @@ paths:
       summary: '"Is typing" signal'
       description: 'Stores nothing: it only sends `chat:typing` to that player. The app calls it at most once every
         3 seconds while the viewer types.'
-      x-status: new
-      x-demo-feature: chat
+      x-status: implemented
       parameters:
       - $ref: '#/components/parameters/UserId'
       responses:
@@ -1814,7 +1808,7 @@ paths:
         replayed with a new match. When the final has a winner the tournament is `finished`. Every change sends
         `tournament:update`. In a tournament match the player whose turn it is loses if no move is made for
         `TOURNAMENT_TURN_TIMEOUT_SECONDS` (180 by default); the loss is recorded as `endReason: disconnect`.
-        Not built yet: the `system` chat message (`event: tournament_match`), which waits for chat.'
+        Each match created also writes a `system` chat message (`event: tournament_match`) into the two players'' conversation.'
       x-status: implemented
       parameters:
       - $ref: '#/components/parameters/TournamentId'
@@ -3023,7 +3017,7 @@ components:
 x-realtime:
   description: 'Live updates over Socket.IO. They are HINTS: the app also polls, so a missed event only delays an
     update. The frontend uses them when built with `VITE_REALTIME=socket`; polling then slows to every 30 s. Built: the connection, `match:*`, `presence`, `friends:update`, `tournament:update`
-    (`x-status: implemented`). A player whose last socket closes has `DISCONNECT_GRACE_SECONDS` (30) to reconnect, otherwise they lose the running match (`endReason: disconnect`). Not built yet: the `chat:*` events.'
+    (`x-status: implemented`). A player whose last socket closes has `DISCONNECT_GRACE_SECONDS` (30) to reconnect, otherwise they lose the running match (`endReason: disconnect`). All events are built.'
   connection:
     library: Socket.IO v4
     url: 'Same origin as the app, path `/socket.io`, WebSocket transport only: `io({ withCredentials: true, transports:
@@ -3054,19 +3048,19 @@ x-realtime:
       when: 'Every change: join, move, resignation, end. One payload for the whole room: `yourSeat` in it is ignored,
         the app keeps the seat from its own `GET /matches/{id}`.'
     chat:message:
-      x-status: new
+      x-status: implemented
       payload:
         $ref: '#/components/schemas/RtChatMessage'
       sentTo: Both players
       when: A message is sent (so the sender's other tabs see it too).
     chat:typing:
-      x-status: new
+      x-status: implemented
       payload:
         $ref: '#/components/schemas/RtChatTyping'
       sentTo: The other player
       when: After `POST /chat/{userId}/typing`.
     chat:read:
-      x-status: new
+      x-status: implemented
       payload:
         $ref: '#/components/schemas/RtChatRead'
       sentTo: The other player

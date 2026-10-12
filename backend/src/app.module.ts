@@ -11,6 +11,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { MatchesModule } from './modules/matches/matches.module.js';
 import { TournamentsModule } from './modules/tournaments/tournaments.module.js';
 import { RealtimeModule } from './modules/realtime/realtime.module.js';
+import { ChatModule } from './modules/chat/chat.module.js';
 import { FriendsModule } from './modules/friends/friends.module.js';
 import { UsersHttpModule } from './modules/users/users-http.module.js';
 import { UsersModule } from './modules/users/users.module.js';
@@ -34,6 +35,7 @@ import { UsersModule } from './modules/users/users.module.js';
     TournamentsModule,
     UsersHttpModule,
     FriendsModule,
+    ChatModule,
     RealtimeModule,
   ],
   controllers: [AppController],

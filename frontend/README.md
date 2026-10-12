@@ -42,8 +42,7 @@ what you need. With Docker, pass them as build arguments.
 
 | Name                 | What it does                                                                                                                                           | Default                  |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
-| `VITE_DEMO_FEATURES` | Features answered by the in-browser demo server until the backend has their routes: `users`, `friends`, `chat`, `spectate`, `tournaments`. Empty: none | All five                 |
-| `VITE_REALTIME`      | `socket` to receive live updates over Socket.IO, once the backend has a gateway                                                                        | Polling only             |
+| `VITE_REALTIME`      | `socket` to receive live updates over Socket.IO                                                                        | Polling only             |
 | `API_PROXY_TARGET`   | Development only: where `npm run dev` forwards `/api` and `/socket.io`                                                                                 | `https://localhost:8443` |
 
 ## Running with Docker
@@ -64,7 +63,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_DEMO_FEATURES: users,friends,chat,spectate,tournaments
+        VITE_REALTIME: socket
     restart: unless-stopped
     expose:
       - '80'
@@ -107,10 +106,9 @@ src/
   components/   Shared components; ui/ is the design system (buttons, fields, dialogs...)
   features/     One folder per feature: api.ts (calls), types.ts (shapes), hooks.ts (data), components/
   pages/        One component per URL, built from features and components
-  layout/       Header, footer, menus, demo banner
+  layout/       Header, footer, menus
   lib/          Code without pages: the API client, live events, formatting, storage
   i18n/         Translations (en, fr, ar) and the language switch
-  demo/         The in-browser demo server (temporary, see below)
   styles/       Tailwind setup, color palette, the board's look
   test/         Test setup and shared test data
 ```
@@ -155,17 +153,7 @@ Every form field has a label and its error is linked to it. The board is played 
 End, then Enter), and each move is announced to screen readers. Dialogs keep the focus inside them, and animations stop
 when the system asks for reduced motion.
 
-### The demo server
-
-`src/demo` answers, inside the browser, the routes the backend does not have yet (players, friends, chat, spectating,
-tournaments) with made-up players, saved in `localStorage`. It sits in front of the network (`setTransport` in
-`lib/api/http.ts`): requests for the features in `VITE_DEMO_FEATURES` are answered there, and everything else, like
-login and real matches, goes to the backend. A banner tells which pages use demo data, with a button to reset it.
-
-When the backend serves every route, set `VITE_DEMO_FEATURES` to an empty value. The folder can then be deleted, with
-the lines that load it in `main.tsx` and `layout/DemoBanner.tsx`.
-
 ## Testing
 
 `npm test` runs the unit tests with Vitest and Testing Library: the game engine and the computer opponent, brackets,
-the match model and statistics, form validation, the API client, the demo server, and the translations.
+the match model and statistics, form validation, the API client and the translations.

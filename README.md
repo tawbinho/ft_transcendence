@@ -171,6 +171,11 @@ All `/api/tournaments` routes need a logged-in user.
 | `GET  /api/blocks`                 | the players I blocked                               |
 | `PUT  /api/blocks/:userId`         | block a player (also ends any friendship)           |
 | `DELETE /api/blocks/:userId`       | unblock                                             |
+| `GET  /api/chat/conversations`     | my conversations, latest message first (with `unread`, read receipt, `blocked`) |
+| `GET  /api/chat/:userId/messages`  | one conversation, newest page first (`limit`, `before`) |
+| `POST /api/chat/:userId/messages`  | send `{ "body" }` (1 to 500 chars) or an invitation `{ "matchId" }` |
+| `POST /api/chat/:userId/read`      | mark the conversation as read (the other player sees "Seen") |
+| `POST /api/chat/:userId/typing`    | tell the other player I am typing (nothing is stored) |
 
 Needs a logged-in user, and every logged-in user can read every profile and
 history. Each player comes with `online` and their `stats` (played, wins,
@@ -285,7 +290,7 @@ sockets whose login ended (logout, expiry). Every tab of a user is in the room
 `user:<id>`. Events (names in `backend/src/modules/realtime/realtime.constants.ts`):
 `match:update` (the whole match, to everyone who sent `match:watch`, spectators
 included), `presence` (`{ userId, online }`, to everyone), `friends:update`
-(both players of a request or block) and `tournament:update` (`{ id }`, to
+(both players of a request or block), the three `chat:*` events and `tournament:update` (`{ id }`, to
 everyone). They are hints: the app also polls, so a missed event only delays an
 update. A user counts as online while they have a socket open (or made a
 request in the last minute), and the REST `online` value can lag the `presence`
@@ -319,8 +324,22 @@ The AI thinks in a **worker thread**, so a long search never freezes the other
 players. After a server restart the bots pick up their waiting and running
 matches again.
 
-**Not built yet:** chat, and the "your tournament match is ready" chat message
-that goes with it. The full API design, including these parts, is in `backend/docs/openapi.yaml`.
+**Chat.** Private conversations between two players. A message is stored ONCE
+per conversation (`messages`, the two ids ordered smaller first, like friendships),
+so both players read the same row; `conversation_reads` holds "I read up to here",
+which gives `unread` and the "Seen" receipts. There are three kinds: `text`
+(1 to 500 characters, trimmed), `invite` (a match you created, still waiting,
+reserved for that player, otherwise `INVALID_INVITE`) and `system` (written by the
+server: when a tournament creates a match, both players get a
+`tournament_match` notice with the match and the tournament). Database CHECKs
+enforce what each kind contains. History is read page by page: the latest
+messages, then `before` = the oldest id you have. While either player blocked the
+other, sending answers `BLOCKED`, typing is not relayed, and old messages stay
+readable. Live events: `chat:message` (to both players, each seeing the other as
+`peerId`, so the sender's other tabs update too), `chat:typing` and `chat:read`.
+Sending is limited to 30 per minute per address.
+
+All parts of the API design (`backend/docs/openapi.yaml`) are now built.
 
 **Rate limits** (per IP, per minute): 100 requests overall; login 10; signup 5;
 2FA verify, enable and disable 5; creating a match or a tournament 20;
