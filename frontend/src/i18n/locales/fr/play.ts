@@ -36,7 +36,6 @@ export const playMessages: PlayMessages = {
       keysTitle: 'Clavier',
       keyMove: 'Passer d’une colonne à l’autre',
       keyEnds: 'Première ou dernière colonne',
-      keyDigits: 'Lâcher un jeton dans cette colonne',
       keyDrop: 'Lâcher un jeton dans la colonne choisie',
       keyEnter: 'Entrée',
       keySpace: 'Espace',

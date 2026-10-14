@@ -175,8 +175,8 @@ Written here instead of taken from a library:
   nothing. The 3D scene reads the same color token as its backdrop, so it is light on a light page and dark on a
   dark one. Size the parent, not the board: a class on `<Board>` cannot change its width (`AuthLayout` does it with a
   20 rem box).
-- Keyboard: the board takes focus when a game starts; arrow keys move, Enter drops, and keys 1 to 9 drop in that column
-  (`features/game/components/Board.tsx`).
+- Keyboard: the board takes focus when a game starts; arrow keys move, Enter or Space drops. There are no number keys: 1 to 9
+  cannot reach a tenth column, and on a French keyboard the digits need Shift (`features/game/components/Board.tsx`).
 - A win shows confetti (`pages/play/components/Celebration.tsx`): 36 pieces placed by arithmetic, none for people
   who asked their system for less motion, and none for a game that was already won when the page opened
   (`useJustWon.ts`, next to it).

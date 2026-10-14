@@ -20,7 +20,6 @@ export function HowToPlay() {
       </>,
       t('play.help.keyEnds'),
     ],
-    [<Kbd>1 – 9</Kbd>, t('play.help.keyDigits')],
     [
       <>
         <Kbd>{t('play.help.keyEnter')}</Kbd> <Kbd>{t('play.help.keySpace')}</Kbd>

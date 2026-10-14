@@ -30,7 +30,6 @@ export const playMessages = {
       keysTitle: 'Keyboard',
       keyMove: 'Move between columns',
       keyEnds: 'First or last column',
-      keyDigits: 'Drop a disc in that column',
       keyDrop: 'Drop a disc in the selected column',
       keyEnter: 'Enter',
       keySpace: 'Space',

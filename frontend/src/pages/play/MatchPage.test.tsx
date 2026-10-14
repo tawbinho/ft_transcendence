@@ -86,7 +86,7 @@ describe('MatchPage: playing', () => {
     await expectNoA11yViolations(container);
   });
 
-  it('sends a move typed with a digit key', async () => {
+  it('sends a move chosen with the arrow keys and Enter', async () => {
     const api = fakeApi({
       ...quietApi,
       [`GET ${URL}`]: makeMatch({ id: MATCH_ID }, [3, 3]),
@@ -95,10 +95,11 @@ describe('MatchPage: playing', () => {
     const { events } = renderRoute(URL, { user: alice });
     await screen.findByText('Your turn');
 
-    await events.keyboard('2');
+    // Focus starts on the middle column (number 4, index 3): one arrow left reaches index 2.
+    await events.keyboard('{ArrowLeft}{Enter}');
 
     const move = api.requests.find((request) => request.method === 'POST');
-    expect(move?.body).toEqual({ col: 1 });
+    expect(move?.body).toEqual({ col: 2 });
   });
 
   it('shows who the match is waiting for during the opponent’s turn', async () => {

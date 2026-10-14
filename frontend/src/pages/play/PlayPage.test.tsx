@@ -58,7 +58,7 @@ describe('PlayPage', () => {
     const help = (await screen.findByRole('heading', { level: 2, name: 'How to play' })).closest('section');
     expect(help).toHaveTextContent('Be the first to line up 4 discs');
     expect(screen.getByRole('heading', { level: 2, name: 'Keyboard' })).toBeInTheDocument();
-    expect(screen.getByText('Drop a disc in that column')).toBeInTheDocument();
+    expect(screen.getByText('Drop a disc in the selected column')).toBeInTheDocument();
   });
 });
 

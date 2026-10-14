@@ -30,6 +30,11 @@ const computerSecond: Session = {
 const liveRegion = (container: HTMLElement) => container.querySelector('[aria-live="polite"]');
 const column = (n: number) => screen.getByRole('button', { name: `Drop a disc in column ${n}` });
 
+// Clicks the columns one after the other, like a person playing with the mouse.
+async function dropIn(events: { click: (element: Element) => Promise<void> }, ...columns: number[]) {
+  for (const n of columns) await events.click(column(n));
+}
+
 beforeEach(() => {
   bot.chooseMove.mockReset();
   bot.dispose.mockReset();
@@ -48,7 +53,8 @@ describe('OfflineGame', () => {
     );
     expect(screen.getByText('Ana to play')).toBeInTheDocument();
 
-    await events.keyboard('2');
+    // Focus starts on column 4: two arrows left reach column 2, Enter drops the disc.
+    await events.keyboard('{ArrowLeft}{ArrowLeft}{Enter}');
 
     expect(screen.getByText('Ben to play')).toBeInTheDocument();
     expect(liveRegion(container)).toHaveTextContent('Ana played column 2.');
@@ -60,7 +66,7 @@ describe('OfflineGame', () => {
     );
 
     // Ana stacks column 1, Ben column 2.
-    await events.keyboard('1212121');
+    await dropIn(events, 1, 2, 1, 2, 1, 2, 1);
 
     expect(screen.getByText('Ana wins!')).toBeInTheDocument();
     expect(screen.getByText('Connected 4 in 7 moves.')).toBeInTheDocument();
@@ -73,7 +79,7 @@ describe('OfflineGame', () => {
     );
     expect(screen.queryByTestId('celebration')).not.toBeInTheDocument();
 
-    await events.keyboard('1212121');
+    await dropIn(events, 1, 2, 1, 2, 1, 2, 1);
     expect(screen.getByTestId('celebration')).toBeInTheDocument();
 
     await events.click(screen.getByRole('button', { name: 'Play again' }));
@@ -88,7 +94,7 @@ describe('OfflineGame', () => {
       <OfflineGame title="Same screen" session={twoPeople} onChangeSettings={() => {}} />,
     );
 
-    await events.keyboard('1212121');
+    await dropIn(events, 1, 2, 1, 2, 1, 2, 1);
 
     expect(screen.getByText('Ana wins!')).toBeInTheDocument();
     expect(screen.queryByTestId('celebration')).not.toBeInTheDocument();
@@ -122,10 +128,10 @@ describe('OfflineGame', () => {
     );
 
     for (let turn = 0; turn < 3; turn++) {
-      await events.keyboard('1');
+      await dropIn(events, 1);
       await screen.findByText('Your turn', undefined, { timeout: 3000 });
     }
-    await events.keyboard('1');
+    await dropIn(events, 1);
 
     expect(screen.getByText('You win!')).toBeInTheDocument();
     expect(screen.getByTestId('celebration')).toBeInTheDocument();
@@ -138,7 +144,7 @@ describe('OfflineGame', () => {
     );
     expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
 
-    await events.keyboard('4');
+    await dropIn(events, 4);
     await events.click(screen.getByRole('button', { name: 'Undo' }));
     expect(screen.getByText('Ana to play')).toBeInTheDocument();
 

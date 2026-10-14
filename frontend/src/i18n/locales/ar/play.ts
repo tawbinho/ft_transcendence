@@ -32,7 +32,6 @@ export const playMessages: PlayMessages = {
       keysTitle: 'لوحة المفاتيح',
       keyMove: 'التنقل بين الأعمدة',
       keyEnds: 'العمود الأول أو الأخير',
-      keyDigits: 'أسقط قرصًا في هذا العمود',
       keyDrop: 'أسقط قرصًا في العمود المحدد',
       keyEnter: 'Enter',
       keySpace: 'Space',
