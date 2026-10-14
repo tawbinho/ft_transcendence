@@ -1,5 +1,4 @@
 import { screen, within } from '@testing-library/react';
-import { config } from '@/config';
 import type { Tournament } from '@/features/tournaments/types';
 import { ApiError } from '@/lib/api/errors';
 import { expectNoA11yViolations } from '@/test/axe';
@@ -144,23 +143,10 @@ describe('a server that cannot start tournaments yet', () => {
 });
 
 describe('the players of a tournament', () => {
-  it('are plain names while tournaments are real and profiles are demo data', async () => {
+  it('link to their profile', async () => {
     open(makeTournament());
 
-    await screen.findByRole('heading', { level: 2, name: /Players/ });
-    expect(screen.getByText('bob')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /bob/ })).not.toBeInTheDocument();
-  });
-
-  it('link to their profile when profiles and tournaments come from the same place', async () => {
-    config.demoFeatures.delete('users');
-    try {
-      open(makeTournament());
-
-      expect(await screen.findByRole('link', { name: /bob/ })).toHaveAttribute('href', '/users/bob');
-    } finally {
-      config.demoFeatures.add('users');
-    }
+    expect(await screen.findByRole('link', { name: /bob/ })).toHaveAttribute('href', '/users/bob');
   });
 });
 

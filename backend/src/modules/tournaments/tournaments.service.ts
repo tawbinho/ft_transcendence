@@ -8,6 +8,7 @@ import {
   DEFAULT_SETTINGS,
   type GameSettings,
 } from '../matches/engine/game.types.js';
+import { ChatService } from '../chat/chat.service.js';
 import { MatchPlayer } from '../matches/entities/match-player.entity.js';
 import { DEFAULT_THEME } from '../matches/match.constants.js';
 import { MatchesService } from '../matches/matches.service.js';
@@ -32,6 +33,10 @@ import {
   type TournamentSummaryView,
   type TournamentView,
 } from './tournament-view.js';
+
+// A "your match is ready" chat message, written inside a transaction and sent
+// live to the two players once the transaction has committed.
+type MatchNotice = Awaited<ReturnType<ChatService['addTournamentMatchNotice']>>;
 
 export interface TournamentPage {
   items: TournamentSummaryView[];
@@ -61,6 +66,7 @@ export class TournamentsService implements OnModuleInit {
     @InjectRepository(TournamentPairing)
     private readonly pairings: Repository<TournamentPairing>,
     private readonly matches: MatchesService,
+    private readonly chat: ChatService,
     private readonly realtime: RealtimeService,
     private readonly dataSource: DataSource,
   ) {}
@@ -202,6 +208,7 @@ export class TournamentsService implements OnModuleInit {
 
   // The viewer takes a place, while registration is open.
   async join(userId: string, tournamentId: string): Promise<TournamentView> {
+    const notices: MatchNotice[] = [];
     await this.dataSource.transaction(async (manager) => {
       const tournament = await this.lockTournament(manager, tournamentId);
       this.requireRegistering(tournament);
@@ -224,10 +231,11 @@ export class TournamentsService implements OnModuleInit {
 
       // Taking the last place starts the tournament at once.
       if (taken + 1 === tournament.size) {
-        await this.startBracket(manager, tournament);
+        await this.startBracket(manager, tournament, notices);
       }
     });
 
+    this.publishNotices(notices);
     this.announce(tournamentId);
     return this.get(userId, tournamentId);
   }
@@ -268,6 +276,7 @@ export class TournamentsService implements OnModuleInit {
   // The creator starts the tournament before it is full. Needs at least 3
   // players: the empty places of the bracket become byes.
   async start(userId: string, tournamentId: string): Promise<TournamentView> {
+    const notices: MatchNotice[] = [];
     await this.dataSource.transaction(async (manager) => {
       const tournament = await this.lockTournament(manager, tournamentId);
       if (tournament.createdById !== userId) {
@@ -289,9 +298,10 @@ export class TournamentsService implements OnModuleInit {
           409,
         );
       }
-      await this.startBracket(manager, tournament);
+      await this.startBracket(manager, tournament, notices);
     });
 
+    this.publishNotices(notices);
     this.announce(tournamentId);
     return this.get(userId, tournamentId);
   }
@@ -302,6 +312,7 @@ export class TournamentsService implements OnModuleInit {
   private async startBracket(
     manager: EntityManager,
     tournament: Tournament,
+    notices: MatchNotice[],
   ): Promise<void> {
     const registered = await manager.find(TournamentPlayer, {
       where: { tournamentId: tournament.id },
@@ -312,7 +323,12 @@ export class TournamentsService implements OnModuleInit {
     // A pairing is ready when both players are known (byes can already fill a
     // round-1 pairing): its match starts right away.
     for (const slot of slots.filter(isReady)) {
-      slot.matchId = await this.createMatchFor(manager, tournament, slot);
+      slot.matchId = await this.createMatchFor(
+        manager,
+        tournament,
+        slot,
+        notices,
+      );
     }
 
     await manager.insert(
@@ -326,13 +342,16 @@ export class TournamentsService implements OnModuleInit {
     );
   }
 
-  // A started match for a pairing, with the board of the tournament.
-  private createMatchFor(
+  // A started match for a pairing, with the board of the tournament, and the
+  // "your match is ready" message for its two players (collected in `notices`
+  // and sent live after the transaction commits).
+  private async createMatchFor(
     manager: EntityManager,
     tournament: Tournament,
-    slot: Slot,
+    slot: Pick<Slot, 'player1Id' | 'player2Id'>,
+    notices: MatchNotice[],
   ): Promise<string> {
-    return this.matches.createStartedMatch(
+    const matchId = await this.matches.createStartedMatch(
       manager,
       {
         cols: tournament.cols,
@@ -343,6 +362,22 @@ export class TournamentsService implements OnModuleInit {
       slot.player1Id!,
       slot.player2Id!,
     );
+    notices.push(
+      await this.chat.addTournamentMatchNotice(manager, {
+        playerAId: slot.player1Id!,
+        playerBId: slot.player2Id!,
+        matchId,
+        tournamentId: tournament.id,
+      }),
+    );
+    return matchId;
+  }
+
+  // Sends the collected notices live. Called AFTER the transaction committed.
+  private publishNotices(notices: MatchNotice[]): void {
+    for (const notice of notices) {
+      this.chat.publish(notice.message, notice.playerAId, notice.playerBId);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -361,6 +396,7 @@ export class TournamentsService implements OnModuleInit {
     if (!found) return; // an ordinary match, not part of a tournament
     const tournamentId = found.tournamentId;
 
+    const notices: MatchNotice[] = [];
     await this.dataSource.transaction(async (manager) => {
       const tournament = await this.lockTournament(manager, tournamentId);
       if (tournament.status !== 'running') return;
@@ -379,10 +415,12 @@ export class TournamentsService implements OnModuleInit {
 
       if (!winner) {
         // A tournament needs a winner: play it again, new seats.
-        const replay = await this.createMatchFor(manager, tournament, {
-          player1Id: pairing.player1Id,
-          player2Id: pairing.player2Id,
-        } as Slot);
+        const replay = await this.createMatchFor(
+          manager,
+          tournament,
+          pairing,
+          notices,
+        );
         await manager.update(
           TournamentPairing,
           { id: pairing.id },
@@ -416,7 +454,12 @@ export class TournamentsService implements OnModuleInit {
       // The next pairing may now have both players: start its match.
       const next = changed[1];
       if (next && isReady(next)) {
-        next.matchId = await this.createMatchFor(manager, tournament, next);
+        next.matchId = await this.createMatchFor(
+          manager,
+          tournament,
+          next,
+          notices,
+        );
       }
       for (const slot of changed) {
         await manager.update(
@@ -441,6 +484,7 @@ export class TournamentsService implements OnModuleInit {
       }
     });
 
+    this.publishNotices(notices);
     this.announce(tournamentId);
   }
 

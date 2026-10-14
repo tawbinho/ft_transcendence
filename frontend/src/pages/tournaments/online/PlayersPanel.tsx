@@ -1,12 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { sameWorld } from '@/config';
 import type { Tournament } from '@/features/tournaments/types';
 import { PlayerLink } from '@/features/users/components/PlayerLink';
 
-/**
- * The registered players, with who is online. Their names link to a profile only when profiles come from the same
- * place as tournaments (the demo profiles do not know real players, and the other way round).
- */
+/** The registered players, with who is online. Each name links to the player's profile. */
 export function PlayersPanel({ tournament }: { tournament: Tournament }) {
   const { t } = useTranslation();
   return (
@@ -20,7 +16,7 @@ export function PlayersPanel({ tournament }: { tournament: Tournament }) {
       <ul className="flex flex-col gap-2">
         {tournament.players.map((player) => (
           <li key={player.id}>
-            <PlayerLink user={player} presence linked={sameWorld('tournaments', 'users')} />
+            <PlayerLink user={player} presence />
           </li>
         ))}
       </ul>

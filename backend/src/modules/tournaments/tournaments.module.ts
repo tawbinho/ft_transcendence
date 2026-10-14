@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module.js';
+import { ChatModule } from '../chat/chat.module.js';
 import { MatchesModule } from '../matches/matches.module.js';
 import { TournamentPairing } from './entities/tournament-pairing.entity.js';
 import { TournamentPlayer } from './entities/tournament-player.entity.js';
@@ -15,6 +16,7 @@ import { TournamentsService } from './tournaments.service.js';
   imports: [
     TypeOrmModule.forFeature([Tournament, TournamentPlayer, TournamentPairing]),
     MatchesModule, // for MatchesService (the matches of the bracket)
+    ChatModule, // for ChatService ("your match is ready" messages)
     AuthModule, // for SessionGuard (every route needs a logged-in user)
   ],
   controllers: [TournamentsController],

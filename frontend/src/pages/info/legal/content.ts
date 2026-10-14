@@ -38,7 +38,6 @@ export const privacy: Record<Language, LegalDocument> = {
         title: 'What stays in your browser',
         paragraphs: [
           'Your language and appearance choices are saved in your browser’s local storage. Games on the same screen or against the computer are played entirely in your browser and are never sent to the server.',
-          'Until the server provides them, some features (marked by a “Demo data” banner) run in your browser with made-up players. What you do with them, such as messages or friend requests, is saved only in your browser and is erased by “Reset demo”.',
         ],
       },
       {
@@ -82,7 +81,6 @@ export const privacy: Record<Language, LegalDocument> = {
         title: 'Ce qui reste dans votre navigateur',
         paragraphs: [
           'Vos choix de langue et d’apparence sont enregistrés dans le stockage local de votre navigateur. Les parties sur le même écran ou contre l’ordinateur se jouent entièrement dans votre navigateur et ne sont jamais envoyées au serveur.',
-          'En attendant que le serveur les prenne en charge, certaines fonctions (signalées par un bandeau « Données de démonstration ») tournent dans votre navigateur avec des joueurs fictifs. Ce que vous y faites, comme vos messages ou vos demandes d’ami, est enregistré uniquement dans votre navigateur et effacé par « Réinitialiser la démo ».',
         ],
       },
       {
@@ -126,7 +124,6 @@ export const privacy: Record<Language, LegalDocument> = {
         title: 'ما يبقى في متصفحك',
         paragraphs: [
           'تُحفظ اختياراتك للغة والمظهر في التخزين المحلي لمتصفحك. أما المباريات على الشاشة نفسها أو ضد الحاسوب فتُلعب بالكامل في متصفحك ولا تُرسل إلى الخادم أبدًا.',
-          'إلى أن يدعمها الخادم، تعمل بعض الميزات (المشار إليها بشريط «بيانات تجريبية») في متصفحك مع لاعبين وهميين. ما تفعله فيها، كالرسائل أو طلبات الصداقة، يُحفظ في متصفحك فقط ويُمحى عند «إعادة ضبط العرض التجريبي».',
         ],
       },
       {

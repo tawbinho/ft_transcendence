@@ -7,9 +7,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-# Read by Vite at build time (see .env.example). An empty
-# VITE_DEMO_FEATURES turns the demo off: every request goes to the backend.
-ARG VITE_DEMO_FEATURES=users,friends,chat,spectate
+# Read by Vite at build time (see .env.example): "socket" turns live updates on.
 ARG VITE_REALTIME=
 # "off" leaves the 3D board out of the build; anything else keeps it.
 ARG VITE_BOARD_3D=on

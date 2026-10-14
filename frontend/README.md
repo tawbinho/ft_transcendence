@@ -55,12 +55,11 @@ Build-time settings, listed in `.env.example`. For `npm run dev`, copy it to `.e
 what you need. With Docker, pass them as build arguments (`args:` of the `frontend` service in the root
 `docker-compose.yml`).
 
-| Name                 | What it does                                                                                                                                           | Default                        |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
-| `VITE_DEMO_FEATURES` | Features answered by the in-browser demo server until the backend has their routes: `users`, `friends`, `chat`, `spectate`, `tournaments`. Empty: none | users, friends, chat, spectate |
-| `VITE_REALTIME`      | `socket` to receive live updates over Socket.IO, once the backend has a gateway                                                                        | Polling only                   |
-| `VITE_BOARD_3D`      | `off` leaves the 3D board and Three.js out of the build; anything else keeps the 2D / 3D switch                                                        | `on`                           |
-| `API_PROXY_TARGET`   | Development only: where `npm run dev` forwards `/api` and `/socket.io`                                                                                 | `https://localhost:8443`       |
+| Name               | What it does                                                                                    | Default                  |
+| ------------------ | ----------------------------------------------------------------------------------------------- | ------------------------ |
+| `VITE_REALTIME`    | `socket` to receive live updates over Socket.IO                                                 | Polling only             |
+| `VITE_BOARD_3D`    | `off` leaves the 3D board and Three.js out of the build; anything else keeps the 2D / 3D switch | `on`                     |
+| `API_PROXY_TARGET` | Development only: where `npm run dev` forwards `/api` and `/socket.io`                          | `https://localhost:8443` |
 
 ## Running with Docker
 
@@ -84,10 +83,9 @@ src/
                 optional page background
   components/   Shared components; ui/ is the design system (buttons, fields, dialogs, tabs...), plus icons,
                 the logo and illustrations
-  layout/       Header, menus, demo banner, footer
+  layout/       Header, menus, footer
   lib/          Code without pages: the API client, live events, formatting, storage, validation
   i18n/         Translations, one file per area and language (locales/en, fr, ar), and the language switch
-  demo/         The in-browser demo server (temporary, see below)
   styles/       Tailwind setup, color tokens for light and dark, the board's look
   test/         Test helpers and shared test data
 ```
@@ -114,16 +112,6 @@ A few rules keep it easy to follow:
 files with exactly the same keys: a test checks it, and TypeScript checks every key given to `t()`. Arabic turns the
 whole page right-to-left (`dir="rtl"` on `<html>`), and layouts use logical properties (`ms-`, `me-`, `start`, `end`)
 so they mirror by themselves.
-
-### The demo server
-
-`src/demo` answers, inside the browser, the routes the backend does not have yet (players, friends, chat, spectating)
-with made-up players saved in `localStorage`. Online tournament registration is served by the backend; list `tournaments`
-in `VITE_DEMO_FEATURES` to use the demo version again. Requests for the features in `VITE_DEMO_FEATURES` are
-answered there; everything else, like login and real matches, goes to the backend. A banner says so, with a Reset
-button. When the backend serves every route, set `VITE_DEMO_FEATURES` to an empty value; the folder can then be
-deleted, with the lines that load it in `main.tsx` and `layout/DemoBanner.tsx`. Every route the backend still has to
-add is in [`docs/api-contract.md`](docs/api-contract.md).
 
 ## The 3D board (optional)
 
@@ -153,7 +141,7 @@ Details in [`src/features/backdrop/README.md`](src/features/backdrop/README.md).
 ## Testing
 
 `npm test` runs more than 800 tests with Vitest and Testing Library: the game engine and the computer opponent,
-brackets, rankings, achievements, form validation, the API client, the demo server, the translations, the shared
+brackets, rankings, achievements, form validation, the API client, the translations, the shared
 components, and every page rendered and used like a person would (clicks, typing, keys). Most page tests also run
 axe-core for accessibility, and any console error or warning fails a test.
 

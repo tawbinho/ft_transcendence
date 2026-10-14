@@ -3,47 +3,44 @@
 What the frontend expects from the backend: every route it calls, the JSON it sends and reads, the error codes it
 translates and the live events it listens to.
 
-Routes marked **New** do not exist in the backend yet. Until they do, the in-browser demo server (`src/demo`) answers
-them with made-up players, following this document (see
-[Switching a feature to the backend](#switching-a-feature-to-the-backend)). The shapes below are copied from
+Every route below exists in the backend (see the Status section at the end). The shapes below are copied from
 `src/features/*/types.ts`, which the app is compiled against: if the two ever disagree, the TypeScript files are right.
 
 ## Routes at a glance
 
-| Route                                             | Purpose                              | Backend                    | Demo feature  |
-| ------------------------------------------------- | ------------------------------------ | -------------------------- | ------------- |
-| `POST /auth/signup`                               | Create an account and log in         | Exists                     |               |
-| `POST /auth/login`                                | Log in (may ask for a 2FA code)      | Exists                     |               |
-| `POST /auth/2fa/verify`                           | Finish a login with a 2FA code       | Exists                     |               |
-| `POST /auth/logout`                               | Log out                              | Exists                     |               |
-| `GET /auth/me`                                    | The logged-in user, or null          | Exists                     |               |
-| `POST /auth/2fa/setup`, `enable`, `disable`       | Turn 2FA on or off                   | Exists                     |               |
-| `POST /matches`                                   | Create a match                       | Exists                     |               |
-| `GET /matches/mine`                               | The viewer's matches                 | Exists                     |               |
-| `GET /matches/:id`                                | One match                            | **Change**: spectators too |               |
-| `POST /matches/:id/join`, `moves`, `resign`       | Play                                 | Exists                     |               |
-| `GET /matches/live`                               | Matches being played now             | New                        | `spectate`    |
-| `GET /users`                                      | Player search                        | New                        | `users`       |
-| `GET /users/:displayName`                         | A profile                            | New                        | `users`       |
-| `GET /users/:displayName/matches`                 | A player's finished matches          | New                        | `users`       |
-| `PATCH /users/me`                                 | Change the display name              | New                        | `users`       |
-| `PUT` and `DELETE /users/me/avatar`               | Upload or remove the profile picture | New                        | `users`       |
-| `GET /friends`                                    | Friends and friend requests          | New                        | `friends`     |
-| `PUT` and `DELETE /friends/:userId`               | Add, accept, cancel, decline, remove | New                        | `friends`     |
-| `GET /chat/conversations`                         | The viewer's conversations           | New                        | `chat`        |
-| `GET` and `POST /chat/:userId/messages`           | Read and send messages               | New                        | `chat`        |
-| `POST /chat/:userId/read`                         | Mark a conversation as read          | New                        | `chat`        |
-| `POST /chat/:userId/typing`                       | "Is typing" signal                   | New                        | `chat`        |
-| `GET /blocks`, `PUT` and `DELETE /blocks/:userId` | Block and unblock                    | New                        | `chat`        |
-| `GET` and `POST /tournaments`                     | List and create tournaments          | Exists                     | `tournaments` |
-| `GET` and `DELETE /tournaments/:id`               | Read and cancel a tournament         | Exists                     | `tournaments` |
-| `POST /tournaments/:id/join` and `leave`          | Register and unregister              | Exists                     | `tournaments` |
-| `POST /tournaments/:id/start`                     | Start the bracket                    | New                        | `tournaments` |
-| Socket.IO on `/socket.io`                         | Live updates                         | New                        | (setting)     |
+| Route                                             | Purpose                              | Backend |
+| ------------------------------------------------- | ------------------------------------ | ------- |
+| `POST /auth/signup`                               | Create an account and log in         | Done    |
+| `POST /auth/login`                                | Log in (may ask for a 2FA code)      | Done    |
+| `POST /auth/2fa/verify`                           | Finish a login with a 2FA code       | Done    |
+| `POST /auth/logout`                               | Log out                              | Done    |
+| `GET /auth/me`                                    | The logged-in user, or null          | Done    |
+| `POST /auth/2fa/setup`, `enable`, `disable`       | Turn 2FA on or off                   | Done    |
+| `POST /matches`                                   | Create a match                       | Done    |
+| `GET /matches/mine`                               | The viewer's matches                 | Done    |
+| `GET /matches/:id`                                | One match                            | Done    |
+| `POST /matches/:id/join`, `moves`, `resign`       | Play                                 | Done    |
+| `GET /matches/live`                               | Matches being played now             | Done    |
+| `GET /users`                                      | Player search                        | Done    |
+| `GET /users/:displayName`                         | A profile                            | Done    |
+| `GET /users/:displayName/matches`                 | A player's finished matches          | Done    |
+| `PATCH /users/me`                                 | Change the display name              | Done    |
+| `PUT` and `DELETE /users/me/avatar`               | Upload or remove the profile picture | Done    |
+| `GET /friends`                                    | Friends and friend requests          | Done    |
+| `PUT` and `DELETE /friends/:userId`               | Add, accept, cancel, decline, remove | Done    |
+| `GET /chat/conversations`                         | The viewer's conversations           | Done    |
+| `GET` and `POST /chat/:userId/messages`           | Read and send messages               | Done    |
+| `POST /chat/:userId/read`                         | Mark a conversation as read          | Done    |
+| `POST /chat/:userId/typing`                       | "Is typing" signal                   | Done    |
+| `GET /blocks`, `PUT` and `DELETE /blocks/:userId` | Block and unblock                    | Done    |
+| `GET` and `POST /tournaments`                     | List and create tournaments          | Done    |
+| `GET` and `DELETE /tournaments/:id`               | Read and cancel a tournament         | Done    |
+| `POST /tournaments/:id/join`, `leave`, `start`    | Register and start                   | Done    |
+| Socket.IO on `/socket.io`                         | Live updates                         | Done    |
 
 ## Conventions
 
-The existing backend already follows these rules; the new routes keep them.
+The backend follows these rules everywhere.
 
 - **Base path.** Every route is under `/api`, on the same origin as the app: the HTTPS proxy sends `/api` and
   `/socket.io` to the backend and everything else to the frontend. The paths in this document leave `/api` out.
@@ -214,7 +211,7 @@ The matches being played right now (`in_progress`), most recently started first.
 `POST /matches` with the `opponentDisplayName` of a player the viewer blocked, or who blocked the viewer:
 `403 BLOCKED`.
 
-## Players (new, demo feature `users`)
+## Players
 
 ```ts
 /** Finished matches only: abandoned ones do not count. played = wins + losses + draws. */
@@ -297,7 +294,7 @@ shows the new picture.
 
 Back to the default avatar (`avatarUrl: null`). Answer: the updated `User`.
 
-## Friends (new, demo feature `friends`)
+## Friends
 
 ```ts
 interface Friend extends UserSummary {
@@ -323,7 +320,7 @@ interface FriendsOverview {
   `403 BLOCKED` when either player blocked the other.
 - Every change sends `friends:update` to both players.
 
-## Chat and blocks (new, demo feature `chat`)
+## Chat and blocks
 
 Private conversations between two players. Messages are kept (the history), and each has a kind:
 
@@ -406,10 +403,7 @@ most once every 3 seconds while the viewer types, and hides "is typing" 5 second
 - `Profile.blocked` and `Conversation.blocked` say whether the viewer blocked that player. The app then shows "Unblock"
   instead of the message box.
 
-## Tournaments (registration exists, starting is new; demo feature `tournaments`)
-
-Registration (list, create, read, join, leave, cancel) is served by the backend. `rounds` stays empty and nothing
-starts until the start route and the bracket exist.
+## Tournaments
 
 Online tournaments: a single-elimination bracket with 4 or 8 places. The same-screen tournament, where players are
 names typed on one computer, runs in the browser and needs no route.
@@ -489,9 +483,9 @@ or a number. `size`: 4 or 8. `settings`: as for `POST /matches`, the classic boa
 
 Every change (registration, start, a result, a new match, the end, a cancellation) sends `tournament:update`.
 
-The demo server runs tournaments with `src/features/tournaments/bracket.ts`, which has tests and can be ported as it
-is. One rule is left to the backend: what happens to a match nobody plays (for example, a player who does not move for
-some minutes loses). The app shows whatever the bracket says.
+The backend builds the bracket and moves winners on by itself. A match nobody plays is decided by a turn timeout: in a
+tournament match, the player whose turn it is loses if no move is made for 180 seconds (the clock restarts after each
+move). The app shows whatever the bracket says.
 
 ## Live updates (Socket.IO)
 
@@ -605,30 +599,8 @@ The app makes three more codes itself; the server never sends them:
 - `SERVER_UNAVAILABLE`: a 5xx answer without the JSON envelope, like the proxy's 502 while the backend restarts.
 - `BAD_RESPONSE`: any other answer without the JSON envelope.
 
-## Switching a feature to the backend
+## Status
 
-The build setting `VITE_DEMO_FEATURES` (see `.env.example`) lists the features the demo server answers. Each feature
-is a group of routes:
-
-| Feature       | Routes                                                                         |
-| ------------- | ------------------------------------------------------------------------------ |
-| `users`       | `/users/...`, and the demo's name and picture changes on top of `GET /auth/me` |
-| `friends`     | `/friends/...`                                                                 |
-| `chat`        | `/chat/...` and `/blocks/...`                                                  |
-| `spectate`    | `GET /matches/live`                                                            |
-| `tournaments` | `/tournaments/...`                                                             |
-
-`tournaments` is already off the default list (`DEFAULT_DEMO_FEATURES` in `src/config.ts`). Where the setting is
-written out, as in the root `docker-compose.yml`, take it out of that line too. To use the demo tournaments again,
-list `tournaments` in it.
-
-When the backend serves a feature's routes as described here, remove the feature from the list and rebuild. The pages
-do not change: only where their answers come from. An empty value turns the demo off completely, and its code is then
-not even downloaded.
-
-- Matches against made-up players (challenges, tournament matches, the matches on the Watch page) are answered by the
-  demo as long as any feature is on the list. Real matches always go to the backend.
-- The made-up players exist only in the browser. While some features are real and others are not, a link from one
-  world to the other (the message button on a real profile, a made-up player's name in the chat) leads to "not found".
-  Switching `users` and `friends` together, then `chat` and `spectate`, keeps this short.
-- Demo data is saved in the browser only (`localStorage`). The "Reset demo" button in the demo banner erases it.
+Every route and live event in this document is served by the backend (`backend/docs/openapi.yaml` is the reference
+the backend is built from). The in-browser demo server and its `VITE_DEMO_FEATURES` switch were removed once the last
+feature, chat, was built.

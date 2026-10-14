@@ -9,6 +9,9 @@ export const EVENTS = {
   presence: 'presence', // someone came online or went offline
   friendsUpdate: 'friends:update', // refetch your friends
   tournamentUpdate: 'tournament:update', // { id }: refetch that tournament
+  chatMessage: 'chat:message', // { peerId, message }: a message was sent
+  chatTyping: 'chat:typing', // { userId }: that player is typing to you
+  chatRead: 'chat:read', // { userId, readAt }: that player read your messages
 } as const;
 
 // Client -> server messages.

@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, ScrollRestoration, useLocation, useNavigation } from 'react-router';
 import { useRealtimeSync } from '@/app/realtime';
-import { DemoBanner } from './DemoBanner';
 import { Footer } from './Footer';
 import { Header } from './Header';
 
@@ -36,7 +35,6 @@ export function AppLayout() {
         <div className="fixed inset-x-0 top-0 z-50 h-0.5 animate-pulse bg-primary" aria-hidden="true" />
       )}
       <Header />
-      <DemoBanner />
       {/*
         Page width rule: every page's title starts at this column's edge (max-w-6xl).
         A form or a long text below it may be narrower, but it stays against the same
