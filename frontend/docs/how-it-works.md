@@ -113,7 +113,7 @@ Checked against `package.json`. Where the honest reason is only "it is the usual
 | React Router 7            | Matches the address to a page, guards member pages, loads pages lazily              | The standard router for React; one route table is easy to read                                                                                                                                  |
 | TanStack Query 5          | The data cache: loading, errors, retries, polling, refresh after a change           | Without it every page would hand-write the same loading and refresh code (section 3)                                                                                                            |
 | i18next and react-i18next | English, French and Arabic texts, with placeholders such as `{{name}}`              | The usual translation library for React                                                                                                                                                         |
-| socket.io-client          | Live updates, only with `VITE_REALTIME=socket`                                      | The API contract asks the backend for a Socket.IO gateway, and this client reconnects by itself                                                                                                 |
+| socket.io-client          | Live updates, only with `VITE_REALTIME=socket`                                      | The backend sends live events through Socket.IO, and this client reconnects by itself                                                                                                           |
 | three, @react-three/fiber | The optional 3D board                                                               | Three.js is the standard WebGL library; React Three Fiber lets the 3D scene be written as React components like the rest of the app                                                             |
 | Vitest                    | Runs the tests                                                                      | Reuses Vite's setup, so tests understand the same imports as the app                                                                                                                            |
 | Testing Library and jsdom | Render components in tests and use them like a person: by role, label and text      | Tests then check what a user meets, not how the code is written. jsdom imitates a browser inside Node                                                                                           |
@@ -188,9 +188,11 @@ Written here instead of taken from a library:
 - Decisions are plain functions in `features/tournaments/view.ts`: `roundName` (Final, Semi-finals...), `canJoin`,
   `canLeave`, `canStart`, `canCancel` (which buttons show), `pairingToPlay`, `countMatches`.
 - Online tournaments (list, create, join, leave, cancel, start, the bracket and its matches) all talk to the real
-  backend, which also writes "your match is ready" in the chat of the two players. `isStartUnavailable` and its
-  message in `Registration.tsx` date from before the backend could start a tournament; with this backend they never
-  show. `TournamentPage` checks the address with `isUuid` (`lib/ids.ts`) before asking the server.
+  backend, which also writes "your match is ready" in the chat of the two players. The two warnings in
+  `Registration.tsx` (`startUnavailable` when Start now finds no route, and `fullWaiting` when a full tournament is
+  still open) date from before the backend could start a tournament. This backend starts one at once when the last
+  place is taken, so neither shows. `TournamentPage` checks the address with `isUuid` (`lib/ids.ts`) before asking the
+  server.
 - Each registered player's name links to their profile.
 - The same-screen tournament is saved in the browser (`useLocalTournament.ts`, key `local-tournament`) after every
   result. Coming back to an unfinished one shows "Resume your tournament?" first. A match left halfway is not saved:
@@ -367,9 +369,10 @@ inserts raw HTML (no `dangerouslySetInnerHTML`). Chat messages and names are sho
 
 **Show me where a page gets its data.** Section 3, with `/matches` as the example.
 
-**How does online play stay in sync?** The match is reloaded every 2 seconds while waiting for the other player
-(`pollInterval`); your own move shows at once and is confirmed by the server. With a Socket.IO gateway on the backend,
-`VITE_REALTIME=socket` switches to live events.
+**How does online play stay in sync?** In the Docker build (`VITE_REALTIME: socket`), the backend sends each move as
+a `match:update` event, which goes straight into the cache (`src/app/realtime.ts`); the match is then reloaded only
+every 30 seconds, in case an event was missed. Without live events it is reloaded every 2 seconds while waiting for
+the other player (`pollInterval`). Either way, your own move shows at once and is confirmed by the server.
 
 **How does the computer play? Is it unbeatable?** Section 4 ("Written here"): a search over the next moves, in a Web
 Worker, with three levels that sometimes slip on purpose, so it is not perfect.

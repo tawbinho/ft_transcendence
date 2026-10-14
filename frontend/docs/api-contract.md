@@ -534,17 +534,17 @@ Each page refreshes its data on a timer while its tab is visible:
 | The friend requests badge             | Menu, on every page   | 30 s                                                  | 30 s             |
 | The tournament list                   | Tournaments page      | 10 s                                                  | 30 s             |
 | One tournament                        | Tournament page       | 3 s until it is finished                              | 30 s             |
-| The live matches                      | Watch page            | 5 s                                                   | 30 s             |
+| The live matches                      | Watch page            | 5 s                                                   | 5 s              |
 
 The backend allows 100 requests a minute per address. A player waiting for their opponent's move sends about 30 match
 requests a minute, plus 6 for the menu badges. Two players testing on one computer share one address and stay under
 the limit (about 70 at most); three or more busy tabs on one computer can reach it. The app then shows "Too many
 attempts" and recovers by itself on the next poll.
 
-With live updates on (the Docker build), polling drops to every 30 seconds, and a minute of chat between two windows
-on one computer uses about 40 requests of the busiest route. Many busy tabs or fast reloads on one computer can still
-reach the limit; leaving the read-only `GET` routes out of it, and keeping the strict limits on the auth routes, would
-remove the problem.
+With live updates on (the Docker build), polling drops to every 30 seconds (except the Watch page's live list, which
+live events do not cover), and a minute of chat between two windows on one computer uses about 40 requests of the
+busiest route. Many busy tabs or fast reloads on one computer can still reach the limit; leaving the read-only `GET`
+routes out of it, and keeping the strict limits on the auth routes, would remove the problem.
 
 ## Error codes
 

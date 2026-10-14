@@ -11,7 +11,7 @@ export interface LegalDocument {
 }
 
 /** When the texts below last changed (ISO date). */
-export const LEGAL_UPDATED = '2026-10-08';
+export const LEGAL_UPDATED = '2026-10-12';
 
 // Long-form legal texts live here rather than in the translation files. Keep
 // the three languages in step when the data the app stores changes.

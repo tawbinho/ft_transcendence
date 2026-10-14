@@ -4,8 +4,6 @@ import type { ValidationKey } from '@/lib/validation';
 // the server receives a small square picture (and checks type and size again).
 
 export const AVATAR_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const;
-/** The largest upload the server accepts. */
-export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 /** Larger files are refused before even being opened. */
 export const AVATAR_SOURCE_MAX_BYTES = 10 * 1024 * 1024;
 /** Width and height of the uploaded picture, in pixels. */

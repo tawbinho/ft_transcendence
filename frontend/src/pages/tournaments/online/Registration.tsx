@@ -30,7 +30,8 @@ export function Registration({ tournament }: { tournament: Tournament }) {
           {t('tournaments.registrationBody', { size: tournament.size, min: MIN_TOURNAMENT_PLAYERS })}
         </p>
       </div>
-      {/* The server may not start tournaments yet: say so clearly, and say why a full one still waits. */}
+      {/* Both warnings are for a server that cannot start tournaments. The real backend can, and starts a full one at
+          once, so they do not show with it. */}
       {isStartUnavailable(start.error) && !isFull(tournament) && (
         <Alert tone="warning">{t('tournaments.startUnavailable')}</Alert>
       )}
