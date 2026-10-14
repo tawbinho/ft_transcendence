@@ -21,11 +21,10 @@ const chatLink = NAV_ITEMS.find((item) => item.count === 'chat');
  */
 export function Header() {
   const { t } = useTranslation();
-  const { data, isPending, refetch, isRefetching } = useCurrentUser();
+  const { data, isPending } = useCurrentUser();
   const session = sessionOf(data, isPending);
   const isMember = session.status === 'member';
   const counts = { chat: useUnreadCount(isMember), friends: useIncomingRequestCount(isMember) };
-  const retry = () => void refetch();
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface/85 backdrop-blur supports-[backdrop-filter]:bg-surface/70">
@@ -41,13 +40,13 @@ export function Header() {
           <ThemeToggle />
           <LanguageMenu />
           <div className="ms-1 flex items-center gap-2">
-            <SessionActions session={session} onRetry={retry} retrying={isRefetching} />
+            <SessionActions session={session} />
           </div>
         </div>
 
         <div className="ms-auto flex items-center gap-1 lg:hidden">
           {isMember && chatLink && <NavIconLink item={chatLink} counts={counts} />}
-          <MobileMenu session={session} counts={counts} onRetry={retry} retrying={isRefetching} />
+          <MobileMenu session={session} counts={counts} />
         </div>
       </div>
     </header>

@@ -23,17 +23,7 @@ const GROUP_LABELS = {
  * groups (Play, Community, You), then language and appearance. A dot on the
  * button tells that chat or friends have something new.
  */
-export function MobileMenu({
-  session,
-  counts,
-  onRetry,
-  retrying,
-}: {
-  session: Session;
-  counts: Counts;
-  onRetry: () => void;
-  retrying: boolean;
-}) {
+export function MobileMenu({ session, counts }: { session: Session; counts: Counts }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
@@ -81,14 +71,7 @@ export function MobileMenu({
         >
           <nav aria-label={t('nav.main')}>
             {NAV_GROUPS.map((group) => (
-              <MenuGroup
-                key={group}
-                group={group}
-                session={session}
-                counts={counts}
-                onRetry={onRetry}
-                retrying={retrying}
-              />
+              <MenuGroup key={group} group={group} session={session} counts={counts} />
             ))}
           </nav>
           <div className="mt-3 flex flex-col gap-4 border-t border-border px-3 pt-4">
@@ -101,19 +84,7 @@ export function MobileMenu({
   );
 }
 
-function MenuGroup({
-  group,
-  session,
-  counts,
-  onRetry,
-  retrying,
-}: {
-  group: NavGroup;
-  session: Session;
-  counts: Counts;
-  onRetry: () => void;
-  retrying: boolean;
-}) {
+function MenuGroup({ group, session, counts }: { group: NavGroup; session: Session; counts: Counts }) {
   const { t } = useTranslation();
   const headingId = useId();
   const items = menuItems(group, session.status === 'member');
@@ -135,7 +106,7 @@ function MenuGroup({
         <AccountLinks user={session.user} before={links} />
       ) : group === 'you' ? (
         <div className="flex gap-2 px-3 py-1">
-          <SessionActions session={session} onRetry={onRetry} retrying={retrying} />
+          <SessionActions session={session} />
         </div>
       ) : (
         <ul className="flex flex-col gap-0.5">{links}</ul>

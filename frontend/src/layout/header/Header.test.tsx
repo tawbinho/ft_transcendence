@@ -117,19 +117,21 @@ describe('while the session is unknown', () => {
     expect(await screen.findAllByRole('link', { name: 'Log in' })).not.toHaveLength(0);
   });
 
-  it('offers Retry instead of Log in when the session could not be loaded, and recovers', async () => {
+  it('shows no Log in and no button when the session could not be loaded, and recovers when the tab is shown again', async () => {
     let up = false;
     // The server is down until `up` is set.
     fakeApi({
       ...nothingNew,
       'GET /auth/me': () => (up ? makeUser() : new ApiError('SERVER_UNAVAILABLE', 'down', 503)),
     });
-    const { events } = renderWithProviders(<Header />);
-    expect(await screen.findByRole('button', { name: /Try again/ })).toBeInTheDocument();
+    const { queryClient } = renderWithProviders(<Header />);
+    await waitFor(() => expect(queryClient.getQueryState(authKeys.me)?.status).toBe('error'));
     expect(screen.queryByRole('link', { name: 'Log in' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Try again/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Account menu/ })).not.toBeInTheDocument();
 
     up = true;
-    await events.click(screen.getByRole('button', { name: /Try again/ }));
+    window.dispatchEvent(new Event('visibilitychange'));
     expect(await screen.findByRole('button', { name: /Account menu/ })).toBeInTheDocument();
   });
 

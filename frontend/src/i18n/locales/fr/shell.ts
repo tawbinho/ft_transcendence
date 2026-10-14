@@ -27,7 +27,6 @@ export const shellMessages: ShellMessages = {
     groupYou: 'Vous',
     themeToLight: 'Passer au thème clair',
     themeToDark: 'Passer au thème sombre',
-    sessionError: 'Votre compte n’a pas pu être chargé.',
   },
   preferences: {
     language: 'Langue',

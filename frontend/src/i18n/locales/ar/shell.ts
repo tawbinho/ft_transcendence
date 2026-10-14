@@ -27,7 +27,6 @@ export const shellMessages: ShellMessages = {
     groupYou: 'أنت',
     themeToLight: 'التبديل إلى المظهر الفاتح',
     themeToDark: 'التبديل إلى المظهر الداكن',
-    sessionError: 'تعذّر تحميل حسابك.',
   },
   preferences: {
     language: 'اللغة',

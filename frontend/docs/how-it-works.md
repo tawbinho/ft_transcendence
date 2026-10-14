@@ -141,7 +141,7 @@ Written here instead of taken from a library:
   `inMenus: false` keeps a page out of the top bar and the phone menu while its route, its highlight and the login
   hint stay (Watch and Players are set this way for now).
 - `layout/header/` splits the bar into small files: `Header` (asks who is logged in and the counts), `DesktopNav`,
-  `MobileMenu`, `AccountMenu`, `LanguageMenu`, `SessionActions` (avatar menu, Log in and Sign up, or a Retry button),
+  `MobileMenu`, `AccountMenu`, `LanguageMenu`, `SessionActions` (avatar menu, or Log in and Sign up; nothing if the server did not answer),
   `ThemeToggle`, `CountBadge`.
 - Page width rule (a comment in `layout/AppLayout.tsx`): every page's title starts at the left edge of the column
   (`max-w-6xl`). A form or a long text below it may be narrower, but stays against that edge: no `mx-auto`. Only short

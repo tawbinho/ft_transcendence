@@ -25,7 +25,6 @@ export const shellMessages = {
     groupYou: 'You',
     themeToLight: 'Switch to the light theme',
     themeToDark: 'Switch to the dark theme',
-    sessionError: 'Your account could not be loaded.',
   },
   preferences: {
     language: 'Language',

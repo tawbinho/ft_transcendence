@@ -16,7 +16,7 @@ function renderMenu(session: Session, counts = noCounts) {
   const user = session.status === 'member' ? session.user : null;
   return renderWithProviders(
     <>
-      <MobileMenu session={session} counts={counts} onRetry={() => {}} retrying={false} />
+      <MobileMenu session={session} counts={counts} />
       <Link to="/elsewhere">Elsewhere</Link>
     </>,
     { user },
