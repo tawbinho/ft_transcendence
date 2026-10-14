@@ -138,6 +138,8 @@ Written here instead of taken from a library:
 
 - `app/nav.ts` is the one list of links: address, name, icon, whether visitors see it, whether it needs an account,
   which count it shows and when it is highlighted. The top bar, the phone menu and the login hint all read it.
+  `inMenus: false` keeps a page out of the top bar and the phone menu while its route, its highlight and the login
+  hint stay (Watch and Players are set this way for now).
 - `layout/header/` splits the bar into small files: `Header` (asks who is logged in and the counts), `DesktopNav`,
   `MobileMenu`, `AccountMenu`, `LanguageMenu`, `SessionActions` (avatar menu, Log in and Sign up, or a Retry button),
   `ThemeToggle`, `CountBadge`.

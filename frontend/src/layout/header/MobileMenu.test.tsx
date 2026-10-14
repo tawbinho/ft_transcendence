@@ -41,8 +41,8 @@ describe('the phone menu for a member', () => {
       within(screen.getByRole('group', { name: group }))
         .getAllByRole('link')
         .map((link) => link.textContent);
-    expect(links('Play')).toEqual(['Play', 'Tournaments', 'Watch']);
-    expect(links('Community')).toEqual(['Players', 'Friends', 'Chat']);
+    expect(links('Play')).toEqual(['Play', 'Tournaments']);
+    expect(links('Community')).toEqual(['Friends', 'Chat']);
     expect(links('You')).toEqual(['My profile', 'History', 'Settings']);
     expect(
       within(screen.getByRole('group', { name: 'You' })).getByRole('button', { name: 'Log out' }),
@@ -89,7 +89,7 @@ describe('the phone menu for a member', () => {
   it('closes when the person goes to another page', async () => {
     const { events, queryByRole, container } = renderMenu(member);
     await openMenu(events);
-    await events.click(within(screen.getByRole('group', { name: 'Play' })).getByRole('link', { name: 'Watch' }));
+    await events.click(within(screen.getByRole('group', { name: 'Play' })).getByRole('link', { name: 'Tournaments' }));
     expect(queryByRole('group', { name: 'Play' })).not.toBeInTheDocument();
     expect(container).toBeInTheDocument();
   });
@@ -106,8 +106,12 @@ describe('the phone menu for a visitor', () => {
     const { events } = renderMenu(visitor);
     await openMenu(events);
 
-    expect(screen.getByRole('link', { name: 'Watch' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Players' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Play' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Tournaments' })).toBeInTheDocument();
+    for (const name of ['Watch', 'Players']) {
+      expect(screen.queryByRole('link', { name })).not.toBeInTheDocument();
+    }
+    expect(screen.queryByRole('group', { name: 'Community' })).not.toBeInTheDocument();
     const you = within(screen.getByRole('group', { name: 'You' }));
     expect(you.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
     expect(you.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup');

@@ -4,17 +4,23 @@ const labelsActiveOn = (pathname: string) =>
   NAV_ITEMS.filter((item) => item.isActive(pathname)).map((item) => item.label);
 
 describe('which links a person sees', () => {
-  it('shows a visitor Play, Tournaments, Watch and Players', () => {
-    expect(navItemsFor(false).map((item) => item.label)).toEqual([
+  it('shows a visitor Play and Tournaments', () => {
+    expect(navItemsFor(false).map((item) => item.label)).toEqual(['nav.play', 'nav.tournaments']);
+  });
+
+  it('shows a member every link except Watch and Players, which are out of the bars for now', () => {
+    expect(navItemsFor(true).map((item) => item.label)).toEqual([
       'nav.play',
       'nav.tournaments',
-      'nav.watch',
-      'nav.players',
+      'nav.history',
+      'nav.chat',
+      'nav.friends',
     ]);
   });
 
-  it('shows a member every link', () => {
-    expect(navItemsFor(true)).toHaveLength(NAV_ITEMS.length);
+  it('keeps Watch and Players in the list, so their pages are still highlighted and named in the login hint', () => {
+    const hidden = NAV_ITEMS.filter((item) => !item.inMenus).map((item) => item.label);
+    expect(hidden).toEqual(['nav.watch', 'nav.players']);
   });
 
   it('marks the pages that need an account', () => {
@@ -84,17 +90,17 @@ describe('the phone menu groups', () => {
   const labels = (group: 'play' | 'community' | 'you', isMember: boolean) =>
     menuItems(group, isMember).map((item) => item.label);
 
-  it('lists Play, Tournaments and Watch under Play', () => {
-    expect(labels('play', true)).toEqual(['nav.play', 'nav.tournaments', 'nav.watch']);
+  it('lists Play and Tournaments under Play', () => {
+    expect(labels('play', true)).toEqual(['nav.play', 'nav.tournaments']);
   });
 
-  it('lists Players, Friends and Chat under Community for a member', () => {
-    expect(labels('community', true)).toEqual(['nav.players', 'nav.friends', 'nav.chat']);
+  it('lists Friends and Chat under Community for a member', () => {
+    expect(labels('community', true)).toEqual(['nav.friends', 'nav.chat']);
   });
 
   it('shows a visitor only the links a visitor may see', () => {
-    expect(labels('play', false)).toEqual(['nav.play', 'nav.tournaments', 'nav.watch']);
-    expect(labels('community', false)).toEqual(['nav.players']);
+    expect(labels('play', false)).toEqual(['nav.play', 'nav.tournaments']);
+    expect(labels('community', false)).toEqual([]);
     expect(labels('you', false)).toEqual([]);
   });
 

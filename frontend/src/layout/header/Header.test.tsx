@@ -18,13 +18,16 @@ const nothingNew = {
 const desktopNav = () => screen.getAllByRole('navigation', { name: 'Main navigation' })[0]!;
 
 describe('the bar for a visitor', () => {
-  it('shows Play, Tournaments, Watch, Players, Log in and Sign up', () => {
+  it('shows Play, Tournaments, Log in and Sign up, and no Watch or Players', () => {
     fakeApi();
     renderWithProviders(<Header />, { user: null });
 
     const nav = within(desktopNav());
-    for (const name of ['Play', 'Tournaments', 'Watch', 'Players']) {
+    for (const name of ['Play', 'Tournaments']) {
       expect(nav.getByRole('link', { name })).toBeInTheDocument();
+    }
+    for (const name of ['Watch', 'Players']) {
+      expect(screen.queryByRole('link', { name })).not.toBeInTheDocument();
     }
     expect(screen.getAllByRole('link', { name: 'Log in' })[0]).toHaveAttribute('href', '/login');
     expect(screen.getAllByRole('link', { name: 'Sign up' })[0]).toHaveAttribute('href', '/signup');
@@ -47,13 +50,16 @@ describe('the bar for a visitor', () => {
 });
 
 describe('the bar for a member', () => {
-  it('shows every section, the theme button, the language and the account menu', async () => {
+  it('shows its sections (not Watch or Players), the theme button, the language and the account menu', async () => {
     fakeApi(nothingNew);
     renderWithProviders(<Header />, { user: makeUser() });
 
     const nav = within(desktopNav());
-    for (const name of ['Play', 'Tournaments', 'Watch', 'Players', 'History', 'Chat', 'Friends']) {
+    for (const name of ['Play', 'Tournaments', 'History', 'Chat', 'Friends']) {
       expect(nav.getByRole('link', { name })).toBeInTheDocument();
+    }
+    for (const name of ['Watch', 'Players']) {
+      expect(screen.queryByRole('link', { name })).not.toBeInTheDocument();
     }
     expect(screen.getByRole('button', { name: 'Language: English' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Switch to the dark theme' })).toBeInTheDocument();

@@ -23,6 +23,11 @@ export interface NavItem {
   iconOnly: boolean;
   /** Visitors see this link in the bar too. */
   forVisitors: boolean;
+  /**
+   * Whether the link is in the top bar and the phone menu. A page can stay reachable (route, other links,
+   * the "Log in to open Watch" hint) while its link is out of the bars: set this to true to bring it back.
+   */
+  inMenus: boolean;
   /** The page needs an account: a visitor who follows the link is sent to the login page. */
   needsAccount: boolean;
   count?: CountSource;
@@ -43,6 +48,7 @@ export const NAV_ITEMS: NavItem[] = [
     group: 'play',
     iconOnly: false,
     forVisitors: true,
+    inMenus: true,
     needsAccount: false,
     // A running online match belongs to Play; the list of matches (/matches) does not.
     isActive: (pathname) => isUnder(pathname, '/play') || pathname.startsWith('/matches/'),
@@ -54,6 +60,7 @@ export const NAV_ITEMS: NavItem[] = [
     group: 'play',
     iconOnly: false,
     forVisitors: true,
+    inMenus: true,
     needsAccount: false,
     isActive: (pathname) => isUnder(pathname, '/tournaments'),
   },
@@ -64,6 +71,7 @@ export const NAV_ITEMS: NavItem[] = [
     group: 'play',
     iconOnly: false,
     forVisitors: true,
+    inMenus: false,
     needsAccount: true,
     isActive: (pathname) => isUnder(pathname, '/watch'),
   },
@@ -74,6 +82,7 @@ export const NAV_ITEMS: NavItem[] = [
     group: 'community',
     iconOnly: false,
     forVisitors: true,
+    inMenus: false,
     needsAccount: true,
     isActive: (pathname) => ['/players', '/leaderboard', '/users'].some((base) => isUnder(pathname, base)),
   },
@@ -84,6 +93,7 @@ export const NAV_ITEMS: NavItem[] = [
     group: 'you',
     iconOnly: false,
     forVisitors: false,
+    inMenus: true,
     needsAccount: true,
     isActive: (pathname) => pathname === '/matches' || pathname === '/matches/',
   },
@@ -94,6 +104,7 @@ export const NAV_ITEMS: NavItem[] = [
     group: 'community',
     iconOnly: true,
     forVisitors: false,
+    inMenus: true,
     needsAccount: true,
     count: 'chat',
     isActive: (pathname) => isUnder(pathname, '/chat'),
@@ -105,15 +116,16 @@ export const NAV_ITEMS: NavItem[] = [
     group: 'community',
     iconOnly: true,
     forVisitors: false,
+    inMenus: true,
     needsAccount: true,
     count: 'friends',
     isActive: (pathname) => isUnder(pathname, '/friends'),
   },
 ];
 
-/** The links shown to a visitor or to a member. */
+/** The links of the bars shown to a visitor or to a member. */
 export function navItemsFor(isMember: boolean): NavItem[] {
-  return NAV_ITEMS.filter((item) => isMember || item.forVisitors);
+  return NAV_ITEMS.filter((item) => item.inMenus && (isMember || item.forVisitors));
 }
 
 /** The name of the section an address belongs to (for "Log in to open Watch."), or null. */
