@@ -34,22 +34,6 @@ export const shellMessages = {
     light: 'Light',
     dark: 'Dark',
   },
-  demo: {
-    short: 'Demo data in this browser',
-    details: 'Details',
-    title: 'Demo data.',
-    body: 'These parts run on made-up players kept in this browser until the server supports them: {{features}}.',
-    features: {
-      users: 'players and profiles',
-      friends: 'friends',
-      chat: 'chat',
-      spectate: 'watching matches',
-      tournaments: 'online tournaments',
-    },
-    reset: 'Reset demo',
-    resetTitle: 'Reset the demo data?',
-    resetBody: 'Made-up players, messages and tournaments start over. Your account and real matches are not affected.',
-  },
   footer: {
     privacy: 'Privacy policy',
     terms: 'Terms of service',

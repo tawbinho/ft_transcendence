@@ -22,7 +22,7 @@ export interface ApiResponse {
   payload: unknown;
 }
 
-/** Something that answers API calls: the network, or the demo server. */
+/** Something that answers API calls: the network, or a fake backend in tests. */
 export type Transport = (request: ApiRequest) => Promise<ApiResponse>;
 
 const API_PREFIX = '/api';
@@ -86,8 +86,8 @@ export const sendOverNetwork: Transport = async ({ method, path, query, body, si
 let transport: Transport = sendOverNetwork;
 
 /**
- * Puts a layer in front of the network. The in-browser demo server (src/demo)
- * uses it to answer the routes the backend does not have yet.
+ * Replaces the network. Tests use it to answer API calls with prepared data
+ * (src/test/fakeApi.ts).
  */
 export function setTransport(next: Transport): void {
   transport = next;

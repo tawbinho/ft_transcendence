@@ -1,5 +1,5 @@
 // Single-elimination brackets, used by the same-screen tournament (players
-// are names) and by the demo server's online tournaments (players are ids).
+// are names). Online tournaments get their bracket from the backend.
 //
 // Rounds are arrays of pairings. The winner of pairing i in round r plays in
 // round r + 1, pairing floor(i / 2), in slot i % 2. With a number of players

@@ -1,9 +1,9 @@
 import { useEffect, useEffectEvent, useSyncExternalStore } from 'react';
 import type { RealtimeEvent, RealtimeEvents } from './events';
 
-// The one place live events arrive, whoever produced them: the Socket.IO
-// connection (socket.ts) or the in-browser demo server (src/demo). Pages
-// subscribe with useRealtimeEvent and never know the source.
+// The one place live events arrive: the Socket.IO connection (socket.ts)
+// emits them here, and pages subscribe with useRealtimeEvent without knowing
+// about the socket.
 
 type Listener<K extends RealtimeEvent> = (payload: RealtimeEvents[K]) => void;
 
