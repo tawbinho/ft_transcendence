@@ -105,7 +105,7 @@ open socket". Before it exists, a simple rule works: online when their last requ
 visible tab of a logged-in player sends one at least every 30 seconds (the menu badges, see
 [Polling](#polling-and-the-rate-limit)).
 
-## Auth (exists)
+## Auth
 
 Nothing to change. What the app uses:
 
@@ -128,7 +128,7 @@ password has 8 to 128 characters; a code has 6 digits (spaces are removed).
 
 ## Matches
 
-### Shapes (exist)
+### Shapes
 
 ```ts
 type MatchStatus = 'waiting' | 'in_progress' | 'finished' | 'abandoned';
@@ -177,7 +177,7 @@ interface MatchSummary {
 }
 ```
 
-### Routes (exist)
+### Routes
 
 | Route                      | Body or query                         | Answer                                                    |
 | -------------------------- | ------------------------------------- | --------------------------------------------------------- |
@@ -188,16 +188,12 @@ interface MatchSummary {
 | `POST /matches/:id/moves`  | `{ col }`                             | `Match`                                                   |
 | `POST /matches/:id/resign` |                                       | `Match` (a match still waiting is cancelled: `abandoned`) |
 
-### Change: any logged-in user can read a match
+### Any logged-in user can read a match
 
-Today only its two players can read a match; anyone else gets `404 MATCH_NOT_FOUND`. Spectator mode needs
-`GET /matches/:id` to answer every logged-in user, with `yourSeat: null` for those who do not play in it. Joining,
-moving and resigning stay for players only.
+`GET /matches/:id` answers every logged-in user, with `yourSeat: null` for those who do not play in it (spectator
+mode). Joining, moving and resigning stay for players only.
 
-This also removes the 404 a player gets when they open a shared match link before joining. Chrome prints every 4xx
-answer as a red line in the console, and the subject asks for a console without errors.
-
-### New: `GET /matches/live`
+### `GET /matches/live`
 
 The matches being played right now (`in_progress`), most recently started first.
 
@@ -206,7 +202,7 @@ The matches being played right now (`in_progress`), most recently started first.
 - The Watch page lists them, then opens one with `GET /matches/:id`.
 - Declare it before `:id` in the controller, like `mine`, or "live" is taken for a match id.
 
-### Once blocking exists
+### Blocked players
 
 `POST /matches` with the `opponentDisplayName` of a player the viewer blocked, or who blocked the viewer:
 `403 BLOCKED`.
@@ -545,53 +541,55 @@ requests a minute, plus 6 for the menu badges. Two players testing on one comput
 the limit (about 70 at most); three or more busy tabs on one computer can reach it. The app then shows "Too many
 attempts" and recovers by itself on the next poll.
 
-Once the live connection exists, polling drops to every 30 seconds and the problem goes away. Until then, one option is
-to leave the read-only `GET` routes out of the global limit and keep the strict limits on the auth routes.
+With live updates on (the Docker build), polling drops to every 30 seconds, and a minute of chat between two windows
+on one computer uses about 40 requests of the busiest route. Many busy tabs or fast reloads on one computer can still
+reach the limit; leaving the read-only `GET` routes out of it, and keeping the strict limits on the auth routes, would
+remove the problem.
 
 ## Error codes
 
 Each code below has a translation in English, French and Arabic (`errors` in `src/i18n/locales/*/common.ts`). A code without
 one shows the server's English `message`.
 
-| Code                         | Status   | Where                                                           |
-| ---------------------------- | -------- | --------------------------------------------------------------- |
-| `VALIDATION_ERROR`           | 400      | Any route: the body or the query breaks a rule                  |
-| `UNAUTHORIZED`               | 401      | Any route that needs a session                                  |
-| `FORBIDDEN`, `NOT_FOUND`     | 403, 404 | Errors without a code of their own (a guard, an unknown route)  |
-| `RATE_LIMITED`               | 429      | Any route                                                       |
-| `INTERNAL_ERROR`             | 500      | Any route                                                       |
-| `INVALID_CREDENTIALS`        | 401      | Login                                                           |
-| `EMAIL_TAKEN`                | 409      | Signup                                                          |
-| `DISPLAY_NAME_TAKEN`         | 409      | Signup, and (new) `PATCH /users/me`                             |
-| `INVALID_2FA_CODE`           | 400      | 2FA verify, enable and disable                                  |
-| `TWO_FACTOR_ALREADY_ENABLED` | 409      | 2FA setup                                                       |
-| `TWO_FACTOR_NOT_ENABLED`     | 409      | 2FA disable                                                     |
-| `TWO_FACTOR_NOT_PENDING`     | 409      | 2FA enable without a setup first                                |
-| `USER_NOT_FOUND`             | 404      | `POST /matches`, and (new) the players, friends and chat routes |
-| `CANNOT_INVITE_SELF`         | 400      | `POST /matches`                                                 |
-| `INVALID_SETTINGS`           | 400      | `POST /matches`: the win length does not fit the board          |
-| `TOO_MANY_WAITING_MATCHES`   | 409      | `POST /matches`: 3 matches already wait for an opponent         |
-| `MATCH_NOT_FOUND`            | 404      | Match routes                                                    |
-| `MATCH_NOT_JOINABLE`         | 409      | Join                                                            |
-| `ALREADY_IN_MATCH`           | 409      | Join                                                            |
-| `NOT_INVITED`                | 403      | Join                                                            |
-| `MATCH_NOT_ACTIVE`           | 409      | Move, resign                                                    |
-| `NOT_YOUR_TURN`              | 409      | Move                                                            |
-| `COLUMN_FULL`                | 409      | Move                                                            |
-| `INVALID_COLUMN`             | 400      | Move                                                            |
-| `BLOCKED` (new)              | 403      | Messages, friend requests, match invitations                    |
-| `CANNOT_FRIEND_SELF` (new)   | 400      | `PUT /friends/:userId`                                          |
-| `INVALID_INVITE` (new)       | 400      | `POST /chat/:userId/messages` with a `matchId`                  |
-| `AVATAR_INVALID_TYPE` (new)  | 415      | `PUT /users/me/avatar`                                          |
-| `AVATAR_TOO_LARGE` (new)     | 413      | `PUT /users/me/avatar`                                          |
-| `TOURNAMENT_NOT_FOUND` (new) | 404      | Tournament routes                                               |
-| `TOURNAMENT_NOT_OPEN` (new)  | 409      | Join, leave, start or cancel after registration                 |
-| `TOURNAMENT_FULL` (new)      | 409      | Join                                                            |
-| `ALREADY_JOINED` (new)       | 409      | Join                                                            |
-| `NOT_JOINED` (new)           | 409      | Leave                                                           |
-| `CREATOR_CANNOT_LEAVE` (new) | 409      | Leave                                                           |
-| `NOT_CREATOR` (new)          | 403      | Start, cancel                                                   |
-| `NOT_ENOUGH_PLAYERS` (new)   | 409      | Start                                                           |
+| Code                         | Status   | Where                                                          |
+| ---------------------------- | -------- | -------------------------------------------------------------- |
+| `VALIDATION_ERROR`           | 400      | Any route: the body or the query breaks a rule                 |
+| `UNAUTHORIZED`               | 401      | Any route that needs a session                                 |
+| `FORBIDDEN`, `NOT_FOUND`     | 403, 404 | Errors without a code of their own (a guard, an unknown route) |
+| `RATE_LIMITED`               | 429      | Any route                                                      |
+| `INTERNAL_ERROR`             | 500      | Any route                                                      |
+| `INVALID_CREDENTIALS`        | 401      | Login                                                          |
+| `EMAIL_TAKEN`                | 409      | Signup                                                         |
+| `DISPLAY_NAME_TAKEN`         | 409      | Signup, and `PATCH /users/me`                                  |
+| `INVALID_2FA_CODE`           | 400      | 2FA verify, enable and disable                                 |
+| `TWO_FACTOR_ALREADY_ENABLED` | 409      | 2FA setup                                                      |
+| `TWO_FACTOR_NOT_ENABLED`     | 409      | 2FA disable                                                    |
+| `TWO_FACTOR_NOT_PENDING`     | 409      | 2FA enable without a setup first                               |
+| `USER_NOT_FOUND`             | 404      | `POST /matches`, and the players, friends and chat routes      |
+| `CANNOT_INVITE_SELF`         | 400      | `POST /matches`                                                |
+| `INVALID_SETTINGS`           | 400      | `POST /matches`: the win length does not fit the board         |
+| `TOO_MANY_WAITING_MATCHES`   | 409      | `POST /matches`: 3 matches already wait for an opponent        |
+| `MATCH_NOT_FOUND`            | 404      | Match routes                                                   |
+| `MATCH_NOT_JOINABLE`         | 409      | Join                                                           |
+| `ALREADY_IN_MATCH`           | 409      | Join                                                           |
+| `NOT_INVITED`                | 403      | Join                                                           |
+| `MATCH_NOT_ACTIVE`           | 409      | Move, resign                                                   |
+| `NOT_YOUR_TURN`              | 409      | Move                                                           |
+| `COLUMN_FULL`                | 409      | Move                                                           |
+| `INVALID_COLUMN`             | 400      | Move                                                           |
+| `BLOCKED`                    | 403      | Messages, friend requests, match invitations                   |
+| `CANNOT_FRIEND_SELF`         | 400      | `PUT /friends/:userId`                                         |
+| `INVALID_INVITE`             | 400      | `POST /chat/:userId/messages` with a `matchId`                 |
+| `AVATAR_INVALID_TYPE`        | 415      | `PUT /users/me/avatar`                                         |
+| `AVATAR_TOO_LARGE`           | 413      | `PUT /users/me/avatar`                                         |
+| `TOURNAMENT_NOT_FOUND`       | 404      | Tournament routes                                              |
+| `TOURNAMENT_NOT_OPEN`        | 409      | Join, leave, start or cancel after registration                |
+| `TOURNAMENT_FULL`            | 409      | Join                                                           |
+| `ALREADY_JOINED`             | 409      | Join                                                           |
+| `NOT_JOINED`                 | 409      | Leave                                                          |
+| `CREATOR_CANNOT_LEAVE`       | 409      | Leave                                                          |
+| `NOT_CREATOR`                | 403      | Start, cancel                                                  |
+| `NOT_ENOUGH_PLAYERS`         | 409      | Start                                                          |
 
 The app makes three more codes itself; the server never sends them:
 

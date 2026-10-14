@@ -9,7 +9,7 @@ says where to look in the code. The [README](../README.md) says how to run, test
 - [4. Stack and why](#4-stack-and-why)
 - [5. Area by area](#5-area-by-area)
 - [6. The 3D board and the page background: on, off, removed](#6-the-3d-board-and-the-page-background-on-off-removed)
-- [7. The demo server](#7-the-demo-server)
+- [7. Where the data comes from](#7-where-the-data-comes-from)
 - [8. Tests and checks](#8-tests-and-checks)
 - [9. Questions evaluators are likely to ask](#9-questions-evaluators-are-likely-to-ask)
 - [10. Known limits](#10-known-limits)
@@ -21,8 +21,7 @@ says where to look in the code. The [README](../README.md) says how to run, test
    JavaScript changes what is inside it.
 2. `index.html` loads the JavaScript built by Vite. A few inline lines first apply the saved light or dark mode and
    accent color and page background, so the page does not flash in the wrong colors.
-3. `src/main.tsx` starts the app: it loads the translations (`src/i18n`), the styles, starts the demo server if some
-   features still need it (section 7), and renders `App`.
+3. `src/main.tsx` starts the app: it loads the translations (`src/i18n`) and the styles, and renders `App`.
 4. `src/app/App.tsx` wraps everything in two providers: the data cache (TanStack Query) and the router.
 5. `src/app/router.tsx` is the route table: one line per address, each pointing to a page in `src/pages/`. Pages are
    loaded lazily (`lazy: () => import(...)`), so the browser downloads a page's code only when it is opened.
@@ -41,10 +40,9 @@ src/
   features/     code shared by several areas, one folder per subject: game, matches, tournaments, users, friends,
                 chat, spectate, auth, account, board3d (the optional 3D board), backdrop (the optional page background)
   components/   pieces used everywhere: ui/ (the design system), icons, logo, illustrations, PageHeader, ModeCard
-  layout/       the frame of every page: header, menus, demo banner, footer
+  layout/       the frame of every page: header, menus, footer
   i18n/         translations: locales/<en|fr|ar>/<area>.ts
   lib/          code without pages: the API client, live events, storage, formatting, validation
-  demo/         the in-browser demo server (temporary, section 7)
   styles/       Tailwind setup and the color tokens
   test/         test helpers and shared test data
 ```
@@ -99,7 +97,8 @@ Every route, shape and error code is listed in [`api-contract.md`](api-contract.
 
 Live updates: when the app is built with `VITE_REALTIME=socket`, `lib/realtime/socket.ts` opens one Socket.IO
 connection after login. Events only write into the cache (`app/realtime.ts`), so pages never know whether new data
-came from polling or from the socket. Until the backend has a Socket.IO gateway, polling does the job alone.
+came from polling or from the socket. The Docker build turns live updates on (`VITE_REALTIME: socket` in the root
+`docker-compose.yml`); without them, polling does the job alone.
 
 ## 4. Stack and why
 
@@ -131,8 +130,7 @@ Written here instead of taken from a library:
 - the computer opponent (`features/game/bot`): a negamax search with alpha-beta pruning and iterative deepening, run in
   a Web Worker so the page never freezes; each level searches more or less deeply and sometimes "slips", so it plays
   like a person and not perfectly, as the subject asks;
-- the API client (`lib/api/http.ts`), form validation (`lib/validation.ts`, `features/*/validation.ts`) and the demo
-  server (`src/demo`).
+- the API client (`lib/api/http.ts`) and form validation (`lib/validation.ts`, `features/*/validation.ts`).
 
 ## 5. Area by area
 
@@ -189,13 +187,11 @@ Written here instead of taken from a library:
   are in `online/` and `local/` next to them.
 - Decisions are plain functions in `features/tournaments/view.ts`: `roundName` (Final, Semi-finals...), `canJoin`,
   `canLeave`, `canStart`, `canCancel` (which buttons show), `pairingToPlay`, `countMatches`.
-- Online registration (list, create, join, leave, cancel) talks to the real backend. Starting is not built there yet:
-  `isStartUnavailable` recognises the "no such route" answer to Start now and `Registration.tsx` says so, and a full
-  tournament that is still `registering` shows why it waits. Both messages disappear by themselves once the backend
-  starts tournaments, so nothing changes in the frontend then. `TournamentPage` checks the address with `isUuid`
-  (`lib/ids.ts`) before asking the server.
-- A player's name links to their profile only when tournaments and profiles come from the same place (`sameWorld` in
-  `config.ts`): a real player has no demo profile, and the other way round.
+- Online tournaments (list, create, join, leave, cancel, start, the bracket and its matches) all talk to the real
+  backend, which also writes "your match is ready" in the chat of the two players. `isStartUnavailable` and its
+  message in `Registration.tsx` date from before the backend could start a tournament; with this backend they never
+  show. `TournamentPage` checks the address with `isUuid` (`lib/ids.ts`) before asking the server.
+- Each registered player's name links to their profile.
 - The same-screen tournament is saved in the browser (`useLocalTournament.ts`, key `local-tournament`) after every
   result. Coming back to an unfinished one shows "Resume your tournament?" first. A match left halfway is not saved:
   only results are.
@@ -242,8 +238,7 @@ Written here instead of taken from a library:
   refreshed every 15 seconds) and passes the position as the optional `board` prop. That is at most 12 extra requests
   per page, well under the backend's limit.
 - The live list asks again every 5 seconds, even when live events are on (`features/spectate/hooks.ts`): those events
-  only cover matches you play or watch, never a new match of other people. The demo world starts with a few live
-  matches, so Home and Watch show the same count from the first second.
+  only cover matches you play or watch, never a new match of other people.
 - History keeps its filter and page in the address (`historyQuery.ts`). Each row has one big link to the match and a
   Replay link above it (no link inside a link). Match rows follow the width of their list (`@container`), because the
   same list is shown full width in History and in a narrow card on the home page.
@@ -319,24 +314,15 @@ through `src/app/extensions.ts`, a short list that Settings reads (empty when th
 Remove it: `rm -r src/features/backdrop` and delete that one line in `src/main.tsx`. `npm run typecheck`, `npm test`
 and `npm run build` pass after that (checked). The lines about `backdrop` in `index.html` can stay.
 
-## 7. The demo server
+## 7. Where the data comes from
 
-Some pages need backend routes that do not exist yet (players, friends, chat, spectating; the list is in
-[`api-contract.md`](api-contract.md)). Until they do, `src/demo/` answers those routes inside the browser with made-up
-players saved in `localStorage`. It sits in front of the network (`setTransport` in `lib/api/http.ts`): requests for
-the features listed in `VITE_DEMO_FEATURES` are answered there; everything else (login, two-factor, real matches) goes
-to the backend. A banner says that demo data is in use, with a Reset button.
+Every page that shows players, friends, chat, matches or tournaments reads them from the real backend: every route in
+[`api-contract.md`](api-contract.md) is served there. Only the games on one screen, the games against the computer
+and the same-screen tournament run in the browser alone, as the subject allows.
 
-Online tournament registration (list, create, join, leave, cancel) is served by the backend, so `tournaments` is no
-longer in the default list (`DEFAULT_DEMO_FEATURES` in `src/config.ts`). The root `docker-compose.yml` writes the list
-out, so it must lose `tournaments` too; listing it again brings the demo tournaments back. Starting a tournament and
-its bracket still need the backend (see section 10).
-
-When the backend serves a feature, remove it from `VITE_DEMO_FEATURES`. When none is left, the `src/demo` folder can be
-deleted with the lines that load it in `main.tsx` and `layout/DemoBanner.tsx`.
-
-Be honest about it at the evaluation: a page on demo data looks finished but does not count for a module until the
-backend serves it (subject, page 11).
+While the backend was being written, an in-browser demo server answered the missing routes with made-up players. It
+was removed once chat, the last missing part, was built. What remains of that time is `setTransport` in
+`lib/api/http.ts`, which the tests use to answer API calls with prepared data (`src/test/fakeApi.ts`).
 
 ## 8. Tests and checks
 
@@ -414,16 +400,14 @@ After a change: `npm run typecheck && npm test`.
 
 ## 10. Known limits
 
-- Pages on demo data (players, friends, chat, spectating) need the backend routes listed in
-  [`api-contract.md`](api-contract.md) before they count.
 - The backend does not yet send `twoFactorEnabled` with the user, so Settings shows both two-factor buttons with a hint.
-- Opening a shared match link before joining makes the browser print one "404" line in the console, because the backend
-  only lets players read a match (`GET /matches/:id`). The page then offers to join. The same rule means only the
-  players can replay a match with the real backend.
-- The backend allows 100 requests a minute per route and per address; several busy tabs on one computer can reach it
-  until live events replace polling. The app retries and keeps the logged-in user when it happens.
+- The backend allows 100 requests a minute per route and per address. With live events on, a minute of chat between
+  two windows on one computer uses about 40 of them, but many busy tabs or fast reloads on one computer can still reach
+  it. The app retries and keeps the logged-in user when it happens.
+- Any answer of 400 or more prints a red line in Chrome's console, even an expected one, such as a blocked player
+  trying to send a message (`403 BLOCKED`).
 - Tested in Chromium only. Firefox and Safari (or Edge) must be checked by hand for the browser support module.
 - On a 1280 by 900 screen the 3D board is a little taller than the window, so the page scrolls slightly in 3D.
-- On a 1280 by 800 laptop screen the game board starts about 400 px from the top (header, demo banner, title, players,
-  status, 2D / 3D switch), so the page scrolls about 160 px to see all of it. The board is already as large as the
+- On a 1280 by 800 laptop screen the game board starts about 355 px from the top (header, title, players, status,
+  2D / 3D switch), so the page scrolls about 115 px to see all of it. The board is already as large as the
   screen allows; making it fit would need a smaller header and cards, not a smaller board.
