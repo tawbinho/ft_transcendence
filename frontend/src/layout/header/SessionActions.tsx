@@ -7,15 +7,15 @@ import { AccountMenu } from './AccountMenu';
 /**
  * The right end of the bar: the avatar menu for a member, Log in and Sign up
  * for a visitor. While the answer is on its way a grey circle stands in (no
- * flash of "Log in"); if it never came (server down) nothing is shown: the app asks again when the tab
- * is focused again.
+ * flash of "Log in"). If it never came (server down) the person gets Log in and
+ * Sign up too, so they are never left without a way in; the app asks again when
+ * the tab is shown again and the bar switches to the avatar if they are a member.
  */
 export function SessionActions({ session }: { session: Session }) {
   const { t } = useTranslation();
 
   if (session.status === 'member') return <AccountMenu user={session.user} />;
   if (session.status === 'loading') return <Skeleton className="size-9 rounded-full" />;
-  if (session.status === 'failed') return null;
   return (
     <>
       <Link to="/login" className={buttonClass({ variant: 'ghost', size: 'sm' })}>

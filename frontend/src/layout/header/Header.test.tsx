@@ -117,7 +117,7 @@ describe('while the session is unknown', () => {
     expect(await screen.findAllByRole('link', { name: 'Log in' })).not.toHaveLength(0);
   });
 
-  it('shows no Log in and no button when the session could not be loaded, and recovers when the tab is shown again', async () => {
+  it('shows Log in and Sign up when the session could not be loaded, and recovers when the tab is shown again', async () => {
     let up = false;
     // The server is down until `up` is set.
     fakeApi({
@@ -126,13 +126,15 @@ describe('while the session is unknown', () => {
     });
     const { queryClient } = renderWithProviders(<Header />);
     await waitFor(() => expect(queryClient.getQueryState(authKeys.me)?.status).toBe('error'));
-    expect(screen.queryByRole('link', { name: 'Log in' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Log in' })).not.toHaveLength(0);
+    expect(screen.getAllByRole('link', { name: 'Sign up' })).not.toHaveLength(0);
     expect(screen.queryByRole('button', { name: /Try again/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Account menu/ })).not.toBeInTheDocument();
 
     up = true;
     window.dispatchEvent(new Event('visibilitychange'));
     expect(await screen.findByRole('button', { name: /Account menu/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Log in' })).not.toBeInTheDocument();
   });
 
   it('keeps a member a member when the next /auth/me fails', async () => {

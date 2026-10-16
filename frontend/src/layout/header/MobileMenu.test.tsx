@@ -9,6 +9,7 @@ import { MobileMenu } from './MobileMenu';
 
 const member: Session = { status: 'member', user: makeUser() };
 const visitor: Session = { status: 'visitor' };
+const unknown: Session = { status: 'failed' };
 const noCounts = { chat: 0, friends: 0 };
 
 function renderMenu(session: Session, counts = noCounts) {
@@ -116,5 +117,16 @@ describe('the phone menu for a visitor', () => {
     expect(you.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
     expect(you.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup');
     expect(screen.queryByRole('link', { name: 'Chat' })).not.toBeInTheDocument();
+  });
+});
+
+describe('the phone menu when the server did not say who is logged in', () => {
+  it('still shows Log in and Sign up', async () => {
+    const { events } = renderMenu(unknown);
+    await openMenu(events);
+
+    const you = within(screen.getByRole('group', { name: 'You' }));
+    expect(you.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+    expect(you.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup');
   });
 });
