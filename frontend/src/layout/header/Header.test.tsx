@@ -147,3 +147,22 @@ describe('while the session is unknown', () => {
     expect(screen.queryByRole('link', { name: 'Log in' })).not.toBeInTheDocument();
   });
 });
+
+describe('the phone bar for a visitor', () => {
+  it('has Log in and Sign up next to the menu button, not only inside the menu', async () => {
+    fakeApi({ 'GET /auth/me': null });
+    renderWithProviders(<Header />);
+
+    // The phone part of the bar is the one that is not the wide-screen part (those links are
+    // hidden by CSS, which jsdom ignores, so both are in the page): the menu is still closed here.
+    expect(await screen.findAllByRole('link', { name: 'Log in' })).toHaveLength(2);
+    expect(screen.getAllByRole('link', { name: 'Sign up' })).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Open menu' })).toBeInTheDocument();
+  });
+
+  it('keeps the logo link named even though its text is hidden on phones', async () => {
+    fakeApi({ 'GET /auth/me': null });
+    renderWithProviders(<Header />);
+    expect(await screen.findByRole('link', { name: 'Connect Four' })).toHaveAttribute('href', '/');
+  });
+});

@@ -151,6 +151,8 @@ Written here instead of taken from a library:
   Escape, a click outside and the focus going back to the button. Where there is room (Settings, the phone menu)
   language and appearance are rows of buttons (`LanguagePicker`, `ColorSchemePicker`), like the accent color. Native
   `<select>` is kept for form fields (sort order, the history filter on phones).
+- On phones a visitor (or an unknown session) sees Log in and Sign up in the bar next to the menu button; the name beside
+  the logo is hidden then, so both fit at 320px in English, French and Arabic. A member sees chat and the menu button.
 - The phone menu dims the page behind it; a tap on the dim layer, Escape or a click outside closes it.
 - `features/auth/session.ts` turns the answer of `/auth/me` into four states: loading, visitor, member, failed. A
   member whose later check fails stays a member, because the cache keeps the last answer.
