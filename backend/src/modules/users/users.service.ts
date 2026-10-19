@@ -131,6 +131,30 @@ export class UsersService {
     return this.users.findOneBy({ email });
   }
 
+  async deleteById(id: string): Promise<void> {
+    await this.users.delete({ id });
+  }
+
+  // Email verification and password reset state (see AuthService).
+  async update(
+    id: string,
+    data: Partial<
+      Pick<
+        User,
+        | 'emailVerifiedAt'
+        | 'emailVerifyHash'
+        | 'emailVerifyExpiresAt'
+        | 'emailVerifyAttempts'
+        | 'passwordHash'
+        | 'passwordResetHash'
+        | 'passwordResetExpiresAt'
+        | 'passwordResetAttempts'
+      >
+    >,
+  ): Promise<void> {
+    await this.users.update({ id }, data);
+  }
+
   findByDisplayName(displayName: string): Promise<User | null> {
     return this.users.findOneBy({ displayName });
   }

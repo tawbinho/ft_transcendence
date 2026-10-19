@@ -6,6 +6,7 @@ import { UsersModule } from '../users/users.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { Session } from './entities/session.entity.js';
+import { MailService } from './email/mail.service.js';
 import { SessionGuard } from './session.guard.js';
 import { SessionsService } from './sessions.service.js';
 import { BackupCodesService } from './two-factor/backup-codes.service.js';
@@ -30,6 +31,7 @@ import { TwoFactorService } from './two-factor/two-factor.service.js';
     BackupCodesService,
     SecretCipher,
     SessionGuard,
+    MailService,
   ],
   // Other modules import AuthModule to use @UseGuards(SessionGuard), and the
   // WebSocket gateway will use SessionsService to authenticate a connection.

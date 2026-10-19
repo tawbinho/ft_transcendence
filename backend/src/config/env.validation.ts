@@ -19,6 +19,8 @@ export interface Env {
   DISCONNECT_GRACE_SECONDS: number; // how long a player may stay disconnected from a running match
   TOURNAMENT_TURN_TIMEOUT_SECONDS: number; // a tournament player who does not move in this time loses
   AVATAR_DIR: string; // folder where uploaded profile pictures are stored
+  SMTP_USER: string; // Gmail address that sends the verification emails ('' = just log the link)
+  SMTP_PASSWORD: string; // Gmail app password
 }
 
 // Returns the variable if it is a non-empty string, otherwise stops the app.
@@ -90,5 +92,7 @@ export function validateEnv(config: Record<string, unknown>): Env {
       typeof config.AVATAR_DIR === 'string' && config.AVATAR_DIR !== ''
         ? config.AVATAR_DIR
         : './uploads/avatars',
+    SMTP_USER: typeof config.SMTP_USER === 'string' ? config.SMTP_USER : '',
+    SMTP_PASSWORD: typeof config.SMTP_PASSWORD === 'string' ? config.SMTP_PASSWORD : '',
   };
 }

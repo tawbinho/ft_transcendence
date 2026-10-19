@@ -50,6 +50,32 @@ export class User {
   @Column({ name: 'last_seen_at', type: 'timestamptz', nullable: true })
   lastSeenAt: Date | null;
 
+  // When the user clicked the link sent to their email. null: not verified.
+  @Column({ name: 'email_verified_at', type: 'timestamptz', nullable: true })
+  emailVerifiedAt: Date | null;
+
+  // SHA-256 of the 6-digit code emailed to the user (never the code itself),
+  // when it stops working, and how many wrong guesses it has had.
+  // null once used or never issued.
+  @Column({ name: 'email_verify_hash', type: 'text', nullable: true })
+  emailVerifyHash: string | null;
+
+  @Column({ name: 'email_verify_expires_at', type: 'timestamptz', nullable: true })
+  emailVerifyExpiresAt: Date | null;
+
+  @Column({ name: 'email_verify_attempts', type: 'int', default: 0 })
+  emailVerifyAttempts: number;
+
+  // Forgot password: same idea as the email verification code above.
+  @Column({ name: 'password_reset_hash', type: 'text', nullable: true })
+  passwordResetHash: string | null;
+
+  @Column({ name: 'password_reset_expires_at', type: 'timestamptz', nullable: true })
+  passwordResetExpiresAt: Date | null;
+
+  @Column({ name: 'password_reset_attempts', type: 'int', default: 0 })
+  passwordResetAttempts: number;
+
   // Filled by the database when the row is inserted.
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

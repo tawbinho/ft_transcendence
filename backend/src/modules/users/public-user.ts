@@ -11,6 +11,7 @@ export interface PublicUser {
   displayName: string;
   avatarUrl: string | null;
   locale: string;
+  emailVerified: boolean;
 }
 
 export function toPublicUser(user: User): PublicUser {
@@ -20,5 +21,6 @@ export function toPublicUser(user: User): PublicUser {
     displayName: user.displayName,
     avatarUrl: user.avatarUrl,
     locale: user.locale,
+    emailVerified: user.emailVerifiedAt !== null,
   };
 }

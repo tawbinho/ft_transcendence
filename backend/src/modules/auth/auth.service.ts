@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { QueryFailedError } from 'typeorm';
 import { AppError } from '../../common/errors/app-error.js';
@@ -7,6 +7,8 @@ import { toPublicUser, type PublicUser } from '../users/public-user.js';
 import { UsersService } from '../users/users.service.js';
 import type { LoginDto } from './dto/login.dto.js';
 import type { SignupDto } from './dto/signup.dto.js';
+import { MailService } from './email/mail.service.js';
+import { checkCode, newVerificationCode } from './email/verification-code.js';
 import { SessionsService, type IssuedSession } from './sessions.service.js';
 import { TwoFactorService } from './two-factor/two-factor.service.js';
 
@@ -38,9 +40,23 @@ export class AuthService {
     private readonly users: UsersService,
     private readonly sessions: SessionsService,
     private readonly twoFactor: TwoFactorService,
+    private readonly mail: MailService,
   ) {}
 
-  async signup(dto: SignupDto): Promise<AuthResult> {
+  private readonly log = new Logger(AuthService.name);
+
+  // Creates the account UNVERIFIED and emails a code. It does not log in:
+  // the person must prove they own the email first (see login).
+  async signup(dto: SignupDto): Promise<void> {
+    // 0. An account that never verified its email proves nothing, so it must
+    //    not block the real owner of that email (or name): replace it.
+    for (const old of [
+      await this.users.findByEmail(dto.email),
+      await this.users.findByDisplayName(dto.displayName),
+    ]) {
+      if (old && !old.emailVerifiedAt && !old.isBot) await this.users.deleteById(old.id);
+    }
+
     // 1. Friendly early check. The email was already trimmed and lowercased
     //    by the DTO, so "A@x.com" and "a@x.com" are the same account.
     if (await this.users.findByEmail(dto.email)) {
@@ -72,8 +88,19 @@ export class AuthService {
       throw this.translateUniqueViolation(error) ?? error;
     }
 
-    // 4. Signing up also logs the user in.
-    return { user: toPublicUser(user), session: await this.sessions.create(user.id) };
+    // 4. Send the verification email. If it cannot be sent the account is
+    //    useless (nobody could verify it), so remove it and let them retry.
+    try {
+      await this.sendVerification(user.id);
+    } catch (error) {
+      this.log.warn(`Verification email failed: ${String(error)}`);
+      await this.users.deleteById(user.id);
+      throw new AppError(
+        'EMAIL_SEND_FAILED',
+        'We could not send the verification email, please try again',
+        502,
+      );
+    }
   }
 
   async login(dto: LoginDto): Promise<AuthResult | TwoFactorRequired> {
@@ -88,6 +115,19 @@ export class AuthService {
 
     if (!user || !user.passwordHash || !passwordOk) {
       throw new AppError('INVALID_CREDENTIALS', 'Email or password is incorrect', 401);
+    }
+
+    // Password correct, but the email is not proven yet: no login. A new code
+    // is sent, so a lost email is not a dead end.
+    if (!user.emailVerifiedAt) {
+      await this.sendVerification(user.id).catch((e) =>
+        this.log.warn(`Verification email failed: ${String(e)}`),
+      );
+      throw new AppError(
+        'EMAIL_NOT_VERIFIED',
+        'Please verify your email first: we sent you a new code',
+        403,
+      );
     }
 
     // Password correct. With 2FA on, that is NOT enough to log in: create a
@@ -143,6 +183,119 @@ export class AuthService {
 
   disableTwoFactor(userId: string, code: string): Promise<void> {
     return this.twoFactor.disable(userId, code);
+  }
+
+  // Stores the hash of a fresh 6-digit code on the user and emails the code.
+  async sendVerification(userId: string): Promise<void> {
+    const user = await this.users.findById(userId);
+    if (!user || user.emailVerifiedAt) return;
+    const { code, hash, expiresAt } = newVerificationCode(user.id);
+    await this.users.update(user.id, {
+      emailVerifyHash: hash,
+      emailVerifyExpiresAt: expiresAt,
+      emailVerifyAttempts: 0,
+    });
+    await this.mail.sendVerification(user.email, code);
+  }
+
+  // The emailed code marks the email as verified; it works once, for 15
+  // minutes, and dies after MAX_ATTEMPTS wrong guesses. Every failure gives the
+  // same answer, so it does not reveal which emails exist.
+  async verifyEmail(email: string, code: string): Promise<void> {
+    const invalid = new AppError(
+      'INVALID_VERIFICATION_CODE',
+      'This code is wrong or expired',
+      400,
+    );
+    const user = await this.users.findByEmail(email);
+    if (!user || user.emailVerifiedAt) throw invalid;
+    const result = checkCode(
+      {
+        hash: user.emailVerifyHash,
+        expiresAt: user.emailVerifyExpiresAt,
+        attempts: user.emailVerifyAttempts,
+      },
+      user.id,
+      code,
+    );
+    if (result !== 'ok') {
+      if (result === 'wrong') {
+        await this.users.update(user.id, { emailVerifyAttempts: user.emailVerifyAttempts + 1 });
+      }
+      throw invalid;
+    }
+    await this.users.update(user.id, {
+      emailVerifiedAt: new Date(),
+      emailVerifyHash: null,
+      emailVerifyExpiresAt: null,
+      emailVerifyAttempts: 0,
+    });
+  }
+
+  // "Send me a new code". Always succeeds from the outside, so it cannot be
+  // used to find out which emails are registered.
+  async resendVerification(email: string): Promise<void> {
+    const user = await this.users.findByEmail(email);
+    if (!user || user.emailVerifiedAt || user.isBot) return;
+    await this.sendVerification(user.id).catch((e) =>
+      this.log.warn(`Verification email failed: ${String(e)}`),
+    );
+  }
+
+  // Forgot password, step 1: emails a 6-digit code. Always succeeds from the
+  // outside, so it cannot be used to find out which emails are registered.
+  // Unverified accounts get nothing (they must verify first), nor do accounts
+  // with no password (bots, OAuth).
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.users.findByEmail(email);
+    if (!user || !user.emailVerifiedAt || !user.passwordHash) {
+      // Silent for the client (no email enumeration), but the operator can see why.
+      this.log.log(
+        `Password reset skipped: ${!user ? 'no such account' : !user.emailVerifiedAt ? 'email not verified' : 'no password'}`,
+      );
+      return;
+    }
+    const { code, hash, expiresAt } = newVerificationCode(user.id);
+    await this.users.update(user.id, {
+      passwordResetHash: hash,
+      passwordResetExpiresAt: expiresAt,
+      passwordResetAttempts: 0,
+    });
+    await this.mail
+      .sendPasswordReset(user.email, code)
+      .then(() => this.log.log('Password reset code sent'))
+      .catch((e) => this.log.warn(`Password reset email failed: ${String(e)}`));
+  }
+
+  // Step 2: the code plus the new password. Same limits as the email
+  // verification code. Afterwards every existing login is ended, so whoever
+  // had access with the old password is out.
+  async resetPassword(email: string, code: string, password: string): Promise<void> {
+    const invalid = new AppError('INVALID_RESET_CODE', 'This code is wrong or expired', 400);
+    const user = await this.users.findByEmail(email);
+    if (!user) throw invalid;
+    const result = checkCode(
+      {
+        hash: user.passwordResetHash,
+        expiresAt: user.passwordResetExpiresAt,
+        attempts: user.passwordResetAttempts,
+      },
+      user.id,
+      code,
+    );
+    if (result !== 'ok') {
+      if (result === 'wrong') {
+        await this.users.update(user.id, { passwordResetAttempts: user.passwordResetAttempts + 1 });
+      }
+      throw invalid;
+    }
+    await this.users.update(user.id, {
+      passwordHash: await argon2.hash(password),
+      passwordResetHash: null,
+      passwordResetExpiresAt: null,
+      passwordResetAttempts: 0,
+    });
+    await this.sessions.revokeAll(user.id);
   }
 
   // Ends the login behind this cookie, immediately. Works with no cookie too.

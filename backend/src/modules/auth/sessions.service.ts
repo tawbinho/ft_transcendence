@@ -82,6 +82,11 @@ export class SessionsService {
     await this.sessions.delete({ tokenHash: this.hash(token) });
   }
 
+  // Password reset: every login of this user ends, on every device.
+  async revokeAll(userId: string): Promise<void> {
+    await this.sessions.delete({ userId });
+  }
+
   // 2FA code accepted: replace the pending session by a brand-new full one.
   // The token CHANGES when privileges change, so a token an attacker may have
   // seen earlier (session fixation) never becomes a real login. The delete is

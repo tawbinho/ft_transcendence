@@ -38,6 +38,8 @@ import {
   TwoFactorSetupResponse,
 } from './dto/auth.responses.js';
 import { LoginDto } from './dto/login.dto.js';
+import { ResetPasswordDto } from './dto/reset-password.dto.js';
+import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto.js';
 import { SignupDto } from './dto/signup.dto.js';
 import {
   TwoFactorCodeDto,
@@ -62,20 +64,17 @@ const strict = (limit: number) => ({ default: { limit, ttl: 60_000 } });
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
-  // POST /api/auth/signup: creates the account AND logs the user in.
-  // The global interceptor wraps the answer as { data: { user } }.
+  // POST /api/auth/signup: creates the account and emails a 6-digit
+  // code. It does NOT log in: login works only after the email is verified.
   @Post('signup')
   @Throttle(strict(5))
-  @ApiOperation({ summary: 'Create an account and log in' })
+  @ApiOperation({ summary: 'Create an account and email a verification code' })
   @ApiCreatedResponse({
-    type: SessionResponse,
-    description: 'Account created. Sets the `session` cookie.',
+    description: 'Account created, verification email sent. No session yet.',
   })
-  async signup(
-    @Body() dto: SignupDto,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<{ user: PublicUser }> {
-    return this.respondWithSession(res, await this.auth.signup(dto));
+  async signup(@Body() dto: SignupDto): Promise<{ verificationSent: true }> {
+    await this.auth.signup(dto);
+    return { verificationSent: true };
   }
 
   // POST /api/auth/login: checks the password.
@@ -219,6 +218,48 @@ export class AuthController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<{ remaining: number }> {
     return { remaining: await this.auth.backupCodesRemaining(user.id) };
+  }
+
+  // POST /api/auth/verify-email: the 6-digit code from the email.
+  @Post('verify-email')
+  @Throttle(strict(10))
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Verify the email with the 6-digit code' })
+  @ApiOkResponse({ description: 'Email verified. `data` is null.' })
+  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<void> {
+    await this.auth.verifyEmail(dto.email, dto.code);
+  }
+
+  // POST /api/auth/resend-verification: a new code. Always answers 200.
+  @Post('resend-verification')
+  @Throttle(strict(3))
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Send the verification code again' })
+  @ApiOkResponse({ description: 'Sent if the account exists and is unverified.' })
+  async resendVerification(@Body() dto: ResendVerificationDto): Promise<void> {
+    await this.auth.resendVerification(dto.email);
+  }
+
+  // POST /api/auth/forgot-password: emails a reset code. Always answers 200.
+  @Post('forgot-password')
+  @Throttle(strict(3))
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Email a password reset code' })
+  @ApiOkResponse({ description: 'Sent if the account exists. `data` is null.' })
+  async forgotPassword(@Body() dto: ResendVerificationDto): Promise<void> {
+    await this.auth.forgotPassword(dto.email);
+  }
+
+  // POST /api/auth/reset-password: the code + a new password. Ends every login.
+  @Post('reset-password')
+  @Throttle(strict(10))
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Set a new password with the emailed code' })
+  @ApiOkResponse({
+    description: 'Password changed, all sessions ended. Error: INVALID_RESET_CODE.',
+  })
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+    await this.auth.resetPassword(dto.email, dto.code, dto.password);
   }
 
   // POST /api/auth/logout: ends the login immediately (the session row is
