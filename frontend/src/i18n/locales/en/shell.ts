@@ -37,7 +37,6 @@ export const shellMessages = {
     privacy: 'Privacy policy',
     terms: 'Terms of service',
     project: 'A 42 ft_transcendence project.',
-    design: 'Design system',
     nav: 'Site information',
   },
 };

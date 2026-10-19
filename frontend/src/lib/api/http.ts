@@ -83,16 +83,6 @@ export const sendOverNetwork: Transport = async ({ method, path, query, body, si
   return { status: response.status, statusText: response.statusText, payload: await readJson(response) };
 };
 
-let transport: Transport = sendOverNetwork;
-
-/**
- * Replaces the network. Tests use it to answer API calls with prepared data
- * (src/test/fakeApi.ts).
- */
-export function setTransport(next: Transport): void {
-  transport = next;
-}
-
 /**
  * Unwraps the backend's envelope: `{ data }` on success,
  * `{ error: { code, message } }` on failure. Any failure is thrown as an
@@ -114,7 +104,7 @@ export function unwrap<T>({ status, statusText, payload }: ApiResponse): T {
 
 /** Calls the API and returns the `data` of its answer (see {@link unwrap}). */
 export async function request<T>(path: string, options: Omit<ApiRequest, 'path'> = { method: 'GET' }): Promise<T> {
-  return unwrap<T>(await transport({ ...options, path }));
+  return unwrap<T>(await sendOverNetwork({ ...options, path }));
 }
 
 type Options = Omit<ApiRequest, 'method' | 'path' | 'body'>;

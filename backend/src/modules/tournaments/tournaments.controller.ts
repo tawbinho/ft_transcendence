@@ -10,13 +10,6 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiCookieAuth,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import {
   CurrentUser,
@@ -40,8 +33,6 @@ import {
 // The doorway to tournaments: it declares the routes, validates the input and
 // calls the service. No tournament logic here. Every route needs a logged-in
 // user (the guard on the whole class), and all routes are under /api/tournaments.
-@ApiTags('tournaments')
-@ApiCookieAuth('session')
 @UseGuards(SessionGuard)
 @Controller('tournaments')
 export class TournamentsController {
@@ -49,12 +40,6 @@ export class TournamentsController {
 
   // GET /api/tournaments: the list screen.
   @Get()
-  @ApiOperation({
-    summary: 'List tournaments',
-    description:
-      'Newest first. Filter with `status`, paginate with `limit` and `offset`.',
-  })
-  @ApiOkResponse({ type: TournamentPageResponse })
   list(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListTournamentsQuery,
@@ -66,12 +51,6 @@ export class TournamentsController {
   // registered at once.
   @Post()
   @Throttle({ default: { limit: CREATE_LIMIT_PER_MINUTE, ttl: 60_000 } })
-  @ApiOperation({
-    summary: 'Create a tournament',
-    description:
-      'A single-elimination tournament with 4 or 8 places. The creator takes the first place.',
-  })
-  @ApiCreatedResponse({ type: TournamentResponse })
   create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateTournamentDto,
@@ -81,8 +60,6 @@ export class TournamentsController {
 
   // GET /api/tournaments/:id: the tournament page.
   @Get(':id')
-  @ApiOperation({ summary: 'One tournament, with its registered players' })
-  @ApiOkResponse({ type: TournamentResponse })
   get(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -92,12 +69,6 @@ export class TournamentsController {
 
   // DELETE /api/tournaments/:id: the creator cancels it. Answers `data: null`.
   @Delete(':id')
-  @ApiOperation({
-    summary: 'Cancel a tournament',
-    description:
-      'Creator only, while registration is open. Deletes the tournament.',
-  })
-  @ApiOkResponse({ description: 'Cancelled. `data` is null.' })
   cancel(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -109,12 +80,6 @@ export class TournamentsController {
   // known from the session and the tournament from the URL.
   @Post(':id/join')
   @HttpCode(200)
-  @ApiOperation({
-    summary: 'Register',
-    description:
-      'Errors: ALREADY_JOINED, TOURNAMENT_FULL, TOURNAMENT_NOT_OPEN (registration is over).',
-  })
-  @ApiOkResponse({ type: TournamentResponse })
   join(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -125,12 +90,6 @@ export class TournamentsController {
   // POST /api/tournaments/:id/start: the "Start now" button (creator only).
   @Post(':id/start')
   @HttpCode(200)
-  @ApiOperation({
-    summary: 'Start before it is full',
-    description:
-      'Creator only, with at least 3 players. The players are shuffled into a bracket of 4 or 8 places (empty places are byes) and the first matches start at once. Errors: NOT_CREATOR, NOT_ENOUGH_PLAYERS, TOURNAMENT_NOT_OPEN.',
-  })
-  @ApiOkResponse({ type: TournamentResponse })
   start(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -141,12 +100,6 @@ export class TournamentsController {
   // POST /api/tournaments/:id/leave: the "Leave" button.
   @Post(':id/leave')
   @HttpCode(200)
-  @ApiOperation({
-    summary: 'Leave a tournament',
-    description:
-      'Errors: NOT_JOINED, CREATOR_CANNOT_LEAVE (the creator cancels instead), TOURNAMENT_NOT_OPEN.',
-  })
-  @ApiOkResponse({ type: TournamentResponse })
   leave(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,

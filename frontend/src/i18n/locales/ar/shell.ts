@@ -39,7 +39,6 @@ export const shellMessages: ShellMessages = {
     privacy: 'سياسة الخصوصية',
     terms: 'شروط الاستخدام',
     project: 'مشروع ft_transcendence من 42.',
-    design: 'نظام التصميم',
     nav: 'معلومات الموقع',
   },
 };

@@ -14,9 +14,6 @@ export function Footer() {
           <Link to="/terms" className="py-1 hover:text-fg hover:underline">
             {t('footer.terms')}
           </Link>
-          <Link to="/design" className="py-1 hover:text-fg hover:underline">
-            {t('footer.design')}
-          </Link>
         </nav>
       </div>
     </footer>

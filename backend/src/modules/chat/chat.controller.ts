@@ -9,13 +9,6 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiCookieAuth,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import {
   CurrentUser,
@@ -41,8 +34,6 @@ import type {
 // WHY THIS FILE EXISTS
 // The doorway to the chat: routes, input checks, then the service. Every route
 // needs a logged-in user, and `:userId` is always the OTHER player.
-@ApiTags('chat')
-@ApiCookieAuth('session')
 @UseGuards(SessionGuard)
 @Controller('chat')
 export class ChatController {
@@ -50,12 +41,6 @@ export class ChatController {
 
   // GET /api/chat/conversations: the Messages page list.
   @Get('conversations')
-  @ApiOperation({
-    summary: 'My conversations',
-    description:
-      'One per player you have at least one message with, latest message first. Not paginated.',
-  })
-  @ApiOkResponse({ type: [ConversationResponse] })
   conversations(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ConversationView[]> {
@@ -64,12 +49,6 @@ export class ChatController {
 
   // GET /api/chat/:userId/messages: one conversation, newest page first.
   @Get(':userId/messages')
-  @ApiOperation({
-    summary: 'Messages with a player',
-    description:
-      'Without `before`: the latest `limit` messages. With `before` (a message id of this conversation): the ones just before it. Errors: USER_NOT_FOUND, VALIDATION_ERROR.',
-  })
-  @ApiOkResponse({ type: MessagePageResponse })
   history(
     @CurrentUser() user: AuthenticatedUser,
     @Param('userId', ParseUUIDPipe) userId: string,
@@ -81,12 +60,6 @@ export class ChatController {
   // POST /api/chat/:userId/messages: send a text or an invitation.
   @Post(':userId/messages')
   @Throttle({ default: { limit: SEND_LIMIT_PER_MINUTE, ttl: 60_000 } })
-  @ApiOperation({
-    summary: 'Send a message or an invitation',
-    description:
-      'Send `{ body }` (1 to 500 characters) OR `{ matchId }` (a waiting match you created for this player). Errors: BLOCKED, INVALID_INVITE, USER_NOT_FOUND, VALIDATION_ERROR.',
-  })
-  @ApiCreatedResponse({ type: MessageResponse })
   send(
     @CurrentUser() user: AuthenticatedUser,
     @Param('userId', ParseUUIDPipe) userId: string,
@@ -98,11 +71,6 @@ export class ChatController {
   // POST /api/chat/:userId/read: "I read what they sent".
   @Post(':userId/read')
   @HttpCode(200)
-  @ApiOperation({
-    summary: 'Mark a conversation as read',
-    description: 'The other player is told live (`chat:read`), so they see "Seen".',
-  })
-  @ApiOkResponse({ type: ReadResultResponse })
   read(
     @CurrentUser() user: AuthenticatedUser,
     @Param('userId', ParseUUIDPipe) userId: string,
@@ -113,11 +81,6 @@ export class ChatController {
   // POST /api/chat/:userId/typing: "I am typing". Stores nothing.
   @Post(':userId/typing')
   @HttpCode(200)
-  @ApiOperation({
-    summary: '"Is typing" signal',
-    description: 'Only relays `chat:typing` to the other player. `data` is null.',
-  })
-  @ApiOkResponse({ description: 'Signal sent. `data` is null.' })
   typing(
     @CurrentUser() user: AuthenticatedUser,
     @Param('userId', ParseUUIDPipe) userId: string,

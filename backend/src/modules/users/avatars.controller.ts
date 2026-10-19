@@ -1,5 +1,4 @@
 import { Controller, Get, Param, Res } from '@nestjs/common';
-import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { AppError } from '../../common/errors/app-error.js';
@@ -11,7 +10,6 @@ import { AVATAR_FILE_PATTERN } from './user.constants.js';
 // only forwards /api and /socket.io to the backend, which is why they live
 // under /api. No login needed: the file names are random and unguessable, and
 // a picture shown in the page must load in a plain <img>.
-@ApiTags('users')
 @Controller('avatars')
 export class AvatarsController {
   constructor(private readonly avatars: AvatarService) {}
@@ -20,8 +18,6 @@ export class AvatarsController {
   // otherwise eat the 100 requests a minute of a normal user.
   @SkipThrottle()
   @Get(':file')
-  @ApiOperation({ summary: 'A profile picture (the file, not JSON)' })
-  @ApiProduces('image/webp', 'image/png', 'image/jpeg')
   async get(@Param('file') file: string, @Res() res: Response): Promise<void> {
     // Only names WE generate are accepted: no "../" can get through.
     if (!AVATAR_FILE_PATTERN.test(file)) throw this.notFound();

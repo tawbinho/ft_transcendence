@@ -33,7 +33,6 @@ const publicRoutes: RouteObject[] = [
   { path: 'verify-email', lazy: () => import('@/pages/auth/VerifyEmailPage').then((m) => ({ Component: m.VerifyEmailPage })) },
   { path: 'privacy', lazy: () => import('@/pages/info/legal/LegalPage').then((m) => ({ Component: m.PrivacyPage })) },
   { path: 'terms', lazy: () => import('@/pages/info/legal/LegalPage').then((m) => ({ Component: m.TermsPage })) },
-  { path: 'design', lazy: () => import('@/pages/info/DesignPage').then((m) => ({ Component: m.DesignPage })) },
 ];
 
 /** Visitors only: a logged-in user is sent on to where they were heading. */

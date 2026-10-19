@@ -8,13 +8,6 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiCookieAuth,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import {
@@ -59,7 +52,6 @@ const strict = (limit: number) => ({ default: { limit, ttl: 60_000 } });
 //
 // `@Res({ passthrough: true })` gives access to the response (to set
 // cookies) while still letting Nest send the returned value as usual.
-@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
@@ -68,10 +60,6 @@ export class AuthController {
   // code. It does NOT log in: login works only after the email is verified.
   @Post('signup')
   @Throttle(strict(5))
-  @ApiOperation({ summary: 'Create an account and email a verification code' })
-  @ApiCreatedResponse({
-    description: 'Account created, verification email sent. No session yet.',
-  })
   async signup(@Body() dto: SignupDto): Promise<{ verificationSent: true }> {
     await this.auth.signup(dto);
     return { verificationSent: true };
@@ -85,12 +73,6 @@ export class AuthController {
   @Post('login')
   @Throttle(strict(10))
   @HttpCode(200)
-  @ApiOperation({ summary: 'Log in with email and password' })
-  @ApiOkResponse({
-    type: LoginResponse,
-    description:
-      'Logged in (`session` cookie set), or twoFactorRequired when a 2FA code is still needed (the cookie then only works for /auth/2fa/verify, for 5 minutes).',
-  })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -109,13 +91,6 @@ export class AuthController {
   @Post('2fa/verify')
   @Throttle(strict(5))
   @HttpCode(200)
-  @ApiOperation({
-    summary: 'Finish a 2FA login with the 6-digit code or a backup code',
-  })
-  @ApiOkResponse({
-    type: SessionResponse,
-    description: 'Logged in. The `session` cookie is replaced by a full session.',
-  })
   async verifyTwoFactor(
     @Body() dto: TwoFactorOrBackupCodeDto,
     @Req() req: Request,
@@ -137,9 +112,6 @@ export class AuthController {
   @Throttle(strict(10))
   @HttpCode(200)
   @UseGuards(SessionGuard)
-  @ApiOperation({ summary: 'Start 2FA setup, returns a QR code' })
-  @ApiCookieAuth('session')
-  @ApiOkResponse({ type: TwoFactorSetupResponse })
   setupTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<{ qr: string; secret: string }> {
@@ -151,13 +123,6 @@ export class AuthController {
   @Throttle(strict(5))
   @HttpCode(200)
   @UseGuards(SessionGuard)
-  @ApiOperation({ summary: 'Turn 2FA on with a code from the app' })
-  @ApiCookieAuth('session')
-  @ApiOkResponse({
-    type: BackupCodesResponse,
-    description:
-      '2FA is now on. The 10 backup codes are returned, ONCE: keep them safe.',
-  })
   async enableTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: TwoFactorCodeDto,
@@ -171,11 +136,6 @@ export class AuthController {
   @Throttle(strict(5))
   @HttpCode(200)
   @UseGuards(SessionGuard)
-  @ApiOperation({
-    summary: 'Turn 2FA off (needs a valid code or a backup code)',
-  })
-  @ApiCookieAuth('session')
-  @ApiOkResponse({ description: '2FA is now off. `data` is null.' })
   async disableTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: TwoFactorOrBackupCodeDto,
@@ -189,13 +149,6 @@ export class AuthController {
   @Throttle(strict(5))
   @HttpCode(200)
   @UseGuards(SessionGuard)
-  @ApiOperation({
-    summary: 'Make new backup codes (the old ones stop working)',
-    description:
-      'Needs a valid code (app or backup). Errors: INVALID_2FA_CODE, TWO_FACTOR_NOT_ENABLED.',
-  })
-  @ApiCookieAuth('session')
-  @ApiOkResponse({ type: BackupCodesResponse })
   async regenerateBackupCodes(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: TwoFactorOrBackupCodeDto,
@@ -208,12 +161,6 @@ export class AuthController {
   // GET /api/auth/2fa/backup-codes: how many are left (never the codes).
   @Get('2fa/backup-codes')
   @UseGuards(SessionGuard)
-  @ApiOperation({
-    summary: 'How many backup codes are left',
-    description: 'Error: TWO_FACTOR_NOT_ENABLED.',
-  })
-  @ApiCookieAuth('session')
-  @ApiOkResponse({ type: BackupCodesRemainingResponse })
   async backupCodesRemaining(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<{ remaining: number }> {
@@ -224,8 +171,6 @@ export class AuthController {
   @Post('verify-email')
   @Throttle(strict(10))
   @HttpCode(200)
-  @ApiOperation({ summary: 'Verify the email with the 6-digit code' })
-  @ApiOkResponse({ description: 'Email verified. `data` is null.' })
   async verifyEmail(@Body() dto: VerifyEmailDto): Promise<void> {
     await this.auth.verifyEmail(dto.email, dto.code);
   }
@@ -234,8 +179,6 @@ export class AuthController {
   @Post('resend-verification')
   @Throttle(strict(3))
   @HttpCode(200)
-  @ApiOperation({ summary: 'Send the verification code again' })
-  @ApiOkResponse({ description: 'Sent if the account exists and is unverified.' })
   async resendVerification(@Body() dto: ResendVerificationDto): Promise<void> {
     await this.auth.resendVerification(dto.email);
   }
@@ -244,8 +187,6 @@ export class AuthController {
   @Post('forgot-password')
   @Throttle(strict(3))
   @HttpCode(200)
-  @ApiOperation({ summary: 'Email a password reset code' })
-  @ApiOkResponse({ description: 'Sent if the account exists. `data` is null.' })
   async forgotPassword(@Body() dto: ResendVerificationDto): Promise<void> {
     await this.auth.forgotPassword(dto.email);
   }
@@ -254,10 +195,6 @@ export class AuthController {
   @Post('reset-password')
   @Throttle(strict(10))
   @HttpCode(200)
-  @ApiOperation({ summary: 'Set a new password with the emailed code' })
-  @ApiOkResponse({
-    description: 'Password changed, all sessions ended. Error: INVALID_RESET_CODE.',
-  })
   async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
     await this.auth.resetPassword(dto.email, dto.code, dto.password);
   }
@@ -266,8 +203,6 @@ export class AuthController {
   // deleted) and clears the cookie. Works even if nobody is logged in.
   @Post('logout')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Log out' })
-  @ApiOkResponse({ description: 'Session ended, cookie cleared. `data` is null.' })
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -280,11 +215,6 @@ export class AuthController {
   // Deliberately NOT behind the guard: "am I logged in?" is a question whose
   // answer can be "no" without being an error (see AuthService.currentUser).
   @Get('me')
-  @ApiOperation({ summary: 'The logged-in user, or null if not logged in' })
-  @ApiOkResponse({
-    type: PublicUserResponse,
-    description: 'The user, or `data: null` when not logged in.',
-  })
   me(@Req() req: Request): Promise<PublicUser | null> {
     return this.auth.currentUser(req.cookies?.[SESSION_COOKIE] as string | undefined);
   }

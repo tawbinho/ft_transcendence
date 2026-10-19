@@ -13,7 +13,6 @@ import { settingsMessages } from './settings';
 import { communityMessages } from './community';
 import { watchMessages } from './watch';
 import { historyMessages } from './history';
-import { board3dMessages } from './board3d';
 import { infoMessages } from './info';
 
 export const en = {
@@ -28,7 +27,6 @@ export const en = {
   ...communityMessages,
   ...watchMessages,
   ...historyMessages,
-  ...board3dMessages,
   ...infoMessages,
 };
 

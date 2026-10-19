@@ -1,7 +1,6 @@
 /* ---------------------------------------------------------------------------
-   The stage: the box every game board stands in, 2D or 3D.
-   Both boards are drawn inside the same box, so switching between them moves
-   nothing, and the box is as wide as the cards above it.
+   The stage: the box every game board stands in.
+   Every board is drawn inside this box, and the box is as wide as the cards above it.
 
    --cols and --rows come from GameBoard (inline style).
    --------------------------------------------------------------------------- */
@@ -10,7 +9,7 @@
   width: 100%;
   border: 1px solid var(--c-border);
   border-radius: 1rem;
-  /* The same token the 3D scene uses as its backdrop (Board3DView). */
+  
   background: var(--c-surface-2);
   /* The shape of the board with the row above it, where the disc to drop is previewed
      (the extra 0.35 is the room for the gaps and the margin). On a phone the box is
@@ -30,7 +29,7 @@
   grid-area: 1 / 1;
 }
 
-/* The 3D board covers the whole box. The 2D board is as wide as the box (with 0.5rem
+/* The board is as wide as the box (with 0.5rem
    of room around it), or as wide as the height allows, and centred. */
 .board-stage > .board-frame {
   place-self: center;
