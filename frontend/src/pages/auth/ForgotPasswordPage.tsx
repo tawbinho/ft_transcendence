@@ -5,7 +5,12 @@ import { Alert, Button, OtpInput, TextField } from '@/components/ui';
 import { ResendCode } from '@/features/auth/components/ResendCode';
 import { PasswordField } from '@/features/auth/components/PasswordField';
 import { useForgotPassword, useResetPassword } from '@/features/auth/hooks';
-import { validateEmail, validateNewPassword, validatePasswordConfirmation } from '@/features/auth/validation';
+import {
+  validateCode,
+  validateEmail,
+  validateNewPassword,
+  validatePasswordConfirmation,
+} from '@/features/auth/validation';
 import { useErrorMessage } from '@/lib/errorMessage';
 import { AuthLayout } from '@/layout/AuthLayout';
 
@@ -26,7 +31,7 @@ export function ForgotPasswordPage() {
   const emailError = submitted ? validateEmail(email) : null;
   const passwordError = submitted ? validateNewPassword(password) : null;
   const confirmationError = submitted ? validatePasswordConfirmation(password, confirmation) : null;
-  const codeError = submitted && !/^\d{6}$/.test(code) ? 'validation.required' : null;
+  const codeError = submitted ? validateCode(code) : null;
 
   function sendCode(event: FormEvent) {
     event.preventDefault();
@@ -38,11 +43,7 @@ export function ForgotPasswordPage() {
   function changePassword(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
-    if (
-      !/^\d{6}$/.test(code) ||
-      validateNewPassword(password) ||
-      validatePasswordConfirmation(password, confirmation)
-    ) {
+    if (validateCode(code) || validateNewPassword(password) || validatePasswordConfirmation(password, confirmation)) {
       return;
     }
     reset.mutate({ email: email.trim(), code, password });
