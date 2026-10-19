@@ -27,7 +27,8 @@ says where to look in the code. The [README](../README.md) says how to run, test
    loaded lazily (`lazy: () => import(...)`), so the browser downloads a page's code only when it is opened.
 6. Member pages sit under `RequireAuth` (`src/app/guards.tsx`): it asks the backend who is logged in
    (`GET /api/auth/me`) and sends visitors to `/login`, remembering where they wanted to go. Login and signup sit
-   under `GuestOnly`, which sends a logged-in member on.
+   under `GuestOnly`, which sends a logged-in member on. The email code pages (`/verify-email`, `/forgot-password`)
+   are open to everyone.
 7. The page draws its components, and each component asks for the data it needs (section 3).
 
 ## 2. Where things live
@@ -158,6 +159,12 @@ Written here instead of taken from a library:
   member whose later check fails stays a member, because the cache keeps the last answer.
 - A visitor sent to `/login` from a member page reads "Log in to open Watch." (`features/auth/loginHint.ts`) and comes
   back there after logging in.
+- Signing up does not log in: the backend emails a 6-digit code and the app opens `/verify-email`
+  (`pages/auth/VerifyEmailPage.tsx`), where six boxes take it (`components/ui/OtpInput.tsx`, an empty box is a space
+  in its value) and a full code is sent at once. A login refused with `EMAIL_NOT_VERIFIED` links to that page.
+  `/forgot-password` asks for the email, then the code with the new password. "Send a new code" waits 30 seconds
+  (`features/auth/components/ResendCode.tsx`). Without Gmail settings in the root `.env`, the code is only in the
+  backend log.
 - `pages/home/HomePage.tsx` only chooses: `Landing` for visitors, `Dashboard` for members. Each dashboard panel is its
   own file with loading, empty and error states. "Your turn" works without a backend field: seat 1 always starts and
   players alternate, so after an even number of moves it is seat 1's turn (`isMyTurn` in `dashboard/dashboard.ts`).
@@ -217,7 +224,8 @@ Written here instead of taken from a library:
   (language, light or dark, accent color, page background, board colors for new games) and Blocked players. `resolveSection` in
   `settings/sections.ts` reads the tab from the address; an unknown tab goes back to `/settings`.
 - Two-factor shows only the button that fits when the backend says whether it is on; it does not send that yet, so
-  "Turn on" is the main button and a quiet "Already on? Turn it off" sits under it (section 10).
+  "Turn on" is the main button and a quiet "Already on? Turn it off" sits under it (section 10). The backend's backup
+  codes are not shown yet (section 10).
 
 ### Community (`pages/community/`, `features/chat/`, `features/friends/`)
 
@@ -362,6 +370,11 @@ starts, and the router shows the page for that address (section 1).
 JavaScript cannot read it, and the app stores no token itself: the browser sends the cookie with every request. The
 app only asks `GET /api/auth/me` who is logged in.
 
+**Why does sign up ask for a code from an email?** The backend proves the person owns the email before the first
+login. Signup creates the account unverified and emails a 6-digit code; only its hash is stored, it lasts 15 minutes,
+works once and stops after 5 wrong tries. The app's part is the code page and the login alert that links to it
+(section 5, "Shell and navigation").
+
 **How are member pages protected?** `RequireAuth` in `app/guards.tsx` sends visitors to the login page. That is only
 for comfort: the real protection is the backend, which answers `401` without a valid session.
 
@@ -408,6 +421,8 @@ After a change: `npm run typecheck && npm test`.
 ## 10. Known limits
 
 - The backend does not yet send `twoFactorEnabled` with the user, so Settings shows both two-factor buttons with a hint.
+- The backend makes 10 two-factor backup codes when 2FA is turned on and accepts them at login, but the app neither
+  shows them nor accepts one in the login code field (it takes 6 digits only).
 - The backend allows 100 requests a minute per route and per address. With live events on, a minute of chat between
   two windows on one computer uses about 40 of them, but many busy tabs or fast reloads on one computer can still reach
   it. The app retries and keeps the logged-in user when it happens.

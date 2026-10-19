@@ -10,7 +10,9 @@ Every route below exists in the backend (see the Status section at the end). The
 
 | Route                                             | Purpose                              | Backend |
 | ------------------------------------------------- | ------------------------------------ | ------- |
-| `POST /auth/signup`                               | Create an account and log in         | Done    |
+| `POST /auth/signup`                               | Create an account, email a code      | Done    |
+| `POST /auth/verify-email`, `resend-verification`  | Verify the email with the code       | Done    |
+| `POST /auth/forgot-password`, `reset-password`    | Set a new password with a code       | Done    |
 | `POST /auth/login`                                | Log in (may ask for a 2FA code)      | Done    |
 | `POST /auth/2fa/verify`                           | Finish a login with a 2FA code       | Done    |
 | `POST /auth/logout`                               | Log out                              | Done    |
@@ -44,8 +46,9 @@ The backend follows these rules everywhere.
 
 - **Base path.** Every route is under `/api`, on the same origin as the app: the HTTPS proxy sends `/api` and
   `/socket.io` to the backend and everything else to the frontend. The paths in this document leave `/api` out.
-- **Session.** The httpOnly `session` cookie set at login. Every route needs it except signup, login, 2FA verify and
-  `GET /auth/me`. Without a valid session the answer is `401 UNAUTHORIZED` and the app goes back to the login page.
+- **Session.** The httpOnly `session` cookie set at login. Every route needs it except signup, the email code routes,
+  login, 2FA verify and `GET /auth/me`. Without a valid session the answer is `401 UNAUTHORIZED` and the app goes back
+  to the login page.
 - **Success.** Any 2xx status with `{ "data": ... }`. A route with nothing to return sends `{ "data": null }`.
 - **Failure.** `{ "error": { "code": "EMAIL_TAKEN", "message": "This email is already registered" } }`. The app
   translates `code` (see [Error codes](#error-codes)) and shows `message` only for a code it does not know.
@@ -109,19 +112,34 @@ visible tab of a logged-in player sends one at least every 30 seconds (the menu 
 
 Nothing to change. What the app uses:
 
-| Route                    | Body                               | Answer                                                          |
-| ------------------------ | ---------------------------------- | --------------------------------------------------------------- |
-| `POST /auth/signup`      | `{ email, displayName, password }` | `{ user: User }`, sets the cookie                               |
-| `POST /auth/login`       | `{ email, password }`              | `{ user: User }` or `{ user: null, twoFactorRequired: true }`   |
-| `POST /auth/2fa/verify`  | `{ code }`                         | `{ user: User }`                                                |
-| `POST /auth/logout`      |                                    | `null`                                                          |
-| `GET /auth/me`           |                                    | `User`, or `null` (status 200) when nobody is logged in         |
-| `POST /auth/2fa/setup`   |                                    | `{ qr, secret }`: the QR code as a data URL, the secret as text |
-| `POST /auth/2fa/enable`  | `{ code }`                         | `null`                                                          |
-| `POST /auth/2fa/disable` | `{ code }`                         | `null`                                                          |
+| Route                            | Body                               | Answer                                                          |
+| -------------------------------- | ---------------------------------- | --------------------------------------------------------------- |
+| `POST /auth/signup`              | `{ email, displayName, password }` | `{ verificationSent: true }`, no cookie: nobody is logged in    |
+| `POST /auth/verify-email`        | `{ email, code }`                  | `null`: the email is verified, the user can log in now          |
+| `POST /auth/resend-verification` | `{ email }`                        | `null`, always (it never says whether the email exists)         |
+| `POST /auth/forgot-password`     | `{ email }`                        | `null`, always; a verified account gets a reset code            |
+| `POST /auth/reset-password`      | `{ email, code, password }`        | `null`: new password set, every login of the user ended         |
+| `POST /auth/login`               | `{ email, password }`              | `{ user: User }` or `{ user: null, twoFactorRequired: true }`   |
+| `POST /auth/2fa/verify`          | `{ code }`                         | `{ user: User }`                                                |
+| `POST /auth/logout`              |                                    | `null`                                                          |
+| `GET /auth/me`                   |                                    | `User`, or `null` (status 200) when nobody is logged in         |
+| `POST /auth/2fa/setup`           |                                    | `{ qr, secret }`: the QR code as a data URL, the secret as text |
+| `POST /auth/2fa/enable`          | `{ code }`                         | `null`                                                          |
+| `POST /auth/2fa/disable`         | `{ code }`                         | `null`                                                          |
 
 The forms check the backend's rules before sending: a display name has 3 to 20 letters, numbers, `_` or `-`; a
 password has 8 to 128 characters; a code has 6 digits (spaces are removed).
+
+**Email code.** Signing up does not log in. The backend emails a 6-digit code, and the app opens `/verify-email`
+(`pages/auth/VerifyEmailPage.tsx`). Until the code is entered, login answers `403 EMAIL_NOT_VERIFIED` and emails a
+new code; the login alert links to the code page. A code lasts 15 minutes, works once and stops after 5 wrong tries;
+a new code replaces the old one. `/forgot-password` works the same way for a new password. The email goes out through
+Gmail only when `SMTP_USER` and `SMTP_PASSWORD` are set in the root `.env`; without them the backend prints the code in
+its log (`docker compose logs backend | grep "Code for"`).
+
+**Backup codes.** The backend also answers `{ backupCodes }` (10 codes like `ABCDE-FGHJK`, shown once) when 2FA is
+turned on, and accepts one of them instead of the 6 digits at login and to turn 2FA off
+(`GET` and `POST /auth/2fa/backup-codes` count and renew them). The app does not show or accept them yet.
 
 **Optional:** add `twoFactorEnabled: boolean` to `User`. The account page then shows only the button that applies
 (turn on or turn off). Without it, it shows both and handles `TWO_FACTOR_ALREADY_ENABLED` and `TWO_FACTOR_NOT_ENABLED`.
@@ -559,6 +577,10 @@ one shows the server's English `message`.
 | `RATE_LIMITED`               | 429      | Any route                                                      |
 | `INTERNAL_ERROR`             | 500      | Any route                                                      |
 | `INVALID_CREDENTIALS`        | 401      | Login                                                          |
+| `EMAIL_NOT_VERIFIED`         | 403      | Login before the email code was entered                        |
+| `INVALID_VERIFICATION_CODE`  | 400      | `POST /auth/verify-email`                                      |
+| `INVALID_RESET_CODE`         | 400      | `POST /auth/reset-password`                                    |
+| `EMAIL_SEND_FAILED`          | 502      | Signup, when the email could not be sent (nothing is created)  |
 | `EMAIL_TAKEN`                | 409      | Signup                                                         |
 | `DISPLAY_NAME_TAKEN`         | 409      | Signup, and `PATCH /users/me`                                  |
 | `INVALID_2FA_CODE`           | 400      | 2FA verify, enable and disable                                 |
