@@ -8,6 +8,7 @@ export { ConfirmDialog } from './ConfirmDialog';
 export { EmptyState } from './EmptyState';
 export { IconButton } from './IconButton';
 export { Kbd } from './Kbd';
+export { OtpInput } from './OtpInput';
 export { OptionGroup, type Option } from './OptionGroup';
 export { Pagination } from './Pagination';
 export { ProgressBar } from './ProgressBar';

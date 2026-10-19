@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation } from 'react-router';
+import { Link, Navigate, useLocation } from 'react-router';
 import { Alert, Button, TextField } from '@/components/ui';
 import { PasswordField } from '@/features/auth/components/PasswordField';
 import { useSignup } from '@/features/auth/hooks';
@@ -55,6 +55,9 @@ export function SignupPage() {
     }
     signup.mutate({ email: email.trim(), displayName: displayName.trim(), password });
   }
+
+  // Account created, nobody is logged in yet: ask for the emailed code.
+  if (signup.isSuccess) return <Navigate to="/verify-email" state={{ email: email.trim() }} replace />;
 
   return (
     <AuthLayout

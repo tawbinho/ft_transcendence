@@ -1,28 +1,230 @@
-# ft_transcendence
+*This project has been created as part of the 42 curriculum by atawbi, rnehme, fel-ghaz.*
 
-Connect Four web app.
+# ft_transcendence — Connect Four
 
-| Part     | Stack                         | Status                                      |
-| -------- | ----------------------------- | ------------------------------------------- |
-| backend  | NestJS, TypeORM, MVC          | auth done (signup, login, sessions, 2FA), in Docker   |
-| database | PostgreSQL 17                 | running in Docker                           |
-| frontend | React, Vite                   | skeleton, not in Docker yet (see below)     |
+## Description
 
-## Run the project
+**Connect Four** is a web application where players play Connect Four against each other online, against a
+computer opponent, or on the same screen. Players have accounts, profiles, friends and private chat, can enter
+tournaments, watch live matches and replay finished ones, and the whole interface is available in English, French
+and Arabic (with right-to-left layout).
+
+**Key features**
+
+- Online Connect Four with live updates, reconnection after a refresh or a network cut, and server-side rules (the
+  server judges every move).
+- Computer opponents (3 levels) that run on the server and can be beaten.
+- Accounts with email and password (Argon2), database sessions, optional two-factor authentication with backup codes.
+- Profiles, avatars, friends with online status, blocking, private chat with invitations and read receipts.
+- Single-elimination tournaments (4 or 8 places, byes, turn timeout).
+- Statistics, match history, leaderboard, replays, spectator mode.
+- Custom boards (size, win length, theme), light/dark appearance, optional 3D board.
+- Privacy Policy and Terms of Service pages, linked in the footer.
+
+## Instructions
+
+**Prerequisites:** Docker with the Compose plugin (nothing else is needed to run the project) and `openssl`
+(only to generate a key).
+
+```bash
+# 1. create the local env file (it is ignored by Git)
+cp .env.example .env
+# 2. put a real key in .env: TWO_FACTOR_KEY must be 64 hex characters
+#      openssl rand -hex 32
+# 3. one command builds and starts everything (database, backend, frontend, HTTPS proxy)
+docker compose up --build -d
+```
+
+Open **https://localhost:8443** (the port is `HTTPS_PORT` in `.env`). The certificate is self-signed and created
+automatically at the first start, so the browser shows a warning: click *Advanced*, then *Proceed to localhost*.
+Database tables are created automatically at startup (migrations run when the backend starts).
+
+Useful addresses: the app at `/`, the API docs (Swagger) at `/api/docs`, the legal pages at `/privacy` and `/terms`.
+More commands, the configuration table and every API route are in [Technical documentation](#technical-documentation)
+below. The frontend has its own README in [frontend/README.md](frontend/README.md).
+
+## Team Information
+
+| Login | Role(s) | Responsibilities |
+| ----- | ------- | ---------------- |
+| **atawbi** | Technical Lead, Developer, Project Manager | Chose the architecture and stack (NestJS, TypeORM, PostgreSQL, Docker, HTTPS proxy). Built the backend core: authentication, sessions, 2FA, the game engine, matches, real-time (Socket.IO), the AI opponent, tournaments and chat. Organised the work and reviewed merges. |
+| **rnehme** | Frontend Developer, Product Owner | Built the whole frontend: pages, game board (2D and 3D), design system, three languages with RTL, accessibility, legal pages. Defined what the product must do and validated finished features. |
+| **fel-ghaz** | Backend Developer, Product Owner | Built the backend social side: player search and presence, profiles and match history, display name, avatars, friends and blocks. Defined what the product must do and validated finished features. |
+
+## Project Management
+
+- **Organisation:** the work was split by area: backend core (atawbi), social backend (fel-ghaz) and frontend
+  (rnehme). The backend API was designed and documented first (`backend/docs/openapi.yaml`, Swagger), so the frontend
+  could be built against a stable contract. Each area was developed on its own branch and merged into `main`.
+- **Meetings:** TODO (team to fill in: how often the team met).
+- **Tools:** Git and GitHub (branches and merges), the Swagger page and `frontend/docs/api-contract.md` as the
+  shared API contract.
+- **Communication:** TODO (team to fill in: Discord, Slack, ...).
+
+## Technical Stack
+
+| Part | Technology |
+| ---- | ---------- |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, i18next, Socket.IO client, Three.js (React Three Fiber) for the optional 3D board |
+| Backend | NestJS (Node 22), TypeScript, TypeORM, Socket.IO, Argon2, class-validator |
+| Database | PostgreSQL 17 |
+| Deployment | Docker Compose: `db`, `backend`, `frontend` (nginx), `proxy` (nginx, HTTPS) |
+| Tests | Vitest (backend and frontend) |
+
+**Justification of the main choices**
+
+- **PostgreSQL:** the data is strongly relational (users, matches, tournaments, friendships) and we need
+  transactions and row locks so that two players can never take the same seat or play the same move twice.
+- **NestJS + TypeORM:** a structured framework (modules, guards, validation pipes) and an ORM with migrations, so the
+  schema changes only through reviewed migration files (`synchronize` is off).
+- **Database sessions instead of JWT:** one httpOnly `session` cookie; only its SHA-256 hash is stored, and logout
+  takes effect immediately.
+- **Socket.IO:** reconnection and rooms (one room per user, one per watched match) come built in.
+- **React + Tailwind:** components, colour tokens for light/dark, and logical sides (`ms-`, `me-`) that mirror
+  automatically for Arabic.
+- **nginx HTTPS proxy:** the subject requires HTTPS for every connection to the backend; the backend port is not
+  published, so there is no plain-HTTP way in.
+
+## Database Schema
+
+PostgreSQL, 15 tables (all primary keys are UUIDs unless a composite key is shown). `⟶` means a foreign key.
+
+```
+users (id, email UNIQUE, display_name UNIQUE, password_hash, avatar_url, locale, is_bot,
+       last_seen_at, created_at, updated_at)
+ ├─ sessions            (id, user_id ⟶ users, token_hash UNIQUE, pending_two_factor, expires_at)
+ ├─ two_factor          (user_id ⟶ users [PK], secret [AES-256-GCM], enabled, last_used_step)
+ ├─ two_factor_backup_codes (id, user_id ⟶ users, code_hash [HMAC-SHA256], used_at)
+ ├─ oauth_accounts      (id, user_id ⟶ users, provider, provider_account_id)   -- table only, not used yet
+ ├─ friendships         (user_low_id ⟶ users, user_high_id ⟶ users [PK pair], requester_id, status, accepted_at)
+ ├─ blocks              (blocker_id ⟶ users, blocked_id ⟶ users [PK pair])
+ ├─ messages            (id, user_low_id, user_high_id, sender_id ⟶ users, kind text|invite|system, body,
+ │                       match_id ⟶ matches, tournament_id ⟶ tournaments, event)
+ └─ conversation_reads  (user_id, peer_id ⟶ users [PK pair], read_at)
+
+matches (id, status, end_reason, cols, rows, win_length, theme, invited_user_id ⟶ users,
+         created_at, started_at, ended_at)
+ ├─ match_players (match_id ⟶ matches, seat [PK pair], user_id ⟶ users, result)
+ └─ match_moves   (match_id ⟶ matches, ply [PK pair], seat, col, played_at)
+
+tournaments (id, name, status, size 4|8, cols, rows, win_length, theme,
+             created_by_id ⟶ users, winner_id ⟶ users, created_at, started_at, ended_at)
+ ├─ tournament_players  (tournament_id ⟶ tournaments, user_id ⟶ users [PK pair], joined_at)
+ └─ tournament_pairings (id, tournament_id ⟶ tournaments, round, position, player1_id, player2_id,
+                         winner_id ⟶ users, match_id ⟶ matches, bye)
+```
+
+Design notes: the board is never stored, it is rebuilt from `match_moves`; pairs (friendships, messages) store the
+smaller user id first so one row represents both directions; CHECK constraints enforce board limits and what each
+message kind may contain; wins, losses and draws are computed from finished matches, never stored.
+
+## Features List
+
+| Feature | Description | Who |
+| ------- | ----------- | --- |
+| Signup, login, logout | Email and password (Argon2), database session in an httpOnly cookie, rate limited | atawbi |
+| Two-factor authentication | TOTP with an authenticator app, 10 one-time backup codes | atawbi |
+| Game engine and matches | Connect Four rules on any board size, server-side validation, concurrency-safe transactions | atawbi |
+| Real-time | Socket.IO: live moves, presence, reconnection with a 30 s grace period, forfeit after a disconnection | atawbi |
+| Computer opponent | 3 levels, minimax with alpha-beta, deliberate mistakes, runs in a worker thread | atawbi |
+| Tournaments | Single elimination, byes, automatic matches, replayed draws, turn timeout | atawbi |
+| Private chat | Messages, match invitations, system notices, typing indicator, read receipts, history | atawbi |
+| Spectator mode and live list | Watch running matches in real time | atawbi (API), rnehme (UI) |
+| Player search and presence | Search, filters, sorting, pagination, online status | fel-ghaz |
+| Profiles, statistics, match history | Public profile, stats, finished matches | fel-ghaz (API), rnehme (UI) |
+| Display name and avatars | Rename, upload (type checked from file bytes), default avatar | fel-ghaz (API), rnehme (UI) |
+| Friends and blocks | Requests, accept/decline, remove, block | fel-ghaz (API), rnehme (UI) |
+| Deployment and HTTPS | Docker Compose, nginx HTTPS proxy, automatic migrations | atawbi |
+| Whole user interface | Home, play, watch, tournaments, community, settings, legal pages | rnehme |
+| Languages and RTL | English, French, Arabic, language switcher, mirrored layout | rnehme |
+| Appearance and 3D board | Light/dark, accent colours, page backgrounds, optional Three.js board | rnehme |
+| Privacy Policy and Terms of Service | Real content in three languages, linked in the footer | rnehme |
+
+## Modules
+
+| # | Module | Type | Points | Who | How it is implemented |
+| - | ------ | ---- | ------ | --- | --------------------- |
+| 1 | Web: frameworks for frontend and backend | Major | 2 | rnehme, atawbi | React 19 for the frontend, NestJS for the backend |
+| 2 | Web: ORM | Minor | 1 | atawbi, fel-ghaz | TypeORM entities and migrations on PostgreSQL |
+| 3 | Web: real-time features (WebSockets) | Major | 2 | atawbi | Socket.IO gateway authenticated by the session cookie; rooms, presence, graceful disconnection, broadcast of match, chat, friends and tournament events |
+| 4 | Web: user interaction (chat, profile, friends) | Major | 2 | atawbi, fel-ghaz, rnehme | Private chat, public profiles, friends list with add/remove |
+| 5 | User management: standard | Major | 2 | atawbi, fel-ghaz, rnehme | Profile update, avatar upload with default avatar, friends with online status, profile page |
+| 6 | Gaming: complete web game | Major | 2 | atawbi, rnehme | Connect Four with clear win/draw/resign rules, live matches, 2D board |
+| 7 | Gaming: remote players | Major | 2 | atawbi, rnehme | Two players on different computers, server-authoritative moves, reconnection logic, forfeit after the grace period |
+| 8 | AI: opponent for games | Major | 2 | atawbi | Server-side bots (Easy, Medium, Hard): win/block rules, minimax with alpha-beta and iterative deepening, deliberate mistakes; works with every board size and win length |
+| 9 | User management: 2FA | Minor | 1 | atawbi, rnehme | TOTP (authenticator app) with QR setup, one-time backup codes, replay protection |
+| 10 | User management: game statistics and match history | Minor | 1 | fel-ghaz, rnehme | Wins/losses/draws, streaks, history with opponents and dates, leaderboard |
+| 11 | Gaming: tournament system | Minor | 1 | atawbi, rnehme | Bracket, registration, matchups tracked, automatic match creation |
+| 12 | Gaming: game customization | Minor | 1 | atawbi, rnehme | Board size (5-10 x 5-9), win length (3-5), themes; defaults available; the AI uses them |
+| 13 | Gaming: spectator mode | Minor | 1 | atawbi, rnehme | Live matches list and real-time board for spectators |
+| 14 | Accessibility and i18n: multiple languages | Minor | 1 | rnehme | i18next, English / French / Arabic, language switcher, all texts translatable |
+| 15 | Accessibility and i18n: RTL support | Minor | 1 | rnehme | Arabic with mirrored layout (logical Tailwind classes), switch without reload |
+| 16 | Gaming: advanced chat features | Minor | 1 | atawbi, rnehme | Block users, invite to a match from chat, tournament notices, profile access, persistent history, typing indicator and read receipts |
+| 17 | Web: custom design system | Minor | 1 | rnehme | 22 reusable components (`frontend/src/components/ui`), colour tokens with light/dark, typography and icons |
+
+**Total: 7 Major x 2 = 14, 10 Minor x 1 = 10, giving 24 points** against the 14 required. The bonus counts at most 5
+points beyond 14, so the modules above the first 14 points are the safety margin if one is not validated.
+
+**Justification.** The project is a game, so the Gaming modules are the core of the product; real-time, remote play
+and the interaction modules (chat, friends, profiles) make it a social game; the AI opponent lets a single player
+play at any time; 2FA, languages and RTL improve security and reach; the design system keeps the interface
+consistent. Every module builds on the web game (module 6), which is implemented first.
+
+## Individual Contributions
+
+**atawbi** — Authentication and sessions, 2FA and backup codes, the pure Connect Four engine with its tests,
+matches (create, join, move, resign) with row-locking transactions, Socket.IO real-time layer, disconnection
+forfeit, the AI opponent (worker thread), tournaments and bracket, chat, Docker Compose, the HTTPS proxy, automatic
+migrations, rate limiting, the API documentation. *Challenges:* concurrent actions (two players taking the same
+seat or racing a move) were solved with transactions that lock the match row; blocking the event loop with the AI
+search was solved by running it in a worker thread; HTTPS everywhere on rootless Docker was solved with a proxy on
+port 8443.
+
+**rnehme** — The complete frontend: design system and colour tokens, all pages, the 2D and 3D boards, offline games
+(same screen and against the computer), the three languages and RTL, accessibility checks (axe), the legal pages and
+the frontend documentation. *Challenges:* a layout that mirrors correctly in Arabic, keeping the 2D and 3D boards in
+one box, and keeping the browser console free of errors and warnings.
+
+**fel-ghaz** — Player search and online presence, public profiles and match history, display-name change, avatar
+upload with validation of the real file type, friends and blocks (one row per pair, safe when both players ask at
+the same moment). *Challenges:* making friend requests idempotent and race-safe, and validating uploaded images
+without trusting the declared type.
+
+## Resources
+
+- NestJS: https://docs.nestjs.com — TypeORM: https://typeorm.io — PostgreSQL: https://www.postgresql.org/docs/
+- Socket.IO: https://socket.io/docs/v4/ — React: https://react.dev — Tailwind CSS: https://tailwindcss.com/docs
+- i18next: https://www.i18next.com — React Three Fiber: https://docs.pmnd.rs/react-three-fiber
+- Docker Compose: https://docs.docker.com/compose/ — nginx: https://nginx.org/en/docs/
+- Argon2 (RFC 9106), TOTP (RFC 6238), OWASP session management and password storage cheat sheets
+- Minimax and alpha-beta pruning: https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
+- WCAG 2.1: https://www.w3.org/TR/WCAG21/
+
+**How AI was used.** We used an AI assistant (Claude Code) as a helper, never as a replacement for understanding.
+It was used to: explain concepts (sessions, TOTP, transactions and locks, minimax), draft and review parts of the
+backend code and the documentation, suggest test cases, and review code for bugs. Every generated piece was read,
+tested and corrected by the team member responsible, and each member can explain their own part.
+
+---
+
+# Technical documentation
+
+Details for people working on the project: running and configuring the stack, migrations, and every API route and
+mechanism.
+
+## Run the project (details)
 
 Requirements: Docker with the Compose plugin.
 
 ```bash
-# 1. create your local env file
+# 1. create your local env file and set TWO_FACTOR_KEY (openssl rand -hex 32)
 cp .env.example .env
-# then set TWO_FACTOR_KEY in .env to a value generated with:
-#   openssl rand -hex 32
 
-# 2. build and start the database and the backend
+# 2. build and start everything
 docker compose up --build -d
 
 # 3. check it works (the database tables are created automatically at startup)
-curl -k https://localhost:8443/api    # {"data":"Hello World!"}
+curl -k https://localhost:8443/api/auth/me    # {"data":null}
 ```
 
 Everything is served over **HTTPS** at `https://localhost:8443`. The
@@ -361,6 +563,5 @@ database from `docker compose up -d db`.
 
 ## Frontend
 
-Not in Docker yet. It imports the workspace packages `@cf/shared`,
-`@cf/engine` and `@cf/ai`, which do not exist in the repo yet, so it cannot
-build.
+Built and served by the `frontend` container of `docker compose up` (nginx, behind the HTTPS proxy). To work on it
+with hot reload see [frontend/README.md](frontend/README.md) (`npm ci && npm run dev`, then http://localhost:5173).

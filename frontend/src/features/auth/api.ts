@@ -5,7 +5,16 @@ export const authApi = {
   /** The logged-in user, or null when nobody is logged in. */
   me: (signal?: AbortSignal) => http.get<User | null>('/auth/me', { signal }),
 
-  signup: (input: SignupInput) => http.post<{ user: User }>('/auth/signup', input),
+  signup: (input: SignupInput) => http.post<{ verificationSent: true }>('/auth/signup', input),
+
+  verifyEmail: (input: { email: string; code: string }) => http.post<null>('/auth/verify-email', input),
+
+  forgotPassword: (email: string) => http.post<null>('/auth/forgot-password', { email }),
+
+  resetPassword: (input: { email: string; code: string; password: string }) =>
+    http.post<null>('/auth/reset-password', input),
+
+  resendVerification: (email: string) => http.post<null>('/auth/resend-verification', { email }),
 
   login: (input: LoginInput) => http.post<LoginResult>('/auth/login', input),
 

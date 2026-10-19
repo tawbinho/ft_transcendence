@@ -9,6 +9,7 @@ import { useLogin, useVerifyTwoFactor } from '@/features/auth/hooks';
 import { loginHint } from '@/features/auth/loginHint';
 import { useFocusFirstInvalid } from '@/features/auth/useFocusFirstInvalid';
 import { normalizeCode, validateCode, validateEmail } from '@/features/auth/validation';
+import { isApiError } from '@/lib/api/errors';
 import { useErrorMessage } from '@/lib/errorMessage';
 import { AuthLayout } from '@/layout/AuthLayout';
 
@@ -116,7 +117,19 @@ export function LoginPage() {
     >
       <form ref={form} onSubmit={submitCredentials} noValidate className="flex flex-col gap-4">
         {hint && <LoginHint hint={hint} />}
-        {login.error && <Alert tone="danger">{errorMessage(login.error)}</Alert>}
+        {login.error && (
+          <Alert tone="danger">
+            {errorMessage(login.error)}
+            {isApiError(login.error, 'EMAIL_NOT_VERIFIED') && (
+              <>
+                {' '}
+                <Link to="/verify-email" state={{ email: email.trim() }} className="font-semibold underline">
+                  {t('auth.verifyEmailLogin')}
+                </Link>
+              </>
+            )}
+          </Alert>
+        )}
         <TextField
           label={t('auth.email')}
           type="email"
@@ -138,6 +151,13 @@ export function LoginPage() {
         <Button type="submit" size="lg" block loading={login.isPending}>
           {t('auth.loginAction')}
         </Button>
+        <Link
+          to="/forgot-password"
+          state={{ email: email.trim() }}
+          className="text-center text-sm font-semibold text-primary hover:underline"
+        >
+          {t('auth.forgotPassword')}
+        </Link>
       </form>
     </AuthLayout>
   );

@@ -35,12 +35,27 @@ function updateUser(queryClient: QueryClient, patch: Partial<User>) {
   queryClient.setQueryData<User | null>(authKeys.me, (user) => (user ? { ...user, ...patch } : user));
 }
 
+// Signing up does not log in: the email must be verified first.
 export function useSignup() {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: authApi.signup,
-    onSuccess: ({ user }) => startSession(queryClient, user),
   });
+}
+
+export function useVerifyEmail() {
+  return useMutation({ mutationFn: authApi.verifyEmail });
+}
+
+export function useForgotPassword() {
+  return useMutation({ mutationFn: authApi.forgotPassword });
+}
+
+export function useResetPassword() {
+  return useMutation({ mutationFn: authApi.resetPassword });
+}
+
+export function useResendVerification() {
+  return useMutation({ mutationFn: authApi.resendVerification });
 }
 
 export function useLogin() {
