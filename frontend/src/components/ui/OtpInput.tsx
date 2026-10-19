@@ -1,4 +1,5 @@
 import { useId, useRef, type ClipboardEvent, type KeyboardEvent, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 
 const LENGTH = 6;
@@ -20,6 +21,7 @@ interface OtpInputProps {
 
 /** Six boxes for a one-time code: auto-advance, Backspace, arrows and paste. */
 export function OtpInput({ label, value, onChange, onComplete, error, disabled, autoFocus }: OtpInputProps) {
+  const { t } = useTranslation();
   const id = useId();
   const boxes = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -84,7 +86,7 @@ export function OtpInput({ label, value, onChange, onComplete, error, disabled, 
             onKeyDown={(event) => key(i, event)}
             onPaste={paste}
             onFocus={(event) => event.target.select()}
-            aria-label={`${label}, digit ${i + 1} of ${LENGTH}`}
+            aria-label={t('common.codeDigit', { label, digit: i + 1, total: LENGTH })}
             aria-invalid={error ? true : undefined}
             inputMode="numeric"
             autoComplete={i === 0 ? 'one-time-code' : 'off'}

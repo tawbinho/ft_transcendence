@@ -15,6 +15,7 @@ export const commonMessages: CommonMessages = {
     previous: 'السابق',
     next: 'التالي',
     pageOf: 'الصفحة {{page}} من {{pages}}',
+    codeDigit: '{{label}}، الرقم {{digit}} من {{total}}',
     optional: 'اختياري',
   },
   validation: {
