@@ -59,7 +59,7 @@ below. The frontend has its own README in [frontend/README.md](frontend/README.m
 - **Meetings:** TODO (team to fill in: how often the team met).
 - **Tools:** Git and GitHub (branches and merges), the Swagger page and `frontend/docs/api-contract.md` as the
   shared API contract.
-- **Communication:** TODO (team to fill in: Discord, Slack, ...).
+- **Communication:** Gmail, Whatsapp , OnCampus Meetings
 
 ## Technical Stack
 
