@@ -29,6 +29,7 @@ export const authMessages: AuthMessages = {
     hintGeneric: 'سجّل الدخول للمتابعة.',
     verifyEmailTitle: 'تحقق من بريدك الإلكتروني',
     verifyEmailBody: 'أرسلنا رمزًا من 6 أرقام إلى {{email}}. أدخله أدناه لتفعيل حسابك.',
+    verifyEmailBodyNoEmail: 'أدخل بريدك الإلكتروني والرمز المكوّن من 6 أرقام الذي أرسلناه إليك لتفعيل حسابك.',
     emailVerified: 'تم التحقق من البريد الإلكتروني. يمكنك تسجيل الدخول الآن.',
     resendCode: 'إرسال رمز جديد',
     resendIn: 'إعادة إرسال الرمز بعد {{seconds}} ث',

@@ -60,7 +60,7 @@ export function VerifyEmailPage() {
   return (
     <AuthLayout
       title={t('auth.verifyEmailTitle')}
-      subtitle={known ? t('auth.verifyEmailBody', { email: known }) : t('auth.verifyEmailBody', { email: '...' })}
+      subtitle={known ? t('auth.verifyEmailBody', { email: known }) : t('auth.verifyEmailBodyNoEmail')}
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-5">
         {verify.error && <Alert tone="danger">{errorMessage(verify.error)}</Alert>}

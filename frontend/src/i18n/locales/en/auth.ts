@@ -27,6 +27,7 @@ export const authMessages = {
     hintGeneric: 'Log in to continue.',
     verifyEmailTitle: 'Verify your email',
     verifyEmailBody: 'We sent a 6-digit code to {{email}}. Enter it below to activate your account.',
+    verifyEmailBodyNoEmail: 'Enter your email and the 6-digit code we sent you to activate your account.',
     emailVerified: 'Email verified. You can log in now.',
     resendCode: 'Send a new code',
     resendIn: 'Resend code in {{seconds}}s',

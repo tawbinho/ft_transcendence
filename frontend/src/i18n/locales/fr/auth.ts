@@ -30,6 +30,8 @@ export const authMessages: AuthMessages = {
     verifyEmailTitle: 'Vérifiez votre e-mail',
     verifyEmailBody:
       'Nous avons envoyé un code à 6 chiffres à {{email}}. Saisissez-le ci-dessous pour activer votre compte.',
+    verifyEmailBodyNoEmail:
+      'Saisissez votre e-mail et le code à 6 chiffres que nous vous avons envoyé pour activer votre compte.',
     emailVerified: 'E-mail vérifié. Vous pouvez vous connecter.',
     resendCode: 'Envoyer un nouveau code',
     resendIn: 'Renvoyer le code dans {{seconds}} s',
