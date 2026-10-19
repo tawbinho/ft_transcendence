@@ -28,7 +28,8 @@ export const authMessages: AuthMessages = {
     hintSection: 'Connectez-vous pour ouvrir « {{section}} ».',
     hintGeneric: 'Connectez-vous pour continuer.',
     verifyEmailTitle: 'Vérifiez votre e-mail',
-    verifyEmailBody: 'Nous avons envoyé un code à 6 chiffres à {{email}}. Saisissez-le ci-dessous pour activer votre compte.',
+    verifyEmailBody:
+      'Nous avons envoyé un code à 6 chiffres à {{email}}. Saisissez-le ci-dessous pour activer votre compte.',
     emailVerified: 'E-mail vérifié. Vous pouvez vous connecter.',
     resendCode: 'Envoyer un nouveau code',
     resendIn: 'Renvoyer le code dans {{seconds}} s',

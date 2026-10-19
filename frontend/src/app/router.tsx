@@ -29,8 +29,14 @@ const publicRoutes: RouteObject[] = [
     path: 'tournaments/local',
     lazy: () => import('@/pages/tournaments/LocalTournamentPage').then((m) => ({ Component: m.LocalTournamentPage })),
   },
-  { path: 'forgot-password', lazy: () => import('@/pages/auth/ForgotPasswordPage').then((m) => ({ Component: m.ForgotPasswordPage })) },
-  { path: 'verify-email', lazy: () => import('@/pages/auth/VerifyEmailPage').then((m) => ({ Component: m.VerifyEmailPage })) },
+  {
+    path: 'forgot-password',
+    lazy: () => import('@/pages/auth/ForgotPasswordPage').then((m) => ({ Component: m.ForgotPasswordPage })),
+  },
+  {
+    path: 'verify-email',
+    lazy: () => import('@/pages/auth/VerifyEmailPage').then((m) => ({ Component: m.VerifyEmailPage })),
+  },
   { path: 'privacy', lazy: () => import('@/pages/info/legal/LegalPage').then((m) => ({ Component: m.PrivacyPage })) },
   { path: 'terms', lazy: () => import('@/pages/info/legal/LegalPage').then((m) => ({ Component: m.TermsPage })) },
 ];

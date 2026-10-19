@@ -38,7 +38,11 @@ export function ForgotPasswordPage() {
   function changePassword(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
-    if (!/^\d{6}$/.test(code) || validateNewPassword(password) || validatePasswordConfirmation(password, confirmation)) {
+    if (
+      !/^\d{6}$/.test(code) ||
+      validateNewPassword(password) ||
+      validatePasswordConfirmation(password, confirmation)
+    ) {
       return;
     }
     reset.mutate({ email: email.trim(), code, password });
