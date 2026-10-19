@@ -24,6 +24,8 @@ export function VerifyEmailPage() {
   // Bumped after a wrong code: remounts the boxes, empty, focus on the first.
   const [attempt, setAttempt] = useState(0);
   const emailError = submitted ? validateEmail(email) : null;
+  // Six digits and no empty box (an empty box is a space, see OtpInput).
+  const complete = /^\d{6}$/.test(code);
 
   function send(digits: string) {
     setSubmitted(true);
@@ -41,7 +43,7 @@ export function VerifyEmailPage() {
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (code.length === 6) send(code);
+    if (complete) send(code);
     else setSubmitted(true);
   }
 
@@ -84,7 +86,7 @@ export function VerifyEmailPage() {
           error={verify.error ? ' ' : null}
           autoFocus={!!known || attempt > 0}
         />
-        <Button type="submit" size="lg" block loading={verify.isPending} disabled={code.length !== 6}>
+        <Button type="submit" size="lg" block loading={verify.isPending} disabled={!complete}>
           {t('auth.verify')}
         </Button>
         <ResendCode onResend={() => resend.mutate(email.trim())} loading={resend.isPending} />

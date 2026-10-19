@@ -5,7 +5,10 @@ const LENGTH = 6;
 
 interface OtpInputProps {
   label: string;
-  /** Only digits, up to 6. */
+  /**
+   * One character per box, up to 6: a digit, or a space for an empty box, so
+   * "12 456" has its third box empty. The code is complete when it is 6 digits.
+   */
   value: string;
   onChange: (value: string) => void;
   /** Called once with the 6 digits, as soon as the last one is typed or pasted. */
@@ -22,13 +25,15 @@ export function OtpInput({ label, value, onChange, onComplete, error, disabled, 
 
   const focus = (index: number) => boxes.current[Math.max(0, Math.min(LENGTH - 1, index))]?.focus();
 
-  // The new value, padded with spaces so a middle box can be emptied.
+  // Empty boxes stay spaces, so emptying a middle box does not move the digits
+  // after it. Spaces at the end are dropped: no digit at all gives ''.
   function update(next: string[]) {
-    const joined = next.join('').replace(/ /g, '');
+    const joined = next.join('').trimEnd();
     onChange(joined);
-    if (joined.length === LENGTH && !next.includes(' ')) onComplete?.(joined);
+    if (/^\d{6}$/.test(joined)) onComplete?.(joined);
   }
   const slots = () => Array.from({ length: LENGTH }, (_, i) => value[i] ?? ' ');
+  const digitAt = (index: number) => (value[index] ?? '').trim();
 
   function type(index: number, raw: string) {
     const digits = raw.replace(/\D/g, '');
@@ -74,7 +79,7 @@ export function OtpInput({ label, value, onChange, onComplete, error, disabled, 
             ref={(el) => {
               boxes.current[i] = el;
             }}
-            value={value[i] ?? ''}
+            value={digitAt(i)}
             onChange={(event) => type(i, event.target.value)}
             onKeyDown={(event) => key(i, event)}
             onPaste={paste}
@@ -89,7 +94,7 @@ export function OtpInput({ label, value, onChange, onComplete, error, disabled, 
             className={cn(
               'h-14 w-11 rounded-control border bg-surface text-center text-2xl font-bold text-fg sm:w-12',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
-              error ? 'border-danger' : value[i] ? 'border-primary' : 'border-border',
+              error ? 'border-danger' : digitAt(i) ? 'border-primary' : 'border-border',
             )}
           />
         ))}
