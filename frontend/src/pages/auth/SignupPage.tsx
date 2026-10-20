@@ -96,7 +96,7 @@ export function SignupPage() {
           }}
           error={shown('displayName') ?? (nameTaken ? errorMessage(signup.error) : null)}
           hint={t('auth.displayNameHint')}
-          autoComplete="username"
+          autoComplete="nickname"
           maxLength={20}
           required
         />

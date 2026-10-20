@@ -5,8 +5,8 @@
    Each background is drawn on one fixed layer behind everything (body::before, z-index -1):
    it never takes a click, never scrolls with the page and never moves. Only the color tokens
    are used (--c-fg, --c-primary), so every background follows light or dark mode and the
-   accent color by itself. The strengths below are small on purpose: backdrop.test.ts checks
-   that every text color keeps 4.5:1 on the strongest pixel of each background.
+   accent color by itself. The strengths below are small on purpose, so every text color
+   keeps 4.5:1 on the strongest pixel of each background.
 
    The small previews in Settings (data-backdrop-preview) use the same rules.
    --------------------------------------------------------------------------- */

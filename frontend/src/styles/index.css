@@ -6,8 +6,7 @@
 /* ---------------------------------------------------------------------------
    Design tokens: every color the UI uses, for light and dark mode.
    Components use them through Tailwind classes such as bg-surface or text-muted.
-   Every text and background pair below keeps a contrast of at least 4.5:1
-   (styles/tokens.test.ts checks it).
+   Every text and background pair below keeps a contrast of at least 4.5:1.
 
    [data-theme='light'] is listed next to :root so that a part of a page can
    switch to the light theme on its own.

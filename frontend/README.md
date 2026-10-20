@@ -1,14 +1,12 @@
 # Frontend
 
 The web app of ft_transcendence: Connect Four on one screen, against the computer or online, with profiles, friends,
-chat, tournaments, a leaderboard, replays and a spectator mode, in English, French and Arabic, with an optional 3D
-board.
+chat, tournaments, a leaderboard, replays and a spectator mode, in English, French and Arabic.
 
-Built with React 19, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router and i18next; the optional 3D board
-uses Three.js through React Three Fiber.
+Built with React 19, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router and i18next.
 
-**Requirements:** Node.js 20.19 or newer (22 recommended; `.nvmrc` says 22). Node 18 is too old (six tests fail on
-it), so check `node -v` before running anything. With [nvm](https://github.com/nvm-sh/nvm), in the `frontend` folder:
+**Requirements:** Node.js 20.19 or newer (22 recommended; `.nvmrc` says 22). Older versions are too old for Vite 7, so
+check `node -v` before running anything. With [nvm](https://github.com/nvm-sh/nvm), in the `frontend` folder:
 
 ```sh
 nvm install   # installs the version in .nvmrc
@@ -42,12 +40,10 @@ backend.
 | `npm run build`        | Type-checks, then builds the production files into `dist/` |
 | `npm run preview`      | Serves `dist/` on http://localhost:4173                    |
 | `npm run typecheck`    | Type-checks only                                           |
-| `npm test`             | Runs the tests once                                        |
-| `npm run test:watch`   | Runs the tests again on every change                       |
 | `npm run format`       | Formats every file with Prettier                           |
 | `npm run format:check` | Checks the formatting without changing anything            |
 
-Before a commit: `npm run format`, then `npm run typecheck && npm test && npm run format:check`.
+Before a commit: `npm run format`, then `npm run typecheck && npm run format:check`.
 
 ## Settings
 
@@ -55,11 +51,10 @@ Build-time settings, listed in `.env.example`. For `npm run dev`, copy it to `.e
 what you need. With Docker, pass them as build arguments (`args:` of the `frontend` service in the root
 `docker-compose.yml`).
 
-| Name               | What it does                                                                                    | Default                  |
-| ------------------ | ----------------------------------------------------------------------------------------------- | ------------------------ |
-| `VITE_REALTIME`    | `socket` to receive live updates over Socket.IO                                                 | Polling only             |
-| `VITE_BOARD_3D`    | `off` leaves the 3D board and Three.js out of the build; anything else keeps the 2D / 3D switch | `on`                     |
-| `API_PROXY_TARGET` | Development only: where `npm run dev` forwards `/api` and `/socket.io`                          | `https://localhost:8443` |
+| Name               | What it does                                                           | Default                  |
+| ------------------ | ---------------------------------------------------------------------- | ------------------------ |
+| `VITE_REALTIME`    | `socket` to receive live updates over Socket.IO                        | Polling only             |
+| `API_PROXY_TARGET` | Development only: where `npm run dev` forwards `/api` and `/socket.io` | `https://localhost:8443` |
 
 ## Running with Docker
 
@@ -79,15 +74,13 @@ src/
   pages/        One folder per area: home, auth, play, tournaments, profile, settings, community, watch, history,
                 info. One route component per address, with the pieces only that area uses next to it
   features/     Code shared by several areas, one folder per subject: api.ts (calls), types.ts (shapes),
-                hooks.ts (data), components/, and small tested helpers. board3d/ is the optional 3D board, backdrop/ the
-                optional page background
+                hooks.ts (data), components/, and small helpers. backdrop/ is the optional page background
   components/   Shared components; ui/ is the design system (buttons, fields, dialogs, tabs...), plus icons,
                 the logo and illustrations
   layout/       Header, menus, footer
   lib/          Code without pages: the API client, live events, formatting, storage, validation
   i18n/         Translations, one file per area and language (locales/en, fr, ar), and the language switch
   styles/       Tailwind setup, color tokens for light and dark, the board's look
-  test/         Test helpers and shared test data
 ```
 
 Where a file goes: used by one area only, next to its page in `pages/<area>/`; used by several areas, in
@@ -102,63 +95,34 @@ A few rules keep it easy to follow:
   pieces in `features/game/components/`: `GameLayout`, `PlayersBar`, `GameStatus`, `GameBoard` and `MoveAnnouncer`.
 - The game rules (`features/game/engine`) are plain TypeScript, with the same rules and error codes as the backend's
   engine. The computer opponent (`features/game/bot`) runs in a Web Worker, so the page never freezes while it thinks.
-- Decisions (texts, ranks, which buttons show) are plain functions in small `*.ts` files with tests; page components
-  compose.
+- Decisions (texts, ranks, which buttons show) are plain functions in small `*.ts` files; page components compose.
 - Live events only write into the cache (`app/realtime.ts`): pages never know where an update came from.
 
 ### Translations and right-to-left
 
 `src/i18n/locales/en/` is the reference: one file per area (`play.ts`, `profile.ts`...). `fr/` and `ar/` have the same
-files with exactly the same keys: a test checks it, and TypeScript checks every key given to `t()`. Arabic turns the
+files with exactly the same keys: TypeScript checks it, and checks every key given to `t()`. Arabic turns the
 whole page right-to-left (`dir="rtl"` on `<html>`), and layouts use logical properties (`ms-`, `me-`, `start`, `end`)
 so they mirror by themselves.
-
-## The 3D board (optional)
-
-Every game screen has a 2D / 3D switch above the board (2D by default; the choice is saved in the browser). The 3D
-board lives in `src/features/board3d/`, and only one definition outside that folder knows about it, in
-`src/features/game/components/GameBoard.tsx`. Three.js is downloaded only when someone picks 3D. The switch shows only
-in browsers with WebGL 2, and if the 3D board fails, the 2D board comes back.
-
-- **Turn it off** without deleting anything: build with `VITE_BOARD_3D=off`.
-- **Remove it**: delete `src/features/board3d`, replace the `Board3D` definition in `GameBoard.tsx` with
-  `const Board3D: React.ComponentType<BoardProps> | null = null;`, then run
-  `npm uninstall three @react-three/fiber @types/three`. Type check, tests and build pass after these three steps.
-
-Details, and answers to the usual 3D questions, in [`src/features/board3d/README.md`](src/features/board3d/README.md).
 
 ## The page background (optional)
 
 Members choose a background for every page in Settings > Preferences: plain (the default), a soft glow, dots, a fine
 grid or a faint game board. It is drawn with CSS only, saved on this device, and kept faint so text stays readable
-(a test checks the contrast). It lives in `src/features/backdrop/`; one line in `src/main.tsx` switches it on.
+(text keeps a contrast of 4.5 to 1). It lives in `src/features/backdrop/`; one line in `src/main.tsx` switches it on.
 
 - **Remove it**: delete `src/features/backdrop` and the line `import '@/features/backdrop/register';` in
-  `src/main.tsx`. Type check, tests and build pass after these two steps.
+  `src/main.tsx`. Type check and build pass after these two steps.
 
-Details in [`src/features/backdrop/README.md`](src/features/backdrop/README.md).
+## Checks
 
-## Testing
-
-`npm test` runs more than 800 tests with Vitest and Testing Library: the game engine and the computer opponent,
-brackets, rankings, achievements, form validation, the API client, the translations, the shared
-components, and every page rendered and used like a person would (clicks, typing, keys). Most page tests also run
-axe-core for accessibility, and any console error or warning fails a test.
-
-Helpers in `src/test/` keep page tests short:
-
-- `renderWithProviders(ui, { user })` and `renderRoute('/path', { user })` render with the data cache, the router and
-  English texts; `user: null` is a visitor. They also return `events` (user-event).
-- `fakeApi({ 'GET /friends': {...} })` answers the requests of the test (an `ApiError` value makes a request fail).
-  A request without an answer fails with a message that names it.
-- `expectNoA11yViolations(container)` runs axe-core on what was rendered.
-- `allowConsole()` (from `test/console`) lets a test print a console message it expects.
-- `app/routes.test.tsx` opens every page for a visitor and a member; its fake answers come from
-  `test/fixtures/api/<area>.ts`.
+The frontend has no automated tests at the moment. `npm run typecheck` (TypeScript, which also checks every key given
+to `t()` and that French and Arabic have every English text), `npm run format:check` (Prettier) and `npm run build`
+are the automatic checks.
 
 ## Browsers
 
 Checked in Chromium (the engine of Chrome, which the subject requires): every page in English at 1280 and 390 pixels
-wide, in Arabic at 390, in light and dark mode, and the games in 3D, with no console message, no sideways scrolling
-and no serious accessibility issue (color contrast included). Firefox and Safari (or Edge) have not been checked yet; the
+wide, in Arabic at 390, in light and dark mode, with no console message, no sideways scrolling and no serious
+accessibility issue (color contrast included). Firefox and Safari (or Edge) have not been checked yet; the
 browser support module needs that done by hand, with any limits written here.

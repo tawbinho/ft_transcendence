@@ -5,9 +5,9 @@ export function Footer() {
   const { t } = useTranslation();
   return (
     <footer className="border-t border-border bg-surface">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-6 text-sm text-muted">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-6 gap-y-3 px-4 py-6 text-center text-sm text-muted">
         <p>{t('footer.project')}</p>
-        <nav className="flex flex-wrap gap-x-4 gap-y-2" aria-label={t('footer.nav')}>
+        <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2" aria-label={t('footer.nav')}>
           <Link to="/privacy" className="py-1 hover:text-fg hover:underline">
             {t('footer.privacy')}
           </Link>

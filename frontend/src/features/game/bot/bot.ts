@@ -32,9 +32,9 @@ const PROFILES: Record<Difficulty, Profile> = {
 };
 
 export interface ChooseMoveOptions {
-  /** Random numbers in [0, 1); injectable so tests are reproducible. */
+  /** Random numbers in [0, 1); injectable so a game can be reproduced. */
   random?: () => number;
-  /** Clock in milliseconds; injectable for tests. */
+  /** Clock in milliseconds; injectable like `random`. */
   now?: () => number;
   /** Overrides the difficulty's thinking time. */
   timeBudgetMs?: number;

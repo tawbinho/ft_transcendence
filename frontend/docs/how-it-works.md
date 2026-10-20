@@ -1,16 +1,16 @@
 # How the frontend works
 
 A guide for someone new to frontend work who has to explain this code. Read it once from top to bottom; each part
-says where to look in the code. The [README](../README.md) says how to run, test and build the app.
+says where to look in the code. The [README](../README.md) says how to run and build the app.
 
 - [1. What happens when someone opens the app](#1-what-happens-when-someone-opens-the-app)
 - [2. Where things live](#2-where-things-live)
 - [3. How a page gets its data](#3-how-a-page-gets-its-data)
 - [4. Stack and why](#4-stack-and-why)
 - [5. Area by area](#5-area-by-area)
-- [6. The 3D board and the page background: on, off, removed](#6-the-3d-board-and-the-page-background-on-off-removed)
+- [6. The page background: on, off, removed](#6-the-page-background-on-off-removed)
 - [7. Where the data comes from](#7-where-the-data-comes-from)
-- [8. Tests and checks](#8-tests-and-checks)
+- [8. Checks](#8-checks)
 - [9. Questions evaluators are likely to ask](#9-questions-evaluators-are-likely-to-ask)
 - [10. Known limits](#10-known-limits)
 
@@ -39,13 +39,12 @@ src/
                 (nav.ts), places where optional features plug in (extensions.ts)
   pages/        one folder per area: home, auth, play, tournaments, profile, settings, community, watch, history, info
   features/     code shared by several areas, one folder per subject: game, matches, tournaments, users, friends,
-                chat, spectate, auth, account, board3d (the optional 3D board), backdrop (the optional page background)
+                chat, spectate, auth, account, backdrop (the optional page background)
   components/   pieces used everywhere: ui/ (the design system), icons, logo, illustrations, PageHeader, ModeCard
   layout/       the frame of every page: header, menus, footer
   i18n/         translations: locales/<en|fr|ar>/<area>.ts
   lib/          code without pages: the API client, live events, storage, formatting, validation
   styles/       Tailwind setup and the color tokens
-  test/         test helpers and shared test data
 ```
 
 The rule for where a file goes: used by one area only, next to its page in `pages/<area>/`; used by several areas, in
@@ -53,8 +52,8 @@ The rule for where a file goes: used by one area only, next to its page in `page
 
 A route file is `pages/<area>/<Name>Page.tsx`. It is kept short: it loads data and chooses what to show, and the
 pieces it shows sit next to it (for example `pages/play/online/WaitingRoom.tsx`). Decisions that need no React (which
-text to show, whose turn it is, which rank a player has) are plain functions in small `*.ts` files with their own
-tests, such as `pages/play/offline/offlineText.ts` or `pages/community/leaderboard/ranking.ts`.
+text to show, whose turn it is, which rank a player has) are plain functions in small `*.ts` files next to
+the page, such as `pages/play/offline/offlineText.ts` or `pages/community/leaderboard/ranking.ts`.
 
 Inside a feature folder the files always have the same jobs:
 
@@ -64,7 +63,7 @@ Inside a feature folder the files always have the same jobs:
 | `api.ts`       | One function per backend route, for example `matchesApi.listMine()`          |
 | `hooks.ts`     | React hooks that load or change that data through the cache (`useMatchList`) |
 | `components/`  | Components that several areas show                                           |
-| `*.ts` helpers | Rules and calculations, tested on their own                                  |
+| `*.ts` helpers | Rules and calculations, kept out of the components                           |
 
 ## 3. How a page gets its data
 
@@ -115,10 +114,6 @@ Checked against `package.json`. Where the honest reason is only "it is the usual
 | TanStack Query 5          | The data cache: loading, errors, retries, polling, refresh after a change           | Without it every page would hand-write the same loading and refresh code (section 3)                                                                                                            |
 | i18next and react-i18next | English, French and Arabic texts, with placeholders such as `{{name}}`              | The usual translation library for React                                                                                                                                                         |
 | socket.io-client          | Live updates, only with `VITE_REALTIME=socket`                                      | The backend sends live events through Socket.IO, and this client reconnects by itself                                                                                                           |
-| three, @react-three/fiber | The optional 3D board                                                               | Three.js is the standard WebGL library; React Three Fiber lets the 3D scene be written as React components like the rest of the app                                                             |
-| Vitest                    | Runs the tests                                                                      | Reuses Vite's setup, so tests understand the same imports as the app                                                                                                                            |
-| Testing Library and jsdom | Render components in tests and use them like a person: by role, label and text      | Tests then check what a user meets, not how the code is written. jsdom imitates a browser inside Node                                                                                           |
-| axe-core                  | Accessibility checks in tests and in the browser                                    | The common open source engine for WCAG rules                                                                                                                                                    |
 | Prettier                  | Formats every file the same way                                                     | Removes formatting debates; `npm run format` before each commit                                                                                                                                 |
 
 Not used: ESLint (TypeScript's strict mode and Prettier are the only automatic checks), a component library (every
@@ -179,11 +174,9 @@ Written here instead of taken from a library:
   after how many moves) comes from `offline/offlineText.ts`.
 - `MatchPage.tsx` only loads the online match and picks a screen from `pages/play/online/`: `JoinMatch`,
   `WaitingRoom`, `OnlineGame` (with `ResultActions`: rematch, replay, new match) or `Unavailable`.
-- Both boards stand in one box, the stage (`GameBoard.tsx` and `boardStage.css`): full column width, as high as the
-  board's shape or the screen allows, in the page's surface color. Switching between 2D and 3D therefore moves
-  nothing. The 3D scene reads the same color token as its backdrop, so it is light on a light page and dark on a
-  dark one. Size the parent, not the board: a class on `<Board>` cannot change its width (`AuthLayout` does it with a
-  20 rem box).
+- The board stands in a box, the stage (`GameBoard.tsx` and `boardStage.css`): full column width, as high as the
+  board's shape or the screen allows, in the page's surface color. Size the parent, not the board: a class on
+  `<Board>` cannot change its width (`AuthLayout` does it with a 20 rem box).
 - Keyboard: the board takes focus when a game starts; arrow keys move, Enter or Space drops. There are no number keys: 1 to 9
   cannot reach a tenth column, and on a French keyboard the digits need Shift (`features/game/components/Board.tsx`).
 - A win shows confetti (`pages/play/components/Celebration.tsx`): 36 pieces placed by arithmetic, none for people
@@ -263,8 +256,9 @@ Written here instead of taken from a library:
   dark. Tailwind classes such as `bg-surface` read the tokens, so no component has a raw color.
 - Corner radii, shadows and animation durations are tokens too (`rounded-card`, `shadow-card`, `--duration-*`).
 - The accent color only replaces the primary color (`lib/accent.ts`, `data-accent` on `<html>`). Blue is the default.
-- `styles/tokens.test.ts` checks the contrast of every text and background pair in both themes and with each accent
-  (at least 4.5 to 1, the WCAG AA level).
+- Every text and background pair keeps a contrast of at least 4.5 to 1 (the WCAG AA level) in both themes and with each
+  accent. A test used to check it and was removed, so after changing a color, check the ratio by hand (the browser's
+  developer tools show it).
 - Four illustrations in `components/illustrations/` are small inline SVGs, hidden from screen readers; `EmptyState`
   shows one.
 
@@ -272,7 +266,7 @@ Written here instead of taken from a library:
 
 - One file per area and language: `locales/en/play.ts`, `locales/fr/play.ts`, `locales/ar/play.ts`. English is the
   reference; the French and Arabic files are typed with the English type, so a missing key fails `npm run typecheck`.
-- A test checks that every language has the same keys and placeholders, and that a section of texts lives in one file.
+- `t()` only accepts keys that exist in the English texts (`i18n/i18next.d.ts`), so a misspelled key fails `npm run typecheck`.
 - Choosing Arabic sets `dir="rtl"` on `<html>` (`i18n/index.ts`). Layouts use logical sides (`ms-`, `me-`, `start`,
   `end`), so they mirror by themselves. Text written by players gets `dir="auto"`.
 
@@ -285,46 +279,20 @@ Written here instead of taken from a library:
 - Dialogs and menus close on Escape and give the focus back; icon-only buttons have a label (`IconButton`).
 - Animations stop when the system asks for reduced motion.
 
-## 6. The 3D board and the page background: on, off, removed
+## 6. The page background: on, off, removed
 
-What it is: `src/features/board3d/` draws the board with Three.js. It has no game rules: it draws the state it is
-given and calls `onPlay(column)`, so the engine (or the server) still decides every move. Its own
-[README](../src/features/board3d/README.md) explains each file and answers the usual 3D questions (how the frame is
-made, how a disc falls, how a click finds its column).
-
-How it is connected: one definition in `src/features/game/components/GameBoard.tsx`. Every game screen draws its board
-through `GameBoard`, so play, same-screen tournaments and spectating all get the 2D / 3D switch at once. The 3D code is
-loaded lazily: Three.js (about 250 kB compressed) is downloaded only when someone picks 3D. The choice is saved in the
-browser (key `board-view`). The switch shows only when the browser has WebGL 2; if the 3D code fails, the 2D board
-comes back and the switch hides.
-
-Turn it off without deleting anything: build with `VITE_BOARD_3D=off`. Three.js is then left out of the build.
-
-Remove it for good:
-
-1. `rm -r src/features/board3d`
-2. In `src/features/game/components/GameBoard.tsx`, replace the definition of `Board3D` with
-   `const Board3D: React.ComponentType<BoardProps> | null = null;`
-3. `npm uninstall three @react-three/fiber @types/three`
-
-`npm run typecheck`, `npm test` and `npm run build` pass after these three steps (checked). The `board3d` texts and
-the `VITE_BOARD_3D` lines can stay; they do no harm.
-
-### The page background, also optional (`features/backdrop/`)
-
-Members pick a background for every page in Settings > Preferences: plain (the default), a soft glow in the accent
-color, dots, a fine grid or a faint Connect Four board. The choice is saved on this device (key `backdrop`) and the
-name goes in `data-backdrop` on `<html>`, the same idea as the accent color. `backdrop.css` draws each one on a single
-fixed layer behind the page (`body::before`, `z-index: -1`), with CSS only and the color tokens, so it follows light
-and dark mode and the accent color, is mirrored in Arabic and never moves. `backdrop.test.ts` checks that every text
-color keeps a contrast of 4.5 to 1 on the strongest pixel of each background. Its own
-[README](../src/features/backdrop/README.md) explains each file.
+The page background is optional (`features/backdrop/`). Members pick a background for every page in Settings >
+Preferences: plain (the default), a soft glow in the accent color, dots, a fine grid or a faint Connect Four board. The
+choice is saved on this device (key `backdrop`) and the name goes in `data-backdrop` on `<html>`, the same idea as the
+accent color. `backdrop.css` draws each one on a single fixed layer behind the page (`body::before`, `z-index: -1`),
+with CSS only and the color tokens, so it follows light and dark mode and the accent color, is mirrored in Arabic and
+never moves. The strengths are small on purpose, so text keeps its contrast.
 
 How it is connected: one line in `src/main.tsx`, `import '@/features/backdrop/register'`. The picker reaches Settings
 through `src/app/extensions.ts`, a short list that Settings reads (empty when the feature is absent).
 
-Remove it: `rm -r src/features/backdrop` and delete that one line in `src/main.tsx`. `npm run typecheck`, `npm test`
-and `npm run build` pass after that (checked). The lines about `backdrop` in `index.html` can stay.
+Remove it: `rm -r src/features/backdrop` and delete that one line in `src/main.tsx`. `npm run typecheck` and
+`npm run build` pass after that (checked). The lines about `backdrop` in `index.html` can stay.
 
 ## 7. Where the data comes from
 
@@ -333,28 +301,17 @@ Every page that shows players, friends, chat, matches or tournaments reads them 
 and the same-screen tournament run in the browser alone, as the subject allows.
 
 While the backend was being written, an in-browser demo server answered the missing routes with made-up players. It
-was removed once chat, the last missing part, was built. What remains of that time is `setTransport` in
-`lib/api/http.ts`, which the tests use to answer API calls with prepared data (`src/test/fakeApi.ts`).
+was removed once chat, the last missing part, was built.
 
-## 8. Tests and checks
+## 8. Checks
 
-`npm test` runs more than 800 tests in about 100 files with Vitest:
+The frontend has no automated tests at the moment (they were removed). The checks that remain are `npm run typecheck`
+(TypeScript, which also checks every translation key), `npm run format:check` (Prettier) and `npm run build`.
 
-- plain functions (engine, computer opponent, brackets, ranking, achievements, texts, URL filters...);
-- components and whole pages rendered in jsdom and used like a person would (click, type, keys);
-- accessibility: most page tests end with `expectNoA11yViolations(container)` (axe-core);
-- `src/app/routes.test.tsx` opens every page of the route table as a visitor and as a member and expects one `<h1>`;
-- any `console.error` or `console.warn` during a test fails it, because the subject rejects console messages.
-
-Helpers in `src/test/`: `renderRoute('/path', { user })` and `renderWithProviders(ui)` render with the cache, the
-router and English texts (`user: null` is a visitor); `fakeApi({ 'GET /friends': ... })` answers the requests of a test;
-the fixture files in `test/fixtures/` hold sample data.
-
-The other checks: `npm run typecheck` (TypeScript), `npm run format:check` (Prettier) and `npm run build`. Every page
-was also opened in a real Chromium browser: in English at 1280 and 390 pixels wide, in Arabic at 390, in light and
-dark mode, and the games in 3D (also in French), looking for console messages, sideways scrolling and accessibility
-problems (color contrast included). Two members also played a real online match against the backend and opened its
-replay.
+Every page was also opened by hand in a real Chromium browser, in English at 1280 and 390 pixels wide, in Arabic at
+390, in light and dark mode, looking for console messages, sideways scrolling and accessibility problems (color
+contrast included). Two members also played a real online match against the backend and opened its replay. Repeat
+this after a big change.
 
 ## 9. Questions evaluators are likely to ask
 
@@ -396,25 +353,25 @@ Worker, with three levels that sometimes slip on purpose, so it is not perfect.
 folder in `locales/` with the same files, and one entry in `LANGUAGES` and in `resources` in `i18n/index.ts` (the
 language menu reads that list).
 
-**How is accessibility checked?** axe-core in the tests and in the browser, keyboard play with announcements, focus
-management, a contrast test for every color pair (section 5, "Accessibility").
+**How is accessibility handled?** Labels linked to their errors, keyboard play with announcements, focus management,
+reduced motion, and color pairs that keep a contrast of 4.5 to 1 (section 5, "Accessibility"). It was checked by hand in
+the browser, with no automatic test at the moment.
 
-**How do you remove the 3D view?** Three steps (section 6). **The page background?** Two: delete its folder and one
-line in `src/main.tsx` (section 6).
+**How do you remove the page background?** Two steps: delete its folder and one line in `src/main.tsx` (section 6).
 
 **Can you make a small change now?** Places that change one behavior each:
 
-| Change                        | Where                                                                                  |
-| ----------------------------- | -------------------------------------------------------------------------------------- |
-| XP per win or per level       | `XP_PER_RESULT`, `XP_PER_LEVEL` in `features/users/achievements.ts`                    |
-| A link in the top bar         | `app/nav.ts`                                                                           |
-| A text                        | `src/i18n/locales/<en, fr, ar>/<area>.ts` (all three languages)                        |
-| A color                       | the tokens at the top of `styles/index.css` (the contrast test says if it is too pale) |
-| How often a match is reloaded | `pollInterval` in `features/matches/model.ts`                                          |
-| How fast a replay plays       | the timer in `pages/watch/useReplay.ts`                                                |
-| The computer's levels         | `PROFILES` in `features/game/bot/bot.ts`                                               |
+| Change                        | Where                                                                              |
+| ----------------------------- | ---------------------------------------------------------------------------------- |
+| XP per win or per level       | `XP_PER_RESULT`, `XP_PER_LEVEL` in `features/users/achievements.ts`                |
+| A link in the top bar         | `app/nav.ts`                                                                       |
+| A text                        | `src/i18n/locales/<en, fr, ar>/<area>.ts` (all three languages)                    |
+| A color                       | the tokens at the top of `styles/index.css` (keep text and background at 4.5 to 1) |
+| How often a match is reloaded | `pollInterval` in `features/matches/model.ts`                                      |
+| How fast a replay plays       | the timer in `pages/watch/useReplay.ts`                                            |
+| The computer's levels         | `PROFILES` in `features/game/bot/bot.ts`                                           |
 
-After a change: `npm run typecheck && npm test`.
+After a change: `npm run typecheck && npm run format:check`.
 
 ## 10. Known limits
 
@@ -427,7 +384,6 @@ After a change: `npm run typecheck && npm test`.
 - Any answer of 400 or more prints a red line in Chrome's console, even an expected one, such as a blocked player
   trying to send a message (`403 BLOCKED`).
 - Tested in Chromium only. Firefox and Safari (or Edge) must be checked by hand for the browser support module.
-- On a 1280 by 900 screen the 3D board is a little taller than the window, so the page scrolls slightly in 3D.
-- On a 1280 by 800 laptop screen the game board starts about 355 px from the top (header, title, players, status,
-  2D / 3D switch), so the page scrolls about 115 px to see all of it. The board is already as large as the
-  screen allows; making it fit would need a smaller header and cards, not a smaller board.
+- On a 1280 by 800 laptop screen the game board starts well below the top (header, title, players, status), so the page
+  scrolls a little to see all of it. The board is already as large as the screen allows; making it fit would need a
+  smaller header and cards, not a smaller board. Not measured again since the 2D / 3D switch was removed.

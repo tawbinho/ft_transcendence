@@ -17,7 +17,7 @@ interface Pending {
 
 /**
  * Asks a Web Worker for the computer's moves. Where workers are unavailable
- * (tests, very old browsers) or the worker fails to start, the same search
+ * (very old browsers) or the worker fails to start, the same search
  * runs on the main thread instead.
  */
 export function createBotClient(): BotClient {

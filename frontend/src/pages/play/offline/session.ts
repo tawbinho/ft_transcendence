@@ -28,7 +28,7 @@ export function startingValues(): SetupValues {
   return { settings: loadLastSettings(), difficulty: 'medium', firstPlayer: 'you', names: ['', ''] };
 }
 
-/** Turns the form into a game. `random` is a parameter so tests can decide who starts. */
+/** Turns the form into a game. `random` is a parameter so the caller can decide who starts. */
 export function buildSession(mode: Mode, values: SetupValues, random: () => number = Math.random): Session {
   let opponent: Opponent = { kind: 'human' };
   if (mode === 'computer') {

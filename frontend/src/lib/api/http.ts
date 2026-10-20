@@ -22,7 +22,7 @@ export interface ApiResponse {
   payload: unknown;
 }
 
-/** Something that answers API calls: the network, or a fake backend in tests. */
+/** Something that answers API calls: the network. */
 export type Transport = (request: ApiRequest) => Promise<ApiResponse>;
 
 const API_PREFIX = '/api';

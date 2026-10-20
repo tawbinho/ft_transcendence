@@ -92,7 +92,7 @@ const memberRoutes: RouteObject[] = [
   },
 ];
 
-/** The whole route table. Tests build their own router from it. */
+/** The whole route table. */
 export const routes: RouteObject[] = [
   {
     element: <AppLayout />,
