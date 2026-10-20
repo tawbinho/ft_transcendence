@@ -31,7 +31,7 @@ npm run dev
 
 Then open http://localhost:5173. The development server forwards `/api` and `/socket.io` to the HTTPS proxy on
 https://localhost:8443, so logins, cookies and routes behave as in production. The home page, the games on one screen
-and against the computer, the same-screen tournament, the design page and the legal pages also work without the
+and against the computer, the same-screen tournament and the legal pages also work without the
 backend.
 
 ## Scripts

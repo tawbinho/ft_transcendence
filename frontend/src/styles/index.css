@@ -9,8 +9,8 @@
    Every text and background pair below keeps a contrast of at least 4.5:1
    (styles/tokens.test.ts checks it).
 
-   [data-theme='light'] is listed next to :root so that a part of a page (the
-   /design page shows both themes side by side) can switch theme on its own.
+   [data-theme='light'] is listed next to :root so that a part of a page can
+   switch to the light theme on its own.
    --------------------------------------------------------------------------- */
 :root,
 [data-theme='light'] {

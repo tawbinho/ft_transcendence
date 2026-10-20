@@ -265,8 +265,6 @@ Written here instead of taken from a library:
 - The accent color only replaces the primary color (`lib/accent.ts`, `data-accent` on `<html>`). Blue is the default.
 - `styles/tokens.test.ts` checks the contrast of every text and background pair in both themes and with each accent
   (at least 4.5 to 1, the WCAG AA level).
-- `/design` shows the identity, both palettes, the type scale, every icon and every `ui` component with its variants
-  (`pages/info/design/`, one file per section).
 - Four illustrations in `components/illustrations/` are small inline SVGs, hidden from screen readers; `EmptyState`
   shows one.
 
