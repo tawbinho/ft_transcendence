@@ -1,11 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { LoadError } from '@/components/LoadError';
-<<<<<<< HEAD
 import { EmptyState, SectionSpinner, Pagination } from '@/components/ui';
-=======
-import { EmptyState, PageSpinner, Pagination } from '@/components/ui';
 import { withoutComputerPlayers } from '@/features/users/computerPlayers';
->>>>>>> bf7ae18 (hide the computer opponents from the friends page and the player search)
 import { usePlayerSearch } from '@/features/users/hooks';
 import { cn } from '@/lib/cn';
 import { pageCount } from '@/lib/pages';
