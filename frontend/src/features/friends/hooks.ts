@@ -1,17 +1,24 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { withoutComputerPlayers } from '@/features/users/computerPlayers';
 import { userKeys } from '@/features/users/hooks';
 import { useLiveInterval } from '@/lib/realtime';
 import { friendsApi } from './api';
+import type { FriendsOverview } from './types';
 
 export const friendKeys = {
   all: ['friends'] as const,
 };
 
-/** Friends and requests; refreshed regularly so online dots stay true. */
+/** Friends and requests; refreshed regularly so online dots stay true. Computer opponents are left out, wherever the lists are shown. */
 export function useFriends() {
   return useQuery({
     queryKey: friendKeys.all,
     queryFn: ({ signal }) => friendsApi.overview(signal),
+    select: (overview): FriendsOverview => ({
+      friends: withoutComputerPlayers(overview.friends),
+      incoming: withoutComputerPlayers(overview.incoming),
+      outgoing: withoutComputerPlayers(overview.outgoing),
+    }),
     refetchInterval: useLiveInterval(20_000),
   });
 }
@@ -23,7 +30,7 @@ export function useIncomingRequestCount(enabled: boolean): number {
     queryFn: ({ signal }) => friendsApi.overview(signal),
     enabled,
     refetchInterval: useLiveInterval(30_000),
-    select: (overview) => overview.incoming.length,
+    select: (overview) => withoutComputerPlayers(overview.incoming).length,
   });
   return data ?? 0;
 }
