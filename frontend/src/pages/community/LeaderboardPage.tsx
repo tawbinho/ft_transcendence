@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { LoadError } from '@/components/LoadError';
 import { PageHeader } from '@/components/PageHeader';
 import { EmptyState, PageSpinner, Pagination } from '@/components/ui';
+import { withoutComputerPlayers } from '@/features/users/computerPlayers';
 import { usePlayerSearch } from '@/features/users/hooks';
 import type { PlayerListItem } from '@/features/users/types';
 import { cn } from '@/lib/cn';
@@ -14,13 +15,22 @@ import { splitPodium } from './leaderboard/ranking';
 
 const PAGE_SIZE = 10;
 
-/** The players with the most wins: a podium for the best three on the first page, then a table. */
+/** The most players one request can return. The board is cut into pages here, so it shows this many players at most. */
+const BOARD_SIZE = 50;
+
+/**
+ * The players with the most wins: a podium for the best three on the first page, then a table.
+ * The computer opponents are left out. Because the server pages by its own count, one request
+ * asks for the whole board and the pages are cut here, so ranks never skip a number.
+ */
 export function LeaderboardPage() {
   const { t } = useTranslation();
   const [params, setParams] = useUrlParams();
-  const page = readPage(params);
+  const results = usePlayerSearch({ sort: 'wins', limit: BOARD_SIZE });
+  const ranked = withoutComputerPlayers(results.data?.items ?? []);
+  const pages = pageCount(ranked.length, PAGE_SIZE);
+  const page = Math.min(readPage(params), pages);
   const offset = (page - 1) * PAGE_SIZE;
-  const results = usePlayerSearch({ sort: 'wins', limit: PAGE_SIZE, offset });
 
   return (
     <>
@@ -31,14 +41,14 @@ export function LeaderboardPage() {
         <PageSpinner />
       ) : results.error ? (
         <LoadError error={results.error} onRetry={() => void results.refetch()} retrying={results.isFetching} />
-      ) : results.data.items.length === 0 ? (
+      ) : ranked.length === 0 ? (
         <EmptyState illustration="trophy">{t('leaderboard.empty')}</EmptyState>
       ) : (
         <LeaderboardPlaces
-          players={results.data.items}
+          players={ranked.slice(offset, offset + PAGE_SIZE)}
           page={page}
           offset={offset}
-          pages={pageCount(results.data.total, PAGE_SIZE)}
+          pages={pages}
           faded={results.isPlaceholderData}
           onPageChange={(next) => setParams(next > 1 ? { page: String(next) } : {})}
         />
