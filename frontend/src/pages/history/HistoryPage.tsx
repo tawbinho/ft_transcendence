@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { LoadError } from '@/components/LoadError';
 import { PageHeader } from '@/components/PageHeader';
-import { buttonClass, EmptyState, PageSpinner, Pagination } from '@/components/ui';
+import { buttonClass, EmptyState, SectionSpinner, Pagination } from '@/components/ui';
 import { MatchList } from '@/features/matches/components/MatchList';
 import { useMatchList } from '@/features/matches/hooks';
 import { cn } from '@/lib/cn';
@@ -49,7 +49,7 @@ export function HistoryPage() {
         <HistoryFilters value={view.filter} onChange={(filter) => show({ filter })} />
 
         {list.isPending ? (
-          <PageSpinner />
+          <SectionSpinner />
         ) : list.error ? (
           <LoadError error={list.error} onRetry={() => void list.refetch()} retrying={list.isFetching} />
         ) : list.data.items.length === 0 ? (

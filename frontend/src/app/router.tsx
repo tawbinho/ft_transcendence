@@ -1,5 +1,5 @@
 import { Navigate, createBrowserRouter, type RouteObject } from 'react-router';
-import { ScreenSpinner } from '@/components/ui';
+import { PageSpinner } from '@/components/ui';
 import { AppLayout } from '@/layout/AppLayout';
 import { RouteError } from '@/layout/RouteError';
 import { NotFoundPage } from '@/pages/info/NotFoundPage';
@@ -97,7 +97,7 @@ export const routes: RouteObject[] = [
   {
     element: <AppLayout />,
     errorElement: <RouteError />,
-    hydrateFallbackElement: <ScreenSpinner />,
+    hydrateFallbackElement: <PageSpinner />,
     children: [
       {
         errorElement: <RouteError />,

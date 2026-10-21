@@ -16,7 +16,7 @@ export { RangeField } from './RangeField';
 export { ScrollFade } from './ScrollFade';
 export { SelectField } from './SelectField';
 export { Skeleton } from './Skeleton';
-export { PageSpinner, ScreenSpinner, Spinner } from './Spinner';
+export { PageSpinner, SectionSpinner, Spinner } from './Spinner';
 export { Switch } from './Switch';
 export { TabLinks, type TabLink } from './TabLinks';
 export { TextField } from './TextField';

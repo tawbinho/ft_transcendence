@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { paths } from '@/app/paths';
 import { LoadError } from '@/components/LoadError';
-import { Badge, EmptyState, PageSpinner, Pagination, type BadgeTone } from '@/components/ui';
+import { Badge, EmptyState, SectionSpinner, Pagination, type BadgeTone } from '@/components/ui';
 import { PROFILE_MATCHES_PAGE, useProfileMatches } from '@/features/users/hooks';
 import type { Profile, ProfileMatch } from '@/features/users/types';
 import { cn } from '@/lib/cn';
@@ -23,7 +23,7 @@ export function RecentMatches({ player }: { player: Profile }) {
   const matches = useProfileMatches(player.displayName, page);
   const self = player.friendship === 'self';
 
-  if (matches.isPending) return <PageSpinner />;
+  if (matches.isPending) return <SectionSpinner />;
   if (matches.error) {
     return <LoadError error={matches.error} onRetry={() => void matches.refetch()} retrying={matches.isFetching} />;
   }

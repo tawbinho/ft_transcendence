@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { LoadError } from '@/components/LoadError';
-import { buttonClass, EmptyState, PageSpinner, Pagination } from '@/components/ui';
+import { buttonClass, EmptyState, SectionSpinner, Pagination } from '@/components/ui';
 import { useTournaments } from '@/features/tournaments/hooks';
 import { filterStatus, parseFilter, type TournamentFilter } from '@/features/tournaments/view';
 import { cn } from '@/lib/cn';
@@ -39,7 +39,7 @@ export function TournamentList() {
       </h2>
       <TournamentFilters value={filter} onChange={(next) => go({ filter: next })} />
       {list.isPending ? (
-        <PageSpinner />
+        <SectionSpinner />
       ) : list.error ? (
         <LoadError error={list.error} onRetry={() => void list.refetch()} retrying={list.isFetching} />
       ) : list.data.items.length === 0 ? (

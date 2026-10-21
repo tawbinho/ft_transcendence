@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { LoadError } from '@/components/LoadError';
-import { EmptyState, PageSpinner, Pagination } from '@/components/ui';
+import { EmptyState, SectionSpinner, Pagination } from '@/components/ui';
 import { usePlayerSearch } from '@/features/users/hooks';
 import { cn } from '@/lib/cn';
 import { pageCount } from '@/lib/pages';
@@ -27,7 +27,7 @@ export function PlayerResults({
     offset: (filters.page - 1) * PAGE_SIZE,
   });
 
-  if (results.isPending) return <PageSpinner />;
+  if (results.isPending) return <SectionSpinner />;
   if (results.error) {
     return <LoadError error={results.error} onRetry={() => void results.refetch()} retrying={results.isFetching} />;
   }

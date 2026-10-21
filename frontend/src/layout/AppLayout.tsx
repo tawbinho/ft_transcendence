@@ -39,14 +39,13 @@ export function AppLayout() {
         Page width rule: every page's title starts at this column's edge (max-w-6xl).
         A form or a long text below it may be narrower, but it stays against the same
         edge (no mx-auto), so titles line up from page to page. Only short notices,
-        such as "page not found", are centered. It is a flex column so that a page
-        still loading (PageSpinner) can fill it and sit in the middle.
+        such as "page not found", are centered.
       */}
       <main
         id="main"
         ref={main}
         tabIndex={-1}
-        className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8 outline-none sm:py-10"
+        className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 outline-none sm:py-10"
       >
         <Outlet />
       </main>
