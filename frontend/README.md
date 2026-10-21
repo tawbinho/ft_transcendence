@@ -1,7 +1,8 @@
 # Frontend
 
 The web app of ft_transcendence: Connect Four on one screen, against the computer or online, with profiles, friends,
-chat, tournaments, a leaderboard, replays and a spectator mode, in English, French and Arabic.
+chat, tournaments, a leaderboard, replays and a spectator mode, in English, French and Arabic. Sign-up asks for a
+6-digit code sent by email, and there is a "forgot password" page that works the same way.
 
 Built with React 19, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router and i18next.
 
@@ -32,6 +33,18 @@ https://localhost:8443, so logins, cookies and routes behave as in production. T
 and against the computer, the same-screen tournament and the legal pages also work without the
 backend.
 
+**Creating an account:** the sign-up form sends a 6-digit code by email, and the account works only after the code is
+typed on the next page. If the root `.env` has no Gmail settings (`SMTP_USER` and `SMTP_PASSWORD`), nothing is sent;
+the code is written in the backend log instead:
+
+```sh
+docker compose logs backend | grep "Code for"
+```
+
+The "forgot password" page uses the same kind of code. The computer opponents (`AI_Easy`, `AI_Medium`, `AI_Hard`) are
+accounts of the backend, but the app hides them from the friends pages, the player search and the leaderboard (see
+`src/features/users/computerPlayers.ts`).
+
 ## Scripts
 
 | Command                | What it does                                               |
@@ -51,10 +64,10 @@ Build-time settings, listed in `.env.example`. For `npm run dev`, copy it to `.e
 what you need. With Docker, pass them as build arguments (`args:` of the `frontend` service in the root
 `docker-compose.yml`).
 
-| Name               | What it does                                                           | Default                  |
-| ------------------ | ---------------------------------------------------------------------- | ------------------------ |
-| `VITE_REALTIME`    | `socket` to receive live updates over Socket.IO                        | Polling only             |
-| `API_PROXY_TARGET` | Development only: where `npm run dev` forwards `/api` and `/socket.io` | `https://localhost:8443` |
+| Name               | What it does                                                           | Default                             |
+| ------------------ | ---------------------------------------------------------------------- | ----------------------------------- |
+| `VITE_REALTIME`    | `socket` to receive live updates over Socket.IO                        | Polling only (Docker sets `socket`) |
+| `API_PROXY_TARGET` | Development only: where `npm run dev` forwards `/api` and `/socket.io` | `https://localhost:8443`            |
 
 ## Running with Docker
 
@@ -107,7 +120,8 @@ so they mirror by themselves.
 
 ## The page background (optional)
 
-Members choose a background for every page in Settings > Preferences: plain (the default), a soft glow, dots, a fine
+Settings > Preferences also has the language, light or dark mode and the accent color (blue by default). Members choose a
+background for every page there too: plain (the default), a soft glow, dots, a fine
 grid or a faint game board. It is drawn with CSS only, saved on this device, and kept faint so text stays readable
 (text keeps a contrast of 4.5 to 1). It lives in `src/features/backdrop/`; one line in `src/main.tsx` switches it on.
 
@@ -116,9 +130,9 @@ grid or a faint game board. It is drawn with CSS only, saved on this device, and
 
 ## Checks
 
-The frontend has no automated tests at the moment. `npm run typecheck` (TypeScript, which also checks every key given
-to `t()` and that French and Arabic have every English text), `npm run format:check` (Prettier) and `npm run build`
-are the automatic checks.
+The frontend has no automated tests at the moment (the backend has its own: `npm test` in `backend/`).
+`npm run typecheck` (TypeScript, which also checks every key given to `t()` and that French and Arabic have every
+English text), `npm run format:check` (Prettier) and `npm run build` are the automatic checks.
 
 ## Browsers
 
