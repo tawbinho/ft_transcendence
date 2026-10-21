@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { LoadError } from '@/components/LoadError';
 import { EmptyState, Spinner } from '@/components/ui';
+import { isComputerPlayer } from '@/features/users/computerPlayers';
 import { useProfile } from '@/features/users/hooks';
 import { isApiError } from '@/lib/api/errors';
 import { Conversation } from './Conversation';
@@ -18,8 +19,9 @@ export function ChatThread({ displayName }: { displayName: string }) {
       </p>
     );
   }
-  if (!profile.data) {
-    if (isApiError(profile.error, 'USER_NOT_FOUND')) {
+  // Nobody writes to a computer opponent.
+  if (!profile.data || isComputerPlayer(profile.data)) {
+    if (profile.data || isApiError(profile.error, 'USER_NOT_FOUND')) {
       return <EmptyState className="m-4">{t('profile.notFoundBody', { name: displayName })}</EmptyState>;
     }
     return (

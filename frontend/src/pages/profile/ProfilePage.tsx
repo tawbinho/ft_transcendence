@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router';
 import { LoadError } from '@/components/LoadError';
 import { PageHeader } from '@/components/PageHeader';
 import { buttonClass, Card, PageSpinner } from '@/components/ui';
+import { isComputerPlayer } from '@/features/users/computerPlayers';
 import { useProfile } from '@/features/users/hooks';
 import { isApiError } from '@/lib/api/errors';
 import { ProfileView } from './ProfileView';
@@ -19,8 +20,9 @@ function ProfileScreen({ displayName }: { displayName: string }) {
   const profile = useProfile(displayName);
 
   if (profile.isPending) return <PageSpinner />;
-  if (!profile.data) {
-    if (isApiError(profile.error, 'USER_NOT_FOUND')) {
+  // Computer opponents are not people: no profile, no friend or message buttons.
+  if (!profile.data || isComputerPlayer(profile.data)) {
+    if (profile.data || isApiError(profile.error, 'USER_NOT_FOUND')) {
       return (
         <div className="mx-auto max-w-lg">
           <PageHeader title={t('profile.notFoundTitle')} />

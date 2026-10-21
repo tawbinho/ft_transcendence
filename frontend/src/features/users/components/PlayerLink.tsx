@@ -3,14 +3,16 @@ import { Link } from 'react-router';
 import { paths } from '@/app/paths';
 import { Avatar, type AvatarSize } from '@/components/ui';
 import { cn } from '@/lib/cn';
+import { isComputerPlayer } from '../computerPlayers';
 
 interface PlayerLike {
   displayName: string;
   avatarUrl: string | null;
   online?: boolean;
+  isBot?: boolean;
 }
 
-/** A player's avatar and name, linking to their profile, with an optional line under the name. */
+/** A player's avatar and name, linking to their profile, with an optional line under the name. A computer opponent has no profile, so it is only shown. */
 export function PlayerLink({
   user,
   size = 'sm',
@@ -36,6 +38,8 @@ export function PlayerLink({
     </>
   );
   const classes = cn('group flex min-w-0 items-center gap-3 rounded-lg', className);
+
+  if (isComputerPlayer(user)) return <div className={classes}>{content}</div>;
 
   return (
     <Link to={paths.profile(user.displayName)} className={classes}>
