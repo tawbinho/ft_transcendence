@@ -30,6 +30,8 @@ export interface Profile extends UserSummary {
   friendship: Friendship;
   /** The viewer blocked this player. */
   blocked: boolean;
+  /** A computer opponent (AI_Easy, AI_Medium, AI_Hard), not a person. */
+  isBot: boolean;
 }
 
 /** One row of the player search. */
@@ -37,6 +39,8 @@ export interface PlayerListItem extends UserSummary {
   createdAt: string;
   stats: ProfileStats;
   friendship: Friendship;
+  /** A computer opponent (AI_Easy, AI_Medium, AI_Hard), not a person. */
+  isBot: boolean;
 }
 
 export const PLAYER_SORTS = ['name', 'wins', 'newest'] as const;
