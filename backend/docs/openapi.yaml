@@ -15,7 +15,7 @@ info:
 
     **Status of each route** (`x-status`):
     - `implemented`: the backend already does this, exactly as written (checked with real requests).
-    - `change`: exists, but must change (only `GET /matches/{id}`: spectators may read a match).
+    - `change`: exists, but must change (no route is in this state now).
     - `new`: does not exist yet. The frontend answers it with its in-browser demo server (`x-demo-feature` names the feature switch `VITE_DEMO_FEATURES`).
 
     **Conventions** (the existing backend already follows these; the new routes keep them)
@@ -40,7 +40,7 @@ tags:
 - name: auth
   description: Accounts, login, two-factor authentication. All implemented.
 - name: matches
-  description: Online games, with spectator mode (`live`, and `GET /matches/{id}` open to every logged-in user). All implemented.
+  description: Online games. All implemented.
 - name: users
   description: Player search, profiles, display name and avatar. All implemented.
 - name: friends
@@ -574,46 +574,14 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/RateLimited'
-  /matches/live:
-    get:
-      tags:
-      - matches
-      operationId: listLiveMatches
-      summary: Matches being played now
-      description: Every `in_progress` match, most recently started first. `yourSeat` is the viewer's seat in the
-        matches they play, null in the others. The Watch page lists these, then opens one with `GET /matches/{id}`.
-        Declare this route BEFORE `/matches/{id}`.
-      x-status: implemented
-      parameters:
-      - $ref: '#/components/parameters/Limit'
-      - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - data
-                properties:
-                  data:
-                    $ref: '#/components/schemas/MatchSummaryPage'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '429':
-          $ref: '#/components/responses/RateLimited'
   /matches/{id}:
     get:
       tags:
       - matches
       operationId: getMatch
       summary: One match
-      description: 'Any logged-in user can read any match (spectator mode): `yourSeat` is null for someone who does not
-        play it. Joining, moving and resigning stay for the players only. This also removes the 404 (a red line in the
-        console) a player got when opening a shared match link before joining.'
+      description: 'Only the players of a match can read it; anyone else gets 404 `MATCH_NOT_FOUND`, so nobody can
+        discover which match ids exist.'
       x-status: implemented
       parameters:
       - $ref: '#/components/parameters/MatchId'
@@ -2476,7 +2444,7 @@ components:
           enum:
           - 1
           - 2
-          description: null when the viewer is not a player (a spectator)
+          description: null when the viewer is not a player (only in a live `match:update`, which has no particular viewer)
           nullable: true
         winnerSeat:
           type: integer
@@ -3033,7 +3001,7 @@ x-realtime:
       x-status: implemented
       payload:
         $ref: '#/components/schemas/RtMatchWatch'
-      does: Adds the socket to the room of that match (players and spectators alike).
+      does: Adds the socket to the room of that match (the app sends it for the matches its user plays).
     match:unwatch:
       x-status: implemented
       payload:

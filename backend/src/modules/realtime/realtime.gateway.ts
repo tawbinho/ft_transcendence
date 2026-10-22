@@ -100,7 +100,7 @@ export class RealtimeGateway
   }
 
   // match:watch { matchId }: from now on this socket receives match:update for
-  // that match. Players and spectators alike (anyone logged in may watch).
+  // that match. Only players have a reason to ask: nobody else can read it.
   @SubscribeMessage(MESSAGES.matchWatch)
   watch(@ConnectedSocket() socket: Socket, @MessageBody() body: unknown): void {
     const matchId = readMatchId(body);

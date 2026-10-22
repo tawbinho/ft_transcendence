@@ -16,7 +16,6 @@ import {
 } from '../../common/decorators/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { CreateMatchDto } from './dto/create-match.dto.js';
-import { ListLiveMatchesQuery } from './dto/list-live-matches.query.js';
 import { ListMatchesQuery } from './dto/list-matches.query.js';
 import { MakeMoveDto } from './dto/make-move.dto.js';
 import { MatchPageResponse, MatchResponse } from './dto/match.responses.js';
@@ -52,18 +51,7 @@ export class MatchesController {
     return this.matches.listMine(user.id, query);
   }
 
-  // GET /api/matches/live: the Watch page. Declared BEFORE ':id' too, for the
-  // same reason as 'mine'.
-  @Get('live')
-  live(
-    @CurrentUser() user: AuthenticatedUser,
-    @Query() query: ListLiveMatchesQuery,
-  ): Promise<MatchPage> {
-    return this.matches.listLive(user.id, query);
-  }
-
-  // GET /api/matches/:id: the full state. Any logged-in user may read it
-  // (spectator mode); `yourSeat` is null for someone who does not play it.
+  // GET /api/matches/:id: the full state. Only the players may read it.
   @Get(':id')
   get(
     @CurrentUser() user: AuthenticatedUser,

@@ -167,8 +167,8 @@ export function drop(state: GameState, col: number): GameState {
 }
 
 // Rebuilds a game from its settings and the list of columns played, in order.
-// Used to restore a match from the saved moves (reconnecting, spectating,
-// match history). Throws if the list contains an illegal move.
+// Used to restore a match from the saved moves (reconnecting, match history).
+// Throws if the list contains an illegal move.
 export function replay(
   settings: Partial<GameSettings>,
   moves: readonly number[],

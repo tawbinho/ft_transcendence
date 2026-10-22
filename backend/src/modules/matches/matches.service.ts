@@ -11,7 +11,6 @@ import type {
   CreateMatchDto,
   MatchSettingsDto,
 } from './dto/create-match.dto.js';
-import type { ListLiveMatchesQuery } from './dto/list-live-matches.query.js';
 import type { ListMatchesQuery } from './dto/list-matches.query.js';
 import { drop, replay, validateSettings } from './engine/game.engine.js';
 import { GameRuleError } from './engine/game.errors.js';
@@ -216,11 +215,12 @@ export class MatchesService {
   // Read
   // ---------------------------------------------------------------------------
 
-  // The full state of one match. Any logged-in user may read it (spectator
-  // mode): `yourSeat` is null for someone who does not play it. Joining,
-  // moving and resigning stay for the players.
+  // The full state of one match. Only its players may read it; anyone else
+  // gets "not found", so nobody can discover which match ids exist.
   async get(userId: string, matchId: string): Promise<MatchView> {
-    return this.load(userId, matchId);
+    const view = await this.load(userId, matchId);
+    if (view.yourSeat === null) throw this.notFound();
+    return view;
   }
 
   // Loads a match and builds its view for one viewer (null: nobody in
@@ -301,35 +301,9 @@ export class MatchesService {
     return this.toPage(matches, total, limit, offset, userId);
   }
 
-  // ---------------------------------------------------------------------------
-  // Live matches (the Watch page)
-  // ---------------------------------------------------------------------------
-
-  // Every match being played right now, most recently started first. Any
-  // logged-in user can list them (spectator mode); `yourSeat` is the viewer's
-  // seat in the matches they play, null in the others. A spectator then opens
-  // one with GET /matches/:id.
-  async listLive(
-    userId: string,
-    query: ListLiveMatchesQuery,
-  ): Promise<MatchPage> {
-    const limit = query.limit ?? 20;
-    const offset = query.offset ?? 0;
-
-    const [matches, total] = await this.matches
-      .createQueryBuilder('m')
-      .where("m.status = 'in_progress'")
-      .orderBy('m.startedAt', 'DESC')
-      .addOrderBy('m.id', 'DESC')
-      .take(limit)
-      .skip(offset)
-      .getManyAndCount();
-    return this.toPage(matches, total, limit, offset, userId);
-  }
-
   // Turns a page of match rows into the list the API sends. Two more queries
   // for the whole page (not one per match): the players and the number of
-  // moves of each match. Shared by every list of matches.
+  // moves of each match.
   private async toPage(
     matches: Match[],
     total: number,
