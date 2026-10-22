@@ -8,7 +8,7 @@ export const matchesApi = {
   listMine: (params: ListMatchesParams = {}, signal?: AbortSignal) =>
     http.get<MatchPage>('/matches/mine', { query: { ...params }, signal }),
 
-  /** For its players, and for spectators (`yourSeat` null) once the backend allows it. */
+  /** Only for the players of the match; anyone else gets a 404. */
   get: (id: string, signal?: AbortSignal) => http.get<Match>(`/matches/${encodeURIComponent(id)}`, { signal }),
 
   join: (id: string) => http.post<Match>(`/matches/${encodeURIComponent(id)}/join`),

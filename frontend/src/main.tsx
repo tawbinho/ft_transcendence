@@ -4,7 +4,6 @@ import '@/i18n';
 import '@/styles/index.css';
 import { App } from '@/app/App';
 import { applyColorScheme } from '@/lib/colorScheme';
-import '@/features/backdrop/register';
 
 applyColorScheme();
 

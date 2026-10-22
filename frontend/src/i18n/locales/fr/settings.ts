@@ -44,10 +44,14 @@ export const settingsMessages: SettingsMessages = {
     manualKey: 'Impossible de scanner ? Saisissez plutôt cette clé :',
     confirmOn: 'Confirmer et activer',
     offBody:
-      'Saisissez un code de votre application d’authentification pour désactiver l’authentification à deux facteurs.',
+      'Saisissez un code de votre application d’authentification, ou un code de secours, pour désactiver l’authentification à deux facteurs.',
     confirmOff: 'Désactiver',
     enabled: 'L’authentification à deux facteurs est activée.',
     disabled: 'L’authentification à deux facteurs est désactivée.',
     alreadyOn: 'Déjà activée ? La désactiver',
+    backupTitle: 'Gardez vos codes de secours',
+    backupBody:
+      'Si vous perdez votre téléphone, chaque code permet de vous connecter une fois à la place d’un code de l’application. Gardez-les en lieu sûr : ils ne sont affichés que maintenant.',
+    backupDone: 'Je les ai gardés',
   },
 };

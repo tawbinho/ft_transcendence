@@ -53,11 +53,7 @@ services:
       - avatar-data:/data/avatars
 
   frontend:
-    build:
-      context: ./frontend
-      args:
-        # Live updates over Socket.IO (instant). Empty: the pages poll instead.
-        VITE_REALTIME: socket
+    build: ./frontend
     restart: unless-stopped
     expose:
       - '80'

@@ -7,8 +7,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-# Read by Vite at build time (see .env.example): "socket" turns live updates on.
-ARG VITE_REALTIME=
 RUN npm run build
 
 FROM nginx:1.27-alpine

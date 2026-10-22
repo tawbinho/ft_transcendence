@@ -24,8 +24,10 @@ export const commonMessages: CommonMessages = {
     displayNameLength: 'Utilisez de 3 à 20 caractères.',
     displayNameChars: 'Utilisez uniquement des lettres, des chiffres, _ et -.',
     passwordLength: 'Utilisez de 8 à 128 caractères.',
+    passwordTooLong: 'Utilisez au plus 128 caractères.',
     passwordMismatch: 'Les mots de passe ne correspondent pas.',
     code: 'Saisissez les 6 chiffres du code.',
+    codeOrBackupCode: 'Saisissez les 6 chiffres de l’application, ou un code de secours comme ABCDE-FGHJK.',
     tournamentNameLength: 'Utilisez de 3 à 30 caractères.',
     tournamentNameChars:
       "Utilisez des lettres, des chiffres, des espaces et - _ ' . (en commençant par une lettre ou un chiffre).",

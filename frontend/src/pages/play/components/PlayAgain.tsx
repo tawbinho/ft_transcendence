@@ -6,8 +6,8 @@ import { buttonClass, Card } from '@/components/ui';
 import { loadLastSettings } from '@/features/game/lastSettings';
 
 /**
- * Starts a game at once with the board of the last one played on this device.
- * `?start=1` tells the setup page to skip the form.
+ * Starts a same-screen game at once with the board of the last one played on
+ * this device. `?start=1` tells the setup page to skip the form.
  */
 export function PlayAgain() {
   const { t } = useTranslation();
@@ -27,9 +27,6 @@ export function PlayAgain() {
       <div className="flex flex-wrap gap-2">
         <Link to="/play/local?start=1" className={buttonClass({ variant: 'secondary' })}>
           {t('play.again.local')}
-        </Link>
-        <Link to="/play/computer?start=1" className={buttonClass({ variant: 'secondary' })}>
-          {t('play.again.computer')}
         </Link>
       </div>
     </Card>

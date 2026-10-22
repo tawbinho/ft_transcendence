@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { LoadError } from '@/components/LoadError';
 import { PageHeader } from '@/components/PageHeader';
 import { buttonClass, EmptyState, SectionSpinner, Pagination } from '@/components/ui';
+import { useUser } from '@/features/auth/hooks';
 import { MatchList } from '@/features/matches/components/MatchList';
 import { useMatchList } from '@/features/matches/hooks';
 import { cn } from '@/lib/cn';
@@ -15,6 +16,7 @@ import { historySearch, PAGE_SIZE, readHistoryView, toListParams, type HistoryVi
 /** The member's matches: statistics on top, then the list with a filter and pages. */
 export function HistoryPage() {
   const { t } = useTranslation();
+  const user = useUser();
 
   // Filter and page live in the URL, so they survive a reload and can be shared.
   const [params, setParams] = useUrlParams();
@@ -39,7 +41,7 @@ export function HistoryPage() {
         <h2 id="stats-title" className="text-xl font-bold">
           {t('history.statsTitle')}
         </h2>
-        <HistoryStats />
+        {user && <HistoryStats displayName={user.displayName} />}
       </section>
 
       <section aria-labelledby="matches-title" className="flex flex-col gap-4">

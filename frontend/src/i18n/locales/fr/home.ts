@@ -14,7 +14,7 @@ export const homeMessages: HomeMessages = {
     },
     computer: {
       title: 'Contre l’ordinateur',
-      body: 'Trois niveaux, du plus détendu au plus impitoyable. Aucun compte requis.',
+      body: 'Trois niveaux, du plus détendu au plus impitoyable. Inscrivez-vous pour jouer.',
     },
     online: { title: 'En ligne', body: 'Créez une partie, envoyez le lien et affrontez un ami où qu’il soit.' },
     customTitle: 'Votre plateau, vos règles',
@@ -24,11 +24,11 @@ export const homeMessages: HomeMessages = {
       title: 'Et ce n’est pas tout',
       tournaments: {
         title: 'Tournois',
-        body: 'Organisez un tableau entre amis sur un seul écran, ou rejoignez un tournoi en ligne.',
+        body: 'Créez un tableau à élimination directe en ligne, ou rejoignez-en un.',
       },
       community: {
         title: 'Amis et messages',
-        body: 'Ajoutez des amis, discutez avec eux et regardez les parties en direct.',
+        body: 'Ajoutez des amis, discutez avec eux et défiez-les dans une partie.',
       },
     },
     greeting: {
@@ -64,12 +64,6 @@ export const homeMessages: HomeMessages = {
       noFriends: 'Ajoutez des amis pour voir quand ils sont en ligne.',
       challenge: 'Défier',
       challengeName: 'Défier {{name}}',
-    },
-    live: {
-      title: 'Parties en direct',
-      watch: 'Regarder',
-      count: 'Parties en cours en ce moment : {{count}}',
-      none: 'Aucune partie en cours pour le moment.',
     },
   },
 };

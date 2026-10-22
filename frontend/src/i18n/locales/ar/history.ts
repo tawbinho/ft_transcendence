@@ -4,19 +4,11 @@ export const historyMessages: HistoryMessages = {
   history: {
     title: 'مبارياتي',
     statsTitle: 'الإحصاءات',
-    statsPartial: 'محسوبة على آخر {{count}} مباراة منتهية.',
     played: 'الملعوبة',
     wins: 'الانتصارات',
     losses: 'الهزائم',
     draws: 'التعادلات',
     winRate: 'نسبة الفوز',
-    streak: 'السلسلة الحالية',
-    bestStreak: 'أطول سلسلة انتصارات',
-    streakOf: {
-      won: 'سلسلة الفوز',
-      lost: 'سلسلة الخسارة',
-      draw: 'سلسلة التعادل',
-    },
     none: '—',
     filterLabel: 'عرض',
     filters: {
@@ -44,10 +36,6 @@ export const historyMessages: HistoryMessages = {
     result: 'النتيجة',
     board: 'اللوحة',
     date: 'التاريخ',
-    replay: 'إعادة',
-    replayMatch: 'إعادة المباراة ضد {{name}}',
-    recent: 'آخر النتائج',
-    recentHint: 'من الأحدث إلى الأقدم',
     winRateBar: 'نسبة المباريات المنتصر فيها',
   },
 };

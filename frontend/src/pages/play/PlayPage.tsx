@@ -1,14 +1,16 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { paths } from '@/app/paths';
 import { ChipIcon, GlobeIcon, TrophyIcon, UsersIcon } from '@/components/icons';
 import { ModeCard } from '@/components/ModeCard';
 import { PageHeader } from '@/components/PageHeader';
 import { buttonClass } from '@/components/ui';
 import { useCurrentUser } from '@/features/auth/hooks';
+import { COMPUTER_PLAYERS } from '@/features/users/computerPlayers';
 import { HowToPlay } from './components/HowToPlay';
 import { PlayAgain } from './components/PlayAgain';
 
-/** The play hub: the four ways to play, a quick restart and the rules. */
+/** The play hub: the four ways to play, a quick restart of the same-screen game and the rules. */
 export function PlayPage() {
   const { t } = useTranslation();
   const { data: user } = useCurrentUser();
@@ -24,9 +26,18 @@ export function PlayPage() {
             </Link>
           </ModeCard>
           <ModeCard icon={<ChipIcon />} title={t('play.computer.title')} body={t('play.computer.body')}>
-            <Link to="/play/computer" className={buttonClass({ variant: 'secondary', block: true })}>
-              {t('play.computer.action')}
-            </Link>
+            {/* The online match form, with a computer player already filled in: the server plays its moves. */}
+            <div className="flex flex-col gap-2">
+              {COMPUTER_PLAYERS.map((player) => (
+                <Link
+                  key={player.displayName}
+                  to={paths.challenge(player.displayName)}
+                  className={buttonClass({ variant: 'secondary', size: 'sm', block: true })}
+                >
+                  {t(`difficulty.${player.level}`)}
+                </Link>
+              ))}
+            </div>
           </ModeCard>
           <ModeCard icon={<GlobeIcon />} title={t('play.online.title')} body={t('play.online.body')}>
             {user ? (

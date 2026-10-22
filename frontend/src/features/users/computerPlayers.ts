@@ -1,6 +1,22 @@
 /**
- * The computer opponents (AI_Easy, AI_Medium, AI_Hard) are stored as ordinary accounts, so the
- * server lists them next to real people. They cannot be friends, so the Friends area hides them.
+ * The computer opponents are the backend's: three accounts that nobody logs in
+ * as (backend/src/modules/matches/bot.service.ts). A match created with one of
+ * these names as the opponent is joined at once by the server, which then plays
+ * the computer's moves. The app never chooses a move for the computer itself.
+ */
+export const COMPUTER_PLAYERS = [
+  { level: 'easy', displayName: 'AI_Easy' },
+  { level: 'medium', displayName: 'AI_Medium' },
+  { level: 'hard', displayName: 'AI_Hard' },
+] as const;
+
+/** The level offered first, where a page has room for only one button. */
+export const DEFAULT_COMPUTER_PLAYER = 'AI_Medium';
+
+/**
+ * They are stored as ordinary accounts, so the server lists them next to real
+ * people. They cannot be friends, so the Friends area, the player search and the
+ * leaderboard hide them.
  *
  * The player routes send an `isBot` flag. The friends route sends only a name and a picture,
  * so the name is the fallback: every computer opponent is called "AI_" followed by its level.

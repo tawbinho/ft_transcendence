@@ -1,7 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router';
 import { cn } from '@/lib/cn';
-import { useScrollEdges } from '@/lib/useScrollEdges';
 
 export interface TabLink {
   to: string;
@@ -15,13 +14,11 @@ export interface TabLink {
 /**
  * Links that look like tabs and switch between pages. The current one gets
  * aria-current="page". On a narrow screen the row scrolls sideways inside
- * itself, so the page never does; it fades at an edge that hides more tabs and
- * starts with the current tab in view.
+ * itself, so the page never does, and starts with the current tab in view.
  */
 export function TabLinks({ label, tabs, className }: { label: string; tabs: readonly TabLink[]; className?: string }) {
   const nav = useRef<HTMLElement>(null);
   const { pathname } = useLocation();
-  const edges = useScrollEdges(nav);
 
   // Bring the current tab into view when the page or the row changes.
   useEffect(() => {
@@ -36,16 +33,7 @@ export function TabLinks({ label, tabs, className }: { label: string; tabs: read
   }, [pathname]);
 
   return (
-    <nav
-      ref={nav}
-      aria-label={label}
-      className={cn(
-        'scroll-fade max-w-full overflow-x-auto',
-        edges.start && '[--fade-start:2.5rem]',
-        edges.end && '[--fade-end:2.5rem]',
-        className,
-      )}
-    >
+    <nav ref={nav} aria-label={label} className={cn('max-w-full overflow-x-auto', className)}>
       <ul className="flex w-max min-w-full gap-1 border-b border-border">
         {tabs.map((tab) => (
           <li key={tab.to}>

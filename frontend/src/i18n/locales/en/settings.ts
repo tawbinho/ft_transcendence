@@ -41,11 +41,15 @@ export const settingsMessages = {
     qrAlt: 'QR code for your authenticator app',
     manualKey: 'Can’t scan it? Enter this key instead:',
     confirmOn: 'Confirm and turn on',
-    offBody: 'Enter a code from your authenticator app to turn two-factor authentication off.',
+    offBody: 'Enter a code from your authenticator app, or a backup code, to turn two-factor authentication off.',
     confirmOff: 'Turn off',
     enabled: 'Two-factor authentication is on.',
     disabled: 'Two-factor authentication is off.',
     alreadyOn: 'Already on? Turn it off',
+    backupTitle: 'Save your backup codes',
+    backupBody:
+      'If you lose your phone, each code lets you log in once instead of a code from the app. Keep them somewhere safe: they are shown only now.',
+    backupDone: 'I saved them',
   },
 };
 

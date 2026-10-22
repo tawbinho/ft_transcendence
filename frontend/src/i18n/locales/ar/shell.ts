@@ -13,7 +13,6 @@ export const shellMessages: ShellMessages = {
     signup: 'إنشاء حساب',
     logout: 'تسجيل الخروج',
     tournaments: 'البطولات',
-    watch: 'مشاهدة',
     players: 'اللاعبون',
     friends: 'الأصدقاء',
     chat: 'الرسائل',

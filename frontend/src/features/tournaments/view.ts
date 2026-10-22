@@ -1,5 +1,4 @@
 import { isApiError } from '@/lib/api/errors';
-import type { Bracket } from './bracket';
 import {
   MIN_TOURNAMENT_PLAYERS,
   TOURNAMENT_STATUSES,
@@ -24,18 +23,6 @@ export function roundName(round: number, rounds: number): RoundName {
   if (fromEnd === 1) return 'semiFinals';
   if (fromEnd === 2) return 'quarterFinals';
   return 'round';
-}
-
-/** A pairing of a bracket, found by its round and its place in that round. */
-export interface PairingRef {
-  round: number;
-  index: number;
-}
-
-/** How many matches a bracket has and how many are played. A bye is not a match. */
-export function countMatches(bracket: Bracket<unknown>): { played: number; total: number } {
-  const matches = bracket.flat().filter((pairing) => !pairing.bye);
-  return { played: matches.filter((pairing) => pairing.winner !== null).length, total: matches.length };
 }
 
 // ---- Online tournament buttons --------------------------------------------------

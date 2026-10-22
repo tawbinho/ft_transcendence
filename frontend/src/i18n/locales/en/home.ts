@@ -7,17 +7,17 @@ export const homeMessages = {
     createAccount: 'Create an account',
     modesTitle: 'Ways to play',
     local: { title: 'Same screen', body: 'Two players take turns on one device. No account needed.' },
-    computer: { title: 'Against the computer', body: 'Three levels, from relaxed to ruthless. No account needed.' },
+    computer: { title: 'Against the computer', body: 'Three levels, from relaxed to ruthless. Sign up to play.' },
     online: { title: 'Online', body: 'Create a match, send the link, and play a friend from anywhere.' },
     customTitle: 'Your board, your rules',
     customBody: 'Choose from 5 to 10 columns and 5 to 9 rows, connect 3, 4 or 5, and pick a color theme.',
     onlineGuestTitle: 'Sign up to play online',
     points: {
       title: 'And there is more',
-      tournaments: { title: 'Tournaments', body: 'Run a bracket with friends on one screen, or join an online one.' },
+      tournaments: { title: 'Tournaments', body: 'Create an online knockout bracket, or join one.' },
       community: {
         title: 'Friends and chat',
-        body: 'Add friends, chat with them and watch matches as they are played.',
+        body: 'Add friends, chat with them and challenge them to a match.',
       },
     },
     greeting: {
@@ -49,12 +49,6 @@ export const homeMessages = {
       noFriends: 'Add friends to see when they are online.',
       challenge: 'Challenge',
       challengeName: 'Challenge {{name}}',
-    },
-    live: {
-      title: 'Live matches',
-      watch: 'Watch',
-      count: 'Matches being played right now: {{count}}',
-      none: 'No match is being played right now.',
     },
   },
 };

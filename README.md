@@ -6,8 +6,7 @@
 
 **Connect Four** is a web application where players play Connect Four against each other online, against a
 computer opponent, or on the same screen. Players have accounts, profiles, friends and private chat, can enter
-tournaments, watch live matches and replay finished ones, and the whole interface is available in English, French
-and Arabic (with right-to-left layout).
+tournaments, and the whole interface is available in English, French and Arabic (with right-to-left layout).
 
 **Key features**
 
@@ -17,8 +16,8 @@ and Arabic (with right-to-left layout).
 - Accounts with email and password (Argon2), database sessions, optional two-factor authentication with backup codes.
 - Profiles, avatars, friends with online status, blocking, private chat with invitations and read receipts.
 - Single-elimination tournaments (4 or 8 places, byes, turn timeout).
-- Statistics, match history, leaderboard, replays, spectator mode.
-- Custom boards (size, win length, theme), light/dark appearance, optional 3D board.
+- Statistics, match history, leaderboard, levels and badges.
+- Custom boards (size, win length, theme) and light/dark appearance.
 - Privacy Policy and Terms of Service pages, linked in the footer.
 
 ## Instructions
@@ -48,7 +47,7 @@ below. The frontend has its own README in [frontend/README.md](frontend/README.m
 | Login | Role(s) | Responsibilities |
 | ----- | ------- | ---------------- |
 | **atawbi** | Technical Lead, Developer, Project Manager | Chose the architecture and stack (NestJS, TypeORM, PostgreSQL, Docker, HTTPS proxy). Built the backend core: authentication, sessions, 2FA, the game engine, matches, real-time (Socket.IO), the AI opponent, tournaments and chat. Organised the work and reviewed merges. |
-| **rnehme** | Frontend Developer, Product Owner | Built the whole frontend: pages, game board (2D and 3D), design system, three languages with RTL, accessibility, legal pages. Defined what the product must do and validated finished features. |
+| **rnehme** | Frontend Developer, Product Owner | Built the whole frontend: pages, game board, design system, three languages with RTL, accessibility, legal pages. Defined what the product must do and validated finished features. |
 | **fel-ghaz** | Backend Developer, Product Owner | Built the backend social side: player search and presence, profiles and match history, display name, avatars, friends and blocks. Defined what the product must do and validated finished features. |
 
 ## Project Management
@@ -65,11 +64,11 @@ below. The frontend has its own README in [frontend/README.md](frontend/README.m
 
 | Part | Technology |
 | ---- | ---------- |
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, i18next, Socket.IO client, Three.js (React Three Fiber) for the optional 3D board |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, i18next, Socket.IO client |
 | Backend | NestJS (Node 22), TypeScript, TypeORM, Socket.IO, Argon2, class-validator |
 | Database | PostgreSQL 17 |
 | Deployment | Docker Compose: `db`, `backend`, `frontend` (nginx), `proxy` (nginx, HTTPS) |
-| Tests | Vitest (backend and frontend) |
+| Tests | Vitest (backend) |
 
 **Justification of the main choices**
 
@@ -79,7 +78,7 @@ below. The frontend has its own README in [frontend/README.md](frontend/README.m
   schema changes only through reviewed migration files (`synchronize` is off).
 - **Database sessions instead of JWT:** one httpOnly `session` cookie; only its SHA-256 hash is stored, and logout
   takes effect immediately.
-- **Socket.IO:** reconnection and rooms (one room per user, one per watched match) come built in.
+- **Socket.IO:** reconnection and rooms (one room per user, one per open match) come built in.
 - **React + Tailwind:** components, colour tokens for light/dark, and logical sides (`ms-`, `me-`) that mirror
   automatically for Arabic.
 - **nginx HTTPS proxy:** the subject requires HTTPS for every connection to the backend; the backend port is not
@@ -129,15 +128,14 @@ message kind may contain; wins, losses and draws are computed from finished matc
 | Computer opponent | 3 levels, minimax with alpha-beta, deliberate mistakes, runs in a worker thread | atawbi |
 | Tournaments | Single elimination, byes, automatic matches, replayed draws, turn timeout | atawbi |
 | Private chat | Messages, match invitations, system notices, typing indicator, read receipts, history | atawbi |
-| Spectator mode and live list | Watch running matches in real time | atawbi (API), rnehme (UI) |
 | Player search and presence | Search, filters, sorting, pagination, online status | fel-ghaz |
 | Profiles, statistics, match history | Public profile, stats, finished matches | fel-ghaz (API), rnehme (UI) |
 | Display name and avatars | Rename, upload (type checked from file bytes), default avatar | fel-ghaz (API), rnehme (UI) |
 | Friends and blocks | Requests, accept/decline, remove, block | fel-ghaz (API), rnehme (UI) |
 | Deployment and HTTPS | Docker Compose, nginx HTTPS proxy, automatic migrations | atawbi |
-| Whole user interface | Home, play, watch, tournaments, community, settings, legal pages | rnehme |
+| Whole user interface | Home, play, tournaments, community, settings, legal pages | rnehme |
 | Languages and RTL | English, French, Arabic, language switcher, mirrored layout | rnehme |
-| Appearance and 3D board | Light/dark, accent colours, page backgrounds, optional Three.js board | rnehme |
+| Appearance | Light/dark mode and board colours | rnehme |
 | Privacy Policy and Terms of Service | Real content in three languages, linked in the footer | rnehme |
 
 ## Modules
@@ -153,16 +151,15 @@ message kind may contain; wins, losses and draws are computed from finished matc
 | 7 | Gaming: remote players | Major | 2 | atawbi, rnehme | Two players on different computers, server-authoritative moves, reconnection logic, forfeit after the grace period |
 | 8 | AI: opponent for games | Major | 2 | atawbi | Server-side bots (Easy, Medium, Hard): win/block rules, minimax with alpha-beta and iterative deepening, deliberate mistakes; works with every board size and win length |
 | 9 | User management: 2FA | Minor | 1 | atawbi, rnehme | TOTP (authenticator app) with QR setup, one-time backup codes, replay protection |
-| 10 | User management: game statistics and match history | Minor | 1 | fel-ghaz, rnehme | Wins/losses/draws, streaks, history with opponents and dates, leaderboard |
+| 10 | User management: game statistics and match history | Minor | 1 | fel-ghaz, rnehme | Wins/losses/draws, win rate, history with opponents and dates, leaderboard |
 | 11 | Gaming: tournament system | Minor | 1 | atawbi, rnehme | Bracket, registration, matchups tracked, automatic match creation |
 | 12 | Gaming: game customization | Minor | 1 | atawbi, rnehme | Board size (5-10 x 5-9), win length (3-5), themes; defaults available; the AI uses them |
-| 13 | Gaming: spectator mode | Minor | 1 | atawbi, rnehme | Live matches list and real-time board for spectators |
 | 14 | Accessibility and i18n: multiple languages | Minor | 1 | rnehme | i18next, English / French / Arabic, language switcher, all texts translatable |
 | 15 | Accessibility and i18n: RTL support | Minor | 1 | rnehme | Arabic with mirrored layout (logical Tailwind classes), switch without reload |
 | 16 | Gaming: advanced chat features | Minor | 1 | atawbi, rnehme | Block users, invite to a match from chat, tournament notices, profile access, persistent history, typing indicator and read receipts |
-| 17 | Web: custom design system | Minor | 1 | rnehme | 22 reusable components (`frontend/src/components/ui`), colour tokens with light/dark, typography and icons |
+| 17 | Web: custom design system | Minor | 1 | rnehme | 21 reusable components (`frontend/src/components/ui`), colour tokens with light/dark, typography and icons |
 
-**Total: 7 Major x 2 = 14, 10 Minor x 1 = 10, giving 24 points** against the 14 required. The bonus counts at most 5
+**Total: 7 Major x 2 = 14, 9 Minor x 1 = 9, giving 23 points** against the 14 required. The bonus counts at most 5
 points beyond 14, so the modules above the first 14 points are the safety margin if one is not validated.
 
 **Justification.** The project is a game, so the Gaming modules are the core of the product; real-time, remote play
@@ -180,10 +177,9 @@ seat or racing a move) were solved with transactions that lock the match row; bl
 search was solved by running it in a worker thread; HTTPS everywhere on rootless Docker was solved with a proxy on
 port 8443.
 
-**rnehme** — The complete frontend: design system and colour tokens, all pages, the 2D and 3D boards, offline games
-(same screen and against the computer), the three languages and RTL, accessibility checks (axe), the legal pages and
-the frontend documentation. *Challenges:* a layout that mirrors correctly in Arabic, keeping the 2D and 3D boards in
-one box, and keeping the browser console free of errors and warnings.
+**rnehme** — The complete frontend: design system and colour tokens, all pages, the game board, the same-screen game,
+the three languages and RTL, accessibility, the legal pages and the frontend documentation. *Challenges:* a layout
+that mirrors correctly in Arabic, and keeping the browser console free of errors and warnings.
 
 **fel-ghaz** — Player search and online presence, public profiles and match history, display-name change, avatar
 upload with validation of the real file type, friends and blocks (one row per pair, safe when both players ask at
@@ -194,7 +190,7 @@ without trusting the declared type.
 
 - NestJS: https://docs.nestjs.com — TypeORM: https://typeorm.io — PostgreSQL: https://www.postgresql.org/docs/
 - Socket.IO: https://socket.io/docs/v4/ — React: https://react.dev — Tailwind CSS: https://tailwindcss.com/docs
-- i18next: https://www.i18next.com — React Three Fiber: https://docs.pmnd.rs/react-three-fiber
+- i18next: https://www.i18next.com — TanStack Query: https://tanstack.com/query/latest
 - Docker Compose: https://docs.docker.com/compose/ — nginx: https://nginx.org/en/docs/
 - Argon2 (RFC 9106), TOTP (RFC 6238), OWASP session management and password storage cheat sheets
 - Minimax and alpha-beta pruning: https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
@@ -338,8 +334,7 @@ including the `data` / `error` wrapper. The browser must send requests with
 | `POST /api/auth/2fa/backup-codes` | make 10 new backup codes, the old ones stop working (needs a valid code) |
 | `POST /api/matches`           | create a match (optional settings, optional invited player) |
 | `GET  /api/matches/mine`      | my matches, newest first (`status`, `limit`, `offset`) |
-| `GET  /api/matches/live`      | matches being played now, most recently started first (spectators) |
-| `GET  /api/matches/:id`       | the full state of a match (any logged-in user; `yourSeat` is null for a spectator) |
+| `GET  /api/matches/:id`       | the full state of a match (its players only; anyone else gets `MATCH_NOT_FOUND`) |
 | `POST /api/matches/:id/join`  | join a waiting match, the match starts         |
 | `POST /api/matches/:id/moves` | play a column, body `{ "col": 3 }`             |
 | `POST /api/matches/:id/resign`| give up, or cancel a match still waiting       |
@@ -490,14 +485,14 @@ origin, through the proxy). The server refuses the connection unless the
 `session` cookie belongs to a real login, and every 20 seconds it closes the
 sockets whose login ended (logout, expiry). Every tab of a user is in the room
 `user:<id>`. Events (names in `backend/src/modules/realtime/realtime.constants.ts`):
-`match:update` (the whole match, to everyone who sent `match:watch`, spectators
-included), `presence` (`{ userId, online }`, to everyone), `friends:update`
+`match:update` (the whole match, to every socket that sent `match:watch` for it:
+the match page does), `presence` (`{ userId, online }`, to everyone), `friends:update`
 (both players of a request or block), the three `chat:*` events and `tournament:update` (`{ id }`, to
 everyone). They are hints: the app also polls, so a missed event only delays an
 update. A user counts as online while they have a socket open (or made a
 request in the last minute), and the REST `online` value can lag the `presence`
-event by up to a minute after the last tab closes. The frontend only uses
-sockets when it is built with `VITE_REALTIME=socket`.
+event by up to a minute after the last tab closes. The frontend opens its
+socket after login.
 
 **Leaving a running match.** When a player's LAST socket closes, each running
 match of theirs gets a countdown (`DISCONNECT_GRACE_SECONDS`, 30 by default).
@@ -512,7 +507,8 @@ drops them.
 `AI_Medium` and `AI_Hard`, created at startup (`users.is_bot`, no password: nobody
 can log in as them, they are always shown online, and `isBot` is true in the
 player list and profile). To play one, create a match with
-`"opponentDisplayName": "AI_Hard"`: the server joins for the bot, and after each
+`"opponentDisplayName": "AI_Hard"` (in the app: the Easy, Medium and Hard
+buttons of the Play page): the server joins for the bot, and after each
 of your moves the bot answers (after 0.5 to 1.2 s, like a human) through the
 same move code a person uses, so the rules, live events, history and stats all
 apply to it. It works on any board size and win length. How the AI chooses

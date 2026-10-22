@@ -11,7 +11,7 @@ export interface LegalDocument {
 }
 
 /** When the texts below last changed (ISO date). */
-export const LEGAL_UPDATED = '2026-10-12';
+export const LEGAL_UPDATED = '2026-10-22';
 
 // Long-form legal texts live here rather than in the translation files. Keep
 // the three languages in step when the data the app stores changes.
@@ -24,11 +24,12 @@ export const privacy: Record<Language, LegalDocument> = {
       {
         title: 'What we store',
         paragraphs: [
-          'Your account: email address, display name and password. The password is never stored as typed: only a salted hash (Argon2) is kept.',
-          'Two-factor authentication, if you turn it on: the shared secret used to check your codes, stored encrypted.',
+          'Your account: email address, display name and password. The password is never stored as typed: only a salted hash (Argon2) is kept. Your email address is never shown to other players.',
+          'The 6-digit codes we email you to confirm your address or to reset your password. Only a hash of each code is kept, and a code stops working after 15 minutes or 5 wrong tries.',
+          'Two-factor authentication, if you turn it on: the shared secret used to check your codes, stored encrypted, and your 10 one-time backup codes, of which only a hash is kept.',
           'Your login sessions: a random identifier kept in a secure, httpOnly cookie named "session", valid for 7 days or until you log out.',
           'Your profile picture, if you add one. It is cropped and reduced to 256 × 256 pixels in your browser before being sent. Other players can see it.',
-          'Your online games: who played, every move, the result and the dates. Other players of a match can see it, and logged-in players can watch matches in progress.',
+          'Your online games, games against the computer included: who played, every move, the result and the dates. Logged-in players can see the results: on your profile (with the statistics, level and badges computed from them) and in the leaderboard. Only the two players of a match can open the game itself.',
           'Your friends, your friend requests and the players you block. Your private messages, with the time they were read: a conversation is only visible to its two players.',
           'Your tournaments: the ones you create or join, and their results, visible to logged-in players.',
           'Whether you are online, and when you were last seen, which other logged-in players can see.',
@@ -37,13 +38,14 @@ export const privacy: Record<Language, LegalDocument> = {
       {
         title: 'What stays in your browser',
         paragraphs: [
-          'Your language and appearance choices are saved in your browser’s local storage. Games on the same screen or against the computer are played entirely in your browser and are never sent to the server.',
+          'Your language and appearance choices are saved in your browser’s local storage. Games on the same screen are played entirely in your browser and are never sent to the server.',
         ],
       },
       {
         title: 'Why we use it',
         paragraphs: [
-          'Only to run the game: log you in, protect your account, let you play and chat with other players, and show your history and statistics. There is no advertising, no tracking and no data sold or shared with third parties.',
+          'Only to run the game: log you in, protect your account, let you play and chat with other players, and show your history and statistics. There is no advertising, no tracking and no data sold.',
+          'The codes are sent from the project’s Gmail account, so Google, which delivers the email, receives your email address and the message. Nothing else is shared with anyone.',
         ],
       },
       {
@@ -67,11 +69,12 @@ export const privacy: Record<Language, LegalDocument> = {
       {
         title: 'Ce que nous conservons',
         paragraphs: [
-          'Votre compte : adresse e-mail, pseudo et mot de passe. Le mot de passe n’est jamais conservé tel quel : seule une empreinte salée (Argon2) est gardée.',
-          'L’authentification à deux facteurs, si vous l’activez : le secret partagé servant à vérifier vos codes, stocké chiffré.',
+          'Votre compte : adresse e-mail, pseudo et mot de passe. Le mot de passe n’est jamais conservé tel quel : seule une empreinte salée (Argon2) est gardée. Votre adresse e-mail n’est jamais montrée aux autres joueurs.',
+          'Les codes à 6 chiffres que nous vous envoyons par e-mail pour confirmer votre adresse ou réinitialiser votre mot de passe. Seule une empreinte de chaque code est gardée, et un code ne fonctionne plus après 15 minutes ou 5 essais erronés.',
+          'L’authentification à deux facteurs, si vous l’activez : le secret partagé servant à vérifier vos codes, stocké chiffré, et vos 10 codes de secours à usage unique, dont seule une empreinte est gardée.',
           'Vos sessions de connexion : un identifiant aléatoire dans un cookie sécurisé et httpOnly nommé « session », valable 7 jours ou jusqu’à la déconnexion.',
           'Votre photo de profil, si vous en ajoutez une. Elle est recadrée et réduite à 256 × 256 pixels dans votre navigateur avant l’envoi. Les autres joueurs peuvent la voir.',
-          'Vos parties en ligne : les joueurs, chaque coup, le résultat et les dates. Les autres joueurs d’une partie peuvent la consulter, et les joueurs connectés peuvent regarder les parties en cours.',
+          'Vos parties en ligne, parties contre l’ordinateur comprises : les joueurs, chaque coup, le résultat et les dates. Les joueurs connectés peuvent voir les résultats : sur votre profil (avec les statistiques, le niveau et les badges qui en sont calculés) et dans le classement. Seuls les deux joueurs d’une partie peuvent ouvrir la partie elle-même.',
           'Vos amis, vos demandes d’ami et les joueurs que vous bloquez. Vos messages privés, avec l’heure de leur lecture : une conversation n’est visible que par ses deux participants.',
           'Vos tournois : ceux que vous créez ou rejoignez, et leurs résultats, visibles par les joueurs connectés.',
           'Votre présence en ligne et l’heure de votre dernière visite, visibles par les autres joueurs connectés.',
@@ -80,13 +83,14 @@ export const privacy: Record<Language, LegalDocument> = {
       {
         title: 'Ce qui reste dans votre navigateur',
         paragraphs: [
-          'Vos choix de langue et d’apparence sont enregistrés dans le stockage local de votre navigateur. Les parties sur le même écran ou contre l’ordinateur se jouent entièrement dans votre navigateur et ne sont jamais envoyées au serveur.',
+          'Vos choix de langue et d’apparence sont enregistrés dans le stockage local de votre navigateur. Les parties sur le même écran se jouent entièrement dans votre navigateur et ne sont jamais envoyées au serveur.',
         ],
       },
       {
         title: 'Pourquoi nous les utilisons',
         paragraphs: [
-          'Uniquement pour faire fonctionner le jeu : vous connecter, protéger votre compte, vous permettre de jouer et de discuter avec d’autres joueurs, et afficher votre historique et vos statistiques. Aucune publicité, aucun pistage, et aucune donnée vendue ou partagée avec des tiers.',
+          'Uniquement pour faire fonctionner le jeu : vous connecter, protéger votre compte, vous permettre de jouer et de discuter avec d’autres joueurs, et afficher votre historique et vos statistiques. Aucune publicité, aucun pistage, et aucune donnée vendue.',
+          'Les codes sont envoyés depuis le compte Gmail du projet : Google, qui achemine l’e-mail, reçoit donc votre adresse e-mail et le message. Rien d’autre n’est partagé avec qui que ce soit.',
         ],
       },
       {
@@ -110,11 +114,12 @@ export const privacy: Record<Language, LegalDocument> = {
       {
         title: 'ما نحتفظ به',
         paragraphs: [
-          'حسابك: البريد الإلكتروني والاسم الظاهر وكلمة المرور. لا تُحفظ كلمة المرور كما كتبتها أبدًا، بل تُحفظ بصمة مملّحة منها فقط (Argon2).',
-          'المصادقة الثنائية إن فعّلتها: السر المشترك المستخدم للتحقق من رموزك، محفوظًا بشكل مشفّر.',
+          'حسابك: البريد الإلكتروني والاسم الظاهر وكلمة المرور. لا تُحفظ كلمة المرور كما كتبتها أبدًا، بل تُحفظ بصمة مملّحة منها فقط (Argon2). لا يظهر بريدك الإلكتروني للاعبين الآخرين أبدًا.',
+          'الرموز المكوّنة من 6 أرقام التي نرسلها إلى بريدك لتأكيد عنوانك أو لإعادة تعيين كلمة المرور. لا تُحفظ إلا بصمة كل رمز، ويتوقف الرمز عن العمل بعد 15 دقيقة أو بعد 5 محاولات خاطئة.',
+          'المصادقة الثنائية إن فعّلتها: السر المشترك المستخدم للتحقق من رموزك، محفوظًا بشكل مشفّر، ورموزك الاحتياطية العشرة التي يُستخدم كل منها مرة واحدة، ولا تُحفظ إلا بصمتها.',
           'جلسات تسجيل الدخول: معرّف عشوائي في ملف تعريف ارتباط آمن من نوع httpOnly اسمه «session»، صالح لمدة 7 أيام أو حتى تسجيل الخروج.',
           'صورتك الشخصية إن أضفتها. تُقصّ وتُصغَّر إلى 256 × 256 بكسل في متصفحك قبل إرسالها. يمكن للاعبين الآخرين رؤيتها.',
-          'مبارياتك عبر الإنترنت: اللاعبون وكل حركة والنتيجة والتواريخ. يمكن للاعبين الآخرين في المباراة الاطلاع عليها، ويمكن للاعبين المسجّلين مشاهدة المباريات الجارية.',
+          'مبارياتك عبر الإنترنت، ومنها مبارياتك ضد الحاسوب: اللاعبون وكل حركة والنتيجة والتواريخ. يمكن للاعبين المسجّلين رؤية النتائج: في ملفك الشخصي (مع الإحصاءات والمستوى والإنجازات المحسوبة منها) وفي قائمة المتصدرين. ولا يستطيع فتح المباراة نفسها إلا لاعباها.',
           'أصدقاؤك وطلبات الصداقة واللاعبون الذين تحظرهم، ورسائلك الخاصة مع وقت قراءتها: لا يرى المحادثة إلا طرفاها.',
           'بطولاتك: التي تنشئها أو تنضم إليها ونتائجها، ويمكن للاعبين المسجّلين رؤيتها.',
           'حالة اتصالك ووقت آخر ظهور لك، ويمكن للاعبين المسجّلين الآخرين رؤيتهما.',
@@ -123,13 +128,14 @@ export const privacy: Record<Language, LegalDocument> = {
       {
         title: 'ما يبقى في متصفحك',
         paragraphs: [
-          'تُحفظ اختياراتك للغة والمظهر في التخزين المحلي لمتصفحك. أما المباريات على الشاشة نفسها أو ضد الحاسوب فتُلعب بالكامل في متصفحك ولا تُرسل إلى الخادم أبدًا.',
+          'تُحفظ اختياراتك للغة والمظهر في التخزين المحلي لمتصفحك. أما المباريات على الشاشة نفسها فتُلعب بالكامل في متصفحك ولا تُرسل إلى الخادم أبدًا.',
         ],
       },
       {
         title: 'لماذا نستخدمها',
         paragraphs: [
-          'لتشغيل اللعبة فقط: تسجيل دخولك، وحماية حسابك، وتمكينك من اللعب والدردشة مع اللاعبين الآخرين، وعرض سجلّك وإحصاءاتك. لا إعلانات ولا تتبّع، ولا تُباع أي بيانات ولا تُشارك مع أطراف ثالثة.',
+          'لتشغيل اللعبة فقط: تسجيل دخولك، وحماية حسابك، وتمكينك من اللعب والدردشة مع اللاعبين الآخرين، وعرض سجلّك وإحصاءاتك. لا إعلانات ولا تتبّع، ولا تُباع أي بيانات.',
+          'تُرسَل الرموز من حساب Gmail الخاص بالمشروع، لذا تتلقى Google، التي تنقل الرسالة، عنوان بريدك الإلكتروني والرسالة. ولا يُشارَك أي شيء آخر مع أي جهة.',
         ],
       },
       {

@@ -22,7 +22,6 @@ Every route below exists in the backend (see the Status section at the end). The
 | `GET /matches/mine`                               | The viewer's matches                 | Done    |
 | `GET /matches/:id`                                | One match                            | Done    |
 | `POST /matches/:id/join`, `moves`, `resign`       | Play                                 | Done    |
-| `GET /matches/live`                               | Matches being played now             | Done    |
 | `GET /users`                                      | Player search                        | Done    |
 | `GET /users/:displayName`                         | A profile                            | Done    |
 | `GET /users/:displayName/matches`                 | A player's finished matches          | Done    |
@@ -139,7 +138,8 @@ its log (`docker compose logs backend | grep "Code for"`).
 
 **Backup codes.** The backend also answers `{ backupCodes }` (10 codes like `ABCDE-FGHJK`, shown once) when 2FA is
 turned on, and accepts one of them instead of the 6 digits at login and to turn 2FA off
-(`GET` and `POST /auth/2fa/backup-codes` count and renew them). The app does not show or accept them yet.
+(`GET` and `POST /auth/2fa/backup-codes` count and renew them). The app shows them once after turning 2FA on and
+accepts one at login and to turn 2FA off; it does not count or renew them.
 
 **Optional:** add `twoFactorEnabled: boolean` to `User`. The account page then shows only the button that applies
 (turn on or turn off). Without it, it shows both and handles `TWO_FACTOR_ALREADY_ENABLED` and `TWO_FACTOR_NOT_ENABLED`.
@@ -206,19 +206,17 @@ interface MatchSummary {
 | `POST /matches/:id/moves`  | `{ col }`                             | `Match`                                                   |
 | `POST /matches/:id/resign` |                                       | `Match` (a match still waiting is cancelled: `abandoned`) |
 
-### Any logged-in user can read a match
+### Only the players can read a match
 
-`GET /matches/:id` answers every logged-in user, with `yourSeat: null` for those who do not play in it (spectator
-mode). Joining, moving and resigning stay for players only.
+`GET /matches/:id` answers `404 MATCH_NOT_FOUND` to anyone who does not play in the match, so nobody can discover which
+match ids exist. The app shows the join screen on that 404, because an invited player has not joined yet.
 
-### `GET /matches/live`
+### Computer opponents
 
-The matches being played right now (`in_progress`), most recently started first.
-
-- Query: `limit`, `offset`.
-- Answer: `Page<MatchSummary>`. `yourSeat` is the viewer's seat in the matches they play, null in the others.
-- The Watch page lists them, then opens one with `GET /matches/:id`.
-- Declare it before `:id` in the controller, like `mine`, or "live" is taken for a match id.
+`AI_Easy`, `AI_Medium` and `AI_Hard` are accounts of the backend that nobody logs in as. `POST /matches` with one of
+them as `opponentDisplayName` creates the match like any invitation; the server then joins it for the computer at once
+and plays the computer's moves through the same routes and `match:update` events as a person's. The app sends nothing
+special: the Play page's three levels open the match form with the name filled in.
 
 ### Blocked players
 
@@ -419,8 +417,7 @@ most once every 3 seconds while the viewer types, and hides "is typing" 5 second
 
 ## Tournaments
 
-Online tournaments: a single-elimination bracket with 4 or 8 places. The same-screen tournament, where players are
-names typed on one computer, runs in the browser and needs no route.
+Online tournaments: a single-elimination bracket with 4 or 8 places.
 
 ```ts
 type TournamentStatus = 'registering' | 'running' | 'finished';
@@ -503,8 +500,8 @@ move). The app shows whatever the bracket says.
 
 ## Live updates (Socket.IO)
 
-The app works without them, because every page also polls. Built with `VITE_REALTIME=socket`, it opens a Socket.IO
-connection after login and updates the pages as events arrive; polling then slows down to every 30 seconds.
+The app opens a Socket.IO connection after login and updates the pages as events arrive; polling then slows down to
+every 30 seconds. It still works without them, because every page also polls.
 
 **Connecting.**
 
@@ -516,10 +513,10 @@ connection after login and updates the pages as events arrive; polling then slow
 
 **From the app to the server.**
 
-| Event           | Payload       | What the server does                                               |
-| --------------- | ------------- | ------------------------------------------------------------------ |
-| `match:watch`   | `{ matchId }` | Adds the socket to the room of that match (players and spectators) |
-| `match:unwatch` | `{ matchId }` | Removes it                                                         |
+| Event           | Payload       | What the server does                                                             |
+| --------------- | ------------- | -------------------------------------------------------------------------------- |
+| `match:watch`   | `{ matchId }` | Adds the socket to the room of that match (the app sends it for its own matches) |
+| `match:unwatch` | `{ matchId }` | Removes it                                                                       |
 
 **From the server to the app.** Events are hints: the app never depends on receiving one, and a missed event only
 delays an update until the next poll.
@@ -542,27 +539,27 @@ delays an update until the next poll.
 
 Each page refreshes its data on a timer while its tab is visible:
 
-| Data                                  | Where                 | Every                                                 | With live events |
-| ------------------------------------- | --------------------- | ----------------------------------------------------- | ---------------- |
-| A match being played or watched       | Match and Watch pages | 2 s, or 5 s on the viewer's own turn; stops once over | 30 s             |
-| The messages of the open conversation | Chat page             | 5 s                                                   | 30 s             |
-| The conversation list                 | Chat page             | 10 s                                                  | 30 s             |
-| The unread messages badge             | Menu, on every page   | 15 s                                                  | 30 s             |
-| Friends and friend requests           | Friends page          | 20 s                                                  | 30 s             |
-| The friend requests badge             | Menu, on every page   | 30 s                                                  | 30 s             |
-| The tournament list                   | Tournaments page      | 10 s                                                  | 30 s             |
-| One tournament                        | Tournament page       | 3 s until it is finished                              | 30 s             |
-| The live matches                      | Watch page            | 5 s                                                   | 5 s              |
+| Data                                  | Where               | Every                                                 | With live events |
+| ------------------------------------- | ------------------- | ----------------------------------------------------- | ---------------- |
+| A match waiting for its second player | Match page          | 2 s                                                   | 2 s              |
+| A match being played                  | Match page          | 2 s, or 5 s on the viewer's own turn; stops once over | 30 s             |
+| The messages of the open conversation | Chat page           | 5 s                                                   | 30 s             |
+| The conversation list                 | Chat page           | 10 s                                                  | 30 s             |
+| The unread messages badge             | Menu, on every page | 15 s                                                  | 30 s             |
+| Friends and friend requests           | Friends page        | 20 s                                                  | 30 s             |
+| The friend requests badge             | Menu, on every page | 30 s                                                  | 30 s             |
+| The tournament list                   | Tournaments page    | 10 s                                                  | 30 s             |
+| One tournament                        | Tournament page     | 3 s until it is finished                              | 30 s             |
 
 The backend allows 100 requests a minute per address. A player waiting for their opponent's move sends about 30 match
 requests a minute, plus 6 for the menu badges. Two players testing on one computer share one address and stay under
 the limit (about 70 at most); three or more busy tabs on one computer can reach it. The app then shows "Too many
 attempts" and recovers by itself on the next poll.
 
-With live updates on (the Docker build), polling drops to every 30 seconds (except the Watch page's live list, which
-live events do not cover), and a minute of chat between two windows on one computer uses about 40 requests of the
-busiest route. Many busy tabs or fast reloads on one computer can still reach the limit; leaving the read-only `GET`
-routes out of it, and keeping the strict limits on the auth routes, would remove the problem.
+With live updates on, polling drops to every 30 seconds, and a minute of chat between two windows on one computer uses
+about 40 requests of the busiest route. Many busy tabs or fast reloads on one computer can still reach the limit;
+leaving the read-only `GET` routes out of it, and keeping the strict limits on the auth routes, would remove the
+problem.
 
 ## Error codes
 

@@ -5,10 +5,10 @@ import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
   // In development the app runs on http://localhost:5173 and forwards every
-  // /api request (and the Socket.IO connection, when VITE_REALTIME=socket) to
-  // the HTTPS proxy started by `docker compose up`, so the session cookie and
-  // all routes behave exactly like in production. Set API_PROXY_TARGET (in the
-  // shell or in .env.local) if the proxy runs elsewhere.
+  // /api request and the Socket.IO connection to the HTTPS proxy started by
+  // `docker compose up`, so the session cookie and all routes behave exactly
+  // like in production. Set API_PROXY_TARGET (in the shell or in .env.local)
+  // if the proxy runs elsewhere.
   const apiTarget = loadEnv(mode, process.cwd(), '').API_PROXY_TARGET || 'https://localhost:8443';
 
   return {
@@ -37,7 +37,8 @@ export default defineConfig(({ mode }) => {
     build: {
       target: 'es2022',
       sourcemap: true,
-      // The main chunk holds React and the texts of all three languages (about 550 kB); pages are loaded on demand.
+      // The main chunk holds React, Socket.IO and the texts of all three languages (about 580 kB); pages are loaded
+      // on demand.
       chunkSizeWarningLimit: 1000,
     },
   };

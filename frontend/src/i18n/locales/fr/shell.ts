@@ -13,7 +13,6 @@ export const shellMessages: ShellMessages = {
     signup: 'S’inscrire',
     logout: 'Se déconnecter',
     tournaments: 'Tournois',
-    watch: 'Regarder',
     players: 'Joueurs',
     friends: 'Amis',
     chat: 'Messages',

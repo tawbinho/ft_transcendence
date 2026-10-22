@@ -16,11 +16,3 @@ export function writeStorage(key: string, value: string): void {
     // The preference only lasts for this visit.
   }
 }
-
-export function removeStorage(key: string): void {
-  try {
-    window.localStorage.removeItem(key);
-  } catch {
-    // Storage is blocked: nothing was saved, so there is nothing to remove.
-  }
-}

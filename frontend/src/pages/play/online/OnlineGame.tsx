@@ -11,7 +11,7 @@ import { MoveAnnouncer } from '@/features/game/components/MoveAnnouncer';
 import { PlayersBar } from '@/features/game/components/PlayersBar';
 import { toBoardTheme } from '@/features/game/settings';
 import { useMakeMove, useResignMatch } from '@/features/matches/hooks';
-import { isMyTurn, outcomeOf, toBoardModel } from '@/features/matches/model';
+import { isMyTurn, opponentOf, outcomeOf, toBoardModel } from '@/features/matches/model';
 import type { Match } from '@/features/matches/types';
 import { useErrorMessage } from '@/lib/errorMessage';
 import { Celebration } from '../components/Celebration';
@@ -19,6 +19,7 @@ import { KeysHint } from '../components/KeysHint';
 import { useJustWon } from '../components/useJustWon';
 import { matchAnnouncement, matchDetail, matchStatus, matchTone, playerLabel, playerName } from './onlineText';
 import { ResultActions } from './ResultActions';
+import { useOpponentAway } from './useOpponentAway';
 
 /** A match with two players: the board, whose turn it is, resign while it lasts and the next steps after. */
 export function OnlineGame({ match, syncFailed }: { match: Match; syncFailed: boolean }) {
@@ -32,6 +33,8 @@ export function OnlineGame({ match, syncFailed }: { match: Match; syncFailed: bo
   const playing = match.status === 'in_progress';
   const myTurn = isMyTurn(match);
   const celebrate = useJustWon(outcomeOf(match) === 'won');
+  const opponent = opponentOf(match);
+  const opponentAway = useOpponentAway(opponent?.userId ?? null);
 
   return (
     <>
@@ -67,6 +70,9 @@ export function OnlineGame({ match, syncFailed }: { match: Match; syncFailed: bo
         {move.error && <Alert tone="danger">{errorMessage(move.error)}</Alert>}
         {resign.error && <Alert tone="danger">{errorMessage(resign.error)}</Alert>}
         {syncFailed && <Alert tone="warning">{t('online.syncError')}</Alert>}
+        {playing && opponentAway && (
+          <Alert tone="warning">{t('online.opponentAway', { name: opponent?.displayName ?? '?' })}</Alert>
+        )}
 
         <GameBoard
           // The player can start dropping discs as soon as the match begins.

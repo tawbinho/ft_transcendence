@@ -8,7 +8,7 @@ import type { Match } from '@/features/matches/types';
  * an update slower, never wrong.
  */
 export interface RealtimeEvents {
-  /** A match the viewer plays or watches changed: the whole new state. */
+  /** A match the viewer plays changed: the whole new state. */
   'match:update': Match;
   /** A new message in one of the viewer's conversations, sent by either side. */
   'chat:message': { peerId: string; message: Message };

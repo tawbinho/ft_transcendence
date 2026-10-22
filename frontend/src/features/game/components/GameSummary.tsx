@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import type { Difficulty } from '../bot';
 import type { GameSettings } from '../engine';
 import { toBoardTheme } from '../settings';
 
@@ -7,11 +6,9 @@ import { toBoardTheme } from '../settings';
 export function GameSummary({
   settings,
   moveCount,
-  difficulty,
 }: {
   settings: GameSettings & { theme: string };
   moveCount?: number;
-  difficulty?: Difficulty;
 }) {
   const { t } = useTranslation();
   const rows: [string, string][] = [
@@ -19,7 +16,6 @@ export function GameSummary({
     [t('board.winLength'), String(settings.winLength)],
     [t('board.theme'), t(`themes.${toBoardTheme(settings.theme)}.name`)],
   ];
-  if (difficulty) rows.push([t('difficulty.label'), t(`difficulty.${difficulty}`)]);
   if (moveCount !== undefined) rows.push([t('game.moves'), String(moveCount)]);
 
   return (

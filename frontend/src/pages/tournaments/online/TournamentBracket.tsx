@@ -1,12 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { paths } from '@/app/paths';
-import { EyeIcon, PlayIcon } from '@/components/icons';
+import { PlayIcon } from '@/components/icons';
 import { buttonClass } from '@/components/ui';
 import { BracketView, type BracketPairingView } from '@/features/tournaments/components/BracketView';
 import type { Tournament } from '@/features/tournaments/types';
 
-/** The bracket of an online tournament: a "Play" button on the viewer's match, "Watch" on the others in progress. */
+/** The bracket of an online tournament: a "Play" button on the viewer's match in progress. */
 export function TournamentBracket({ tournament, viewerId }: { tournament: Tournament; viewerId: string | undefined }) {
   const { t } = useTranslation();
 
@@ -24,13 +24,10 @@ export function TournamentBracket({ tournament, viewerId }: { tournament: Tourna
         bye: pairing.bye,
         current: live && viewerPlays,
         action:
-          live && pairing.matchId ? (
-            <Link
-              to={viewerPlays ? paths.match(pairing.matchId) : paths.watch(pairing.matchId)}
-              className={buttonClass({ size: 'sm', variant: viewerPlays ? 'primary' : 'ghost' })}
-            >
-              {viewerPlays ? <PlayIcon /> : <EyeIcon />}
-              {viewerPlays ? t('tournaments.play') : t('watch.watch')}
+          live && viewerPlays && pairing.matchId ? (
+            <Link to={paths.match(pairing.matchId)} className={buttonClass({ size: 'sm' })}>
+              <PlayIcon />
+              {t('tournaments.play')}
             </Link>
           ) : undefined,
       };

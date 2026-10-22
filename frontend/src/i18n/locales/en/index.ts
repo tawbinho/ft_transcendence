@@ -11,7 +11,6 @@ import { tournamentsMessages } from './tournaments';
 import { profileMessages } from './profile';
 import { settingsMessages } from './settings';
 import { communityMessages } from './community';
-import { watchMessages } from './watch';
 import { historyMessages } from './history';
 import { infoMessages } from './info';
 
@@ -25,7 +24,6 @@ export const en = {
   ...profileMessages,
   ...settingsMessages,
   ...communityMessages,
-  ...watchMessages,
   ...historyMessages,
   ...infoMessages,
 };

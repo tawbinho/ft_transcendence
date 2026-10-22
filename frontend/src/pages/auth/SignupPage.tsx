@@ -107,7 +107,6 @@ export function SignupPage() {
           error={shown('password')}
           hint={t('auth.passwordHint')}
           autoComplete="new-password"
-          maxLength={128}
           required
         />
         <PasswordField
@@ -116,7 +115,6 @@ export function SignupPage() {
           onChange={(event) => setConfirmation(event.target.value)}
           error={shown('confirmation')}
           autoComplete="new-password"
-          maxLength={128}
           required
         />
         <Button type="submit" size="lg" block loading={signup.isPending}>

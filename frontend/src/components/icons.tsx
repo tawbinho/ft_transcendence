@@ -103,13 +103,6 @@ export const ChatIcon = (props: SVGProps<SVGSVGElement>) => (
   </Icon>
 );
 
-export const EyeIcon = (props: SVGProps<SVGSVGElement>) => (
-  <Icon {...props}>
-    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
-    <circle cx="12" cy="12" r="3" />
-  </Icon>
-);
-
 export const TrophyIcon = (props: SVGProps<SVGSVGElement>) => (
   <Icon {...props}>
     <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z" />

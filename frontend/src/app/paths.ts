@@ -7,7 +7,6 @@ export const paths = {
   profile: (displayName: string) => `/users/${segment(displayName)}`,
   chat: (displayName?: string) => (displayName ? `/chat/${segment(displayName)}` : '/chat'),
   match: (id: string) => `/matches/${segment(id)}`,
-  watch: (id: string) => `/watch/${segment(id)}`,
   tournament: (id: string) => `/tournaments/${segment(id)}`,
   /** The settings page, optionally opened on one section: profile, security, preferences or blocked. */
   settings: (section?: string) => (section ? `/settings/${segment(section)}` : '/settings'),

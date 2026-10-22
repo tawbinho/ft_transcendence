@@ -8,7 +8,12 @@ import { PasswordField } from '@/features/auth/components/PasswordField';
 import { useLogin, useVerifyTwoFactor } from '@/features/auth/hooks';
 import { loginHint } from '@/features/auth/loginHint';
 import { useFocusFirstInvalid } from '@/features/auth/useFocusFirstInvalid';
-import { normalizeCode, validateCode, validateEmail } from '@/features/auth/validation';
+import {
+  normalizeCode,
+  validateCodeOrBackupCode,
+  validateEmail,
+  validateLoginPassword,
+} from '@/features/auth/validation';
 import { isApiError } from '@/lib/api/errors';
 import { useErrorMessage } from '@/lib/errorMessage';
 import { AuthLayout } from '@/layout/AuthLayout';
@@ -33,13 +38,13 @@ export function LoginPage() {
   const hint = loginHint(returnPath(location));
 
   const emailError = submitted ? validateEmail(email) : null;
-  const passwordError = submitted && !password ? 'validation.required' : null;
-  const codeError = submitted ? validateCode(code) : null;
+  const passwordError = submitted ? validateLoginPassword(password) : null;
+  const codeError = submitted ? validateCodeOrBackupCode(code) : null;
 
   function submitCredentials(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
-    if (validateEmail(email) || !password) {
+    if (validateEmail(email) || validateLoginPassword(password)) {
       setFailedSubmits((count) => count + 1);
       return;
     }
@@ -59,7 +64,7 @@ export function LoginPage() {
   function submitCode(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
-    if (validateCode(code)) {
+    if (validateCodeOrBackupCode(code)) {
       setFailedSubmits((count) => count + 1);
       return;
     }
@@ -85,9 +90,9 @@ export function LoginPage() {
             value={code}
             onChange={(event) => setCode(event.target.value)}
             error={codeError && t(codeError)}
-            inputMode="numeric"
+            // A code from the app ("123 456") or a backup code ("ABCDE-FGHJK"), so letters are allowed.
             autoComplete="one-time-code"
-            maxLength={7}
+            maxLength={11}
             autoFocus
             required
           />

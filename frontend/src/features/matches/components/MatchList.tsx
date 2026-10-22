@@ -1,8 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { paths } from '@/app/paths';
-import { PlayIcon } from '@/components/icons';
-import { Badge, buttonClass, type BadgeTone } from '@/components/ui';
+import { Badge, type BadgeTone } from '@/components/ui';
 import { toBoardTheme } from '@/features/game/settings';
 import { formatDateTime } from '@/lib/format';
 import { opponentOf, outcomeOf } from '../model';
@@ -27,11 +26,8 @@ function StatusBadge({ match }: { match: MatchSummary }) {
   return <Badge tone={tone}>{label}</Badge>;
 }
 
-/** A finished match with moves to show can be replayed. */
-const canReplay = (match: MatchSummary) => match.status === 'finished' && match.moveCount > 0;
-
 /**
- * The viewer's matches, one row each: the row opens the match page, its Replay link the replay.
+ * The viewer's matches, one row each: the row opens the match page.
  * The list is shown full width (History) and in a narrow card (the home page), so its rows follow
  * the width of the list (`@container` and the `@md:` / `@2xl:` classes), not the width of the screen.
  */
@@ -43,7 +39,7 @@ export function MatchList({ matches }: { matches: readonly MatchSummary[] }) {
       {matches.map((match) => {
         const opponent = opponentOf(match)?.displayName;
         return (
-          // The row's main link covers the whole row (the ::after layer); the Replay link sits above it.
+          // The row's main link covers the whole row (the ::after layer).
           <li key={match.id} className="relative flex items-center gap-3 px-4 py-3 transition hover:bg-surface-2">
             <BoardShape
               cols={match.settings.cols}
@@ -68,26 +64,9 @@ export function MatchList({ matches }: { matches: readonly MatchSummary[] }) {
                 {formatDateTime(match.createdAt, i18n.language)}
               </time>
             </div>
-            {/* A fixed-width cluster: the result pills line up in one column, with or without a Replay link. */}
-            <div className="flex flex-none flex-col items-end gap-2 @md:grid @md:w-[13.5rem] @md:grid-cols-[6rem_1fr] @md:items-center @md:gap-2">
-              <span className="@md:justify-self-start">
-                <StatusBadge match={match} />
-              </span>
-              {canReplay(match) && (
-                <Link
-                  to={paths.watch(match.id)}
-                  aria-label={t('history.replayMatch', { name: opponent ?? '?' })}
-                  className={buttonClass({
-                    variant: 'secondary',
-                    size: 'sm',
-                    className: 'relative z-10 justify-self-end',
-                  })}
-                >
-                  <PlayIcon />
-                  {t('history.replay')}
-                </Link>
-              )}
-            </div>
+            <span className="flex-none @md:w-24">
+              <StatusBadge match={match} />
+            </span>
           </li>
         );
       })}

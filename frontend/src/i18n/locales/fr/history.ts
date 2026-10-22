@@ -4,19 +4,11 @@ export const historyMessages: HistoryMessages = {
   history: {
     title: 'Mes parties',
     statsTitle: 'Statistiques',
-    statsPartial: 'Calculées sur vos {{count}} dernières parties terminées.',
     played: 'Jouées',
     wins: 'Victoires',
     losses: 'Défaites',
     draws: 'Nuls',
     winRate: 'Taux de victoire',
-    streak: 'Série en cours',
-    bestStreak: 'Meilleure série de victoires',
-    streakOf: {
-      won: 'Série de victoires',
-      lost: 'Série de défaites',
-      draw: 'Série de nuls',
-    },
     none: '—',
     filterLabel: 'Afficher',
     filters: {
@@ -44,10 +36,6 @@ export const historyMessages: HistoryMessages = {
     result: 'Résultat',
     board: 'Plateau',
     date: 'Date',
-    replay: 'Rejouer',
-    replayMatch: 'Rejouer la partie contre {{name}}',
-    recent: 'Derniers résultats',
-    recentHint: 'Du plus récent au plus ancien',
     winRateBar: 'Part de parties gagnées',
   },
 };

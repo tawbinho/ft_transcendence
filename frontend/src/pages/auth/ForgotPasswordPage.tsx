@@ -11,6 +11,7 @@ import {
   validateNewPassword,
   validatePasswordConfirmation,
 } from '@/features/auth/validation';
+import { useFocusFirstInvalid } from '@/features/auth/useFocusFirstInvalid';
 import { useErrorMessage } from '@/lib/errorMessage';
 import { AuthLayout } from '@/layout/AuthLayout';
 
@@ -27,6 +28,9 @@ export function ForgotPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  // How many times a form was sent with mistakes: moves the focus to the first one.
+  const [failedSubmits, setFailedSubmits] = useState(0);
+  const form = useFocusFirstInvalid(failedSubmits);
 
   const emailError = submitted ? validateEmail(email) : null;
   const passwordError = submitted ? validateNewPassword(password) : null;
@@ -36,7 +40,10 @@ export function ForgotPasswordPage() {
   function sendCode(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
-    if (validateEmail(email)) return;
+    if (validateEmail(email)) {
+      setFailedSubmits((count) => count + 1);
+      return;
+    }
     forgot.mutate(email.trim(), { onSuccess: () => setSubmitted(false) });
   }
 
@@ -44,6 +51,7 @@ export function ForgotPasswordPage() {
     event.preventDefault();
     setSubmitted(true);
     if (validateCode(code) || validateNewPassword(password) || validatePasswordConfirmation(password, confirmation)) {
+      setFailedSubmits((count) => count + 1);
       return;
     }
     reset.mutate({ email: email.trim(), code, password });
@@ -63,7 +71,7 @@ export function ForgotPasswordPage() {
   if (forgot.isSuccess) {
     return (
       <AuthLayout title={t('auth.resetTitle')} subtitle={t('auth.resetCodeBody', { email: email.trim() })}>
-        <form onSubmit={changePassword} noValidate className="flex flex-col gap-5">
+        <form ref={form} onSubmit={changePassword} noValidate className="flex flex-col gap-5">
           {reset.error && <Alert tone="danger">{errorMessage(reset.error)}</Alert>}
           <OtpInput
             label={t('auth.code')}
@@ -79,7 +87,6 @@ export function ForgotPasswordPage() {
             error={passwordError && t(passwordError)}
             hint={t('auth.passwordHint')}
             autoComplete="new-password"
-            maxLength={128}
             required
           />
           <PasswordField
@@ -88,7 +95,6 @@ export function ForgotPasswordPage() {
             onChange={(event) => setConfirmation(event.target.value)}
             error={confirmationError && t(confirmationError)}
             autoComplete="new-password"
-            maxLength={128}
             required
           />
           <Button type="submit" size="lg" block loading={reset.isPending}>
@@ -102,7 +108,7 @@ export function ForgotPasswordPage() {
 
   return (
     <AuthLayout title={t('auth.resetTitle')} subtitle={t('auth.resetEmailBody')}>
-      <form onSubmit={sendCode} noValidate className="flex flex-col gap-4">
+      <form ref={form} onSubmit={sendCode} noValidate className="flex flex-col gap-4">
         {forgot.error && <Alert tone="danger">{errorMessage(forgot.error)}</Alert>}
         <TextField
           label={t('auth.email')}

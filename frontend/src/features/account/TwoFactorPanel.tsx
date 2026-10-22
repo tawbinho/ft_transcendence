@@ -3,15 +3,21 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Badge, Button, Card, TextField } from '@/components/ui';
 import { useDisableTwoFactor, useEnableTwoFactor, useSetupTwoFactor } from '@/features/auth/hooks';
 import type { TwoFactorSetup, User } from '@/features/auth/types';
-import { normalizeCode, validateCode } from '@/features/auth/validation';
+import { normalizeCode, validateCode, validateCodeOrBackupCode } from '@/features/auth/validation';
 import { isApiError } from '@/lib/api/errors';
 import { useErrorMessage } from '@/lib/errorMessage';
+import { BackupCodes } from './BackupCodes';
 
-type Step = { kind: 'idle' } | { kind: 'setup'; setup: TwoFactorSetup } | { kind: 'disable' };
+type Step =
+  | { kind: 'idle' }
+  | { kind: 'setup'; setup: TwoFactorSetup }
+  | { kind: 'codes'; codes: string[] }
+  | { kind: 'disable' };
 
 /**
- * Turns two-factor authentication on (QR code, then a first code) or off
- * (a code). When the user says whether it is on, only the fitting action is
+ * Turns two-factor authentication on (QR code, then a first code, then the
+ * backup codes are shown once) or off (a code from the app or a backup
+ * code). When the user says whether it is on, only the fitting action is
  * shown. The backend does not say yet: until it does, "Turn on" is the main
  * button and a quiet "Already on? Turn it off" sits beside it, and what the
  * server answers is remembered for this visit.
@@ -30,7 +36,9 @@ export function TwoFactorPanel({ user }: { user: User }) {
 
   const [learned, setLearned] = useState<boolean>();
   const status = user.twoFactorEnabled ?? learned;
-  const codeError = submitted ? validateCode(code) : null;
+  // Turning 2FA on needs a code from the app: no backup code exists yet.
+  const checkCode = step.kind === 'setup' ? validateCode : validateCodeOrBackupCode;
+  const codeError = submitted ? checkCode(code) : null;
 
   function reset(next: Step = { kind: 'idle' }) {
     setStep(next);
@@ -56,12 +64,21 @@ export function TwoFactorPanel({ user }: { user: User }) {
   function submit(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
-    if (validateCode(code)) return;
-    const mutation = step.kind === 'setup' ? enable : disable;
-    mutation.mutate(normalizeCode(code), {
+    if (checkCode(code)) return;
+    if (step.kind === 'setup') {
+      enable.mutate(normalizeCode(code), {
+        onSuccess: ({ backupCodes }) => {
+          setLearned(true);
+          setNotice(t('twoFactor.enabled'));
+          reset({ kind: 'codes', codes: backupCodes });
+        },
+      });
+      return;
+    }
+    disable.mutate(normalizeCode(code), {
       onSuccess: () => {
-        setLearned(step.kind === 'setup');
-        setNotice(step.kind === 'setup' ? t('twoFactor.enabled') : t('twoFactor.disabled'));
+        setLearned(false);
+        setNotice(t('twoFactor.disabled'));
         reset();
       },
       onError: (error) => {
@@ -111,7 +128,9 @@ export function TwoFactorPanel({ user }: { user: User }) {
         </div>
       )}
 
-      {step.kind !== 'idle' && (
+      {step.kind === 'codes' && <BackupCodes codes={step.codes} onDone={() => reset()} />}
+
+      {(step.kind === 'setup' || step.kind === 'disable') && (
         <form onSubmit={submit} noValidate className="flex flex-col gap-4">
           {step.kind === 'setup' ? (
             <>
@@ -141,9 +160,10 @@ export function TwoFactorPanel({ user }: { user: User }) {
             value={code}
             onChange={(event) => setCode(event.target.value)}
             error={codeError && t(codeError)}
-            inputMode="numeric"
+            // A backup code has letters: the number keypad only while turning 2FA on.
+            inputMode={step.kind === 'setup' ? 'numeric' : 'text'}
             autoComplete="one-time-code"
-            maxLength={7}
+            maxLength={step.kind === 'setup' ? 7 : 11}
             autoFocus
             className="max-w-xs"
           />

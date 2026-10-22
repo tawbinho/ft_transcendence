@@ -10,14 +10,6 @@ export const infoMessages = {
     home: 'Back to the home page',
     play: 'Play a game',
   },
-  accent: {
-    label: 'Accent color',
-    blue: 'Blue',
-    violet: 'Violet',
-    teal: 'Teal',
-    rose: 'Rose',
-    orange: 'Orange',
-  },
 };
 
 export type InfoMessages = typeof infoMessages;

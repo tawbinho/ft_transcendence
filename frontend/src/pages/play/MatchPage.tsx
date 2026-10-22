@@ -1,7 +1,6 @@
 import { useIsMutating } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useParams } from 'react-router';
-import { paths } from '@/app/paths';
+import { useParams } from 'react-router';
 import { Alert, Button, PageSpinner } from '@/components/ui';
 import { matchKeys, useMatch } from '@/features/matches/hooks';
 import { isMatchId } from '@/features/matches/model';
@@ -44,10 +43,9 @@ function MatchScreen({ id }: { id: string }) {
   }
 
   const match = query.data;
-  // Someone who does not play in this match can join it while it waits,
-  // and watch it once it has started.
+  // Someone who does not play in this match can only join it while it waits.
   if (match.yourSeat === null) {
-    return match.status === 'waiting' ? <JoinMatch id={id} /> : <Navigate to={paths.watch(id)} replace />;
+    return match.status === 'waiting' ? <JoinMatch id={id} /> : <Unavailable />;
   }
   if (match.status === 'waiting') return <WaitingRoom match={match} />;
   return <OnlineGame match={match} syncFailed={query.isRefetchError} />;

@@ -8,7 +8,7 @@ says where to look in the code. The [README](../README.md) says how to run and b
 - [3. How a page gets its data](#3-how-a-page-gets-its-data)
 - [4. Stack and why](#4-stack-and-why)
 - [5. Area by area](#5-area-by-area)
-- [6. The page background: on, off, removed](#6-the-page-background-on-off-removed)
+- [6. Games against the computer](#6-games-against-the-computer)
 - [7. Where the data comes from](#7-where-the-data-comes-from)
 - [8. Checks](#8-checks)
 - [9. Questions evaluators are likely to ask](#9-questions-evaluators-are-likely-to-ask)
@@ -19,8 +19,8 @@ says where to look in the code. The [README](../README.md) says how to run and b
 1. The browser asks for any address, say `/play`. nginx (`nginx.conf`) answers `index.html` for every address that is
    not a file, so the app itself decides what to show. This is a "single-page application": one HTML page, and
    JavaScript changes what is inside it.
-2. `index.html` loads the JavaScript built by Vite. A few inline lines first apply the saved light or dark mode and
-   accent color and page background, so the page does not flash in the wrong colors.
+2. `index.html` loads the JavaScript built by Vite. A few inline lines first apply the saved light or dark mode, so the
+   page does not flash in the wrong colors.
 3. `src/main.tsx` starts the app: it loads the translations (`src/i18n`) and the styles, and renders `App`.
 4. `src/app/App.tsx` wraps everything in two providers: the data cache (TanStack Query) and the router.
 5. `src/app/router.tsx` is the route table: one line per address, each pointing to a page in `src/pages/`. Pages are
@@ -36,10 +36,10 @@ says where to look in the code. The [README](../README.md) says how to run and b
 ```text
 src/
   app/          the shell: route table, addresses (paths.ts), guards, data cache, live updates, navigation links
-                (nav.ts), places where optional features plug in (extensions.ts)
-  pages/        one folder per area: home, auth, play, tournaments, profile, settings, community, watch, history, info
+                (nav.ts)
+  pages/        one folder per area: home, auth, play, tournaments, profile, settings, community, history, info
   features/     code shared by several areas, one folder per subject: game, matches, tournaments, users, friends,
-                chat, spectate, auth, account, backdrop (the optional page background)
+                chat, auth, account
   components/   pieces used everywhere: ui/ (the design system), icons, logo, illustrations, PageHeader, ModeCard
   layout/       the frame of every page: header, menus, footer
   i18n/         translations: locales/<en|fr|ar>/<area>.ts
@@ -90,15 +90,19 @@ What the cache adds, without any code in the page:
   forgets the user.
 - Polling: data that changes on its own is reloaded on a timer (`refetchInterval`). An online match is reloaded every
   2 seconds while the other player is expected (to join or to move), and every 5 seconds on your own turn
-  (`pollInterval` in `features/matches/model.ts`).
+  (`pollInterval` in `features/matches/model.ts`). While live events arrive, these timers slow down to 30 seconds
+  (`LIVE_POLL_MS`), except for a match still waiting for its second player (section 6).
 
 A page never calls `fetch` itself. Error codes become sentences in the reader's language in `lib/errorMessage.ts`.
 Every route, shape and error code is listed in [`api-contract.md`](api-contract.md).
 
-Live updates: when the app is built with `VITE_REALTIME=socket`, `lib/realtime/socket.ts` opens one Socket.IO
-connection after login. Events only write into the cache (`app/realtime.ts`), so pages never know whether new data
-came from polling or from the socket. The Docker build turns live updates on (`VITE_REALTIME: socket` in the root
-`docker-compose.yml`); without them, polling does the job alone.
+Live updates: after login, `lib/realtime/socket.ts` opens one Socket.IO connection, and closes it at logout. It is the
+same in Docker and with `npm run dev`, whose server forwards `/socket.io` too. Events only write into the cache
+(`app/realtime.ts`), so pages never know whether new data came from polling or from the socket. Polling stays as the
+safety net: when the connection drops, the timers above go back to full speed until Socket.IO reconnects by itself.
+Every login and logout reaches every player as a `presence` event: the online dot is changed in the friend list and
+conversations already loaded (`setOnlineInLists`), without a request, because both are loaded on every page for the
+menu badges.
 
 ## 4. Stack and why
 
@@ -113,7 +117,7 @@ Checked against `package.json`. Where the honest reason is only "it is the usual
 | React Router 7            | Matches the address to a page, guards member pages, loads pages lazily              | The standard router for React; one route table is easy to read                                                                                                                                  |
 | TanStack Query 5          | The data cache: loading, errors, retries, polling, refresh after a change           | Without it every page would hand-write the same loading and refresh code (section 3)                                                                                                            |
 | i18next and react-i18next | English, French and Arabic texts, with placeholders such as `{{name}}`              | The usual translation library for React                                                                                                                                                         |
-| socket.io-client          | Live updates, only with `VITE_REALTIME=socket`                                      | The backend sends live events through Socket.IO, and this client reconnects by itself                                                                                                           |
+| socket.io-client          | Live updates: one connection per logged-in tab                                      | The backend sends live events through Socket.IO, and this client reconnects by itself                                                                                                           |
 | Prettier                  | Formats every file the same way                                                     | Removes formatting debates; `npm run format` before each commit                                                                                                                                 |
 
 Not used: ESLint (TypeScript's strict mode and Prettier are the only automatic checks), a component library (every
@@ -123,10 +127,9 @@ state are enough).
 Written here instead of taken from a library:
 
 - the game rules (`features/game/engine`), with the same rules and error codes as the backend's engine;
-- the computer opponent (`features/game/bot`): a negamax search with alpha-beta pruning and iterative deepening, run in
-  a Web Worker so the page never freezes; each level searches more or less deeply and sometimes "slips", so it plays
-  like a person and not perfectly, as the subject asks;
 - the API client (`lib/api/http.ts`) and form validation (`lib/validation.ts`, `features/*/validation.ts`).
+
+The computer opponent is not written here: the server plays it (section 6).
 
 ## 5. Area by area
 
@@ -135,7 +138,7 @@ Written here instead of taken from a library:
 - `app/nav.ts` is the one list of links: address, name, icon, whether visitors see it, whether it needs an account,
   which count it shows and when it is highlighted. The top bar, the phone menu and the login hint all read it.
   `inMenus: false` keeps a page out of the top bar and the phone menu while its route, its highlight and the login
-  hint stay (Watch and Players are set this way for now).
+  hint stay (Players is set this way for now).
 - `layout/header/` splits the bar into small files: `Header` (asks who is logged in and the counts), `DesktopNav`,
   `MobileMenu`, `AccountMenu`, `LanguageMenu`, `SessionActions` (avatar menu, or Log in and Sign up, also when the server did not answer),
   `ThemeToggle`, `CountBadge`.
@@ -145,14 +148,14 @@ Written here instead of taken from a library:
 - The two drop-down menus of the bar, the account menu and the language menu, are built the same way: a button with
   `aria-expanded`, a panel in the same style (`header/menuStyles.ts`), Tab to move through it, and `useDismiss` for
   Escape, a click outside and the focus going back to the button. Where there is room (Settings, the phone menu)
-  language and appearance are rows of buttons (`LanguagePicker`, `ColorSchemePicker`), like the accent color. Native
-  `<select>` is kept for form fields (sort order, the history filter on phones).
+  language and appearance are rows of buttons (`LanguagePicker`, `ColorSchemePicker`). Native `<select>` is kept for
+  form fields (sort order, the history filter on phones).
 - On phones a visitor (or an unknown session) sees Log in and Sign up in the bar next to the menu button; the name beside
   the logo is hidden then, so both fit at 320px in English, French and Arabic. A member sees chat and the menu button.
 - The phone menu dims the page behind it; a tap on the dim layer, Escape or a click outside closes it.
 - `features/auth/session.ts` turns the answer of `/auth/me` into four states: loading, visitor, member, failed. A
   member whose later check fails stays a member, because the cache keeps the last answer.
-- A visitor sent to `/login` from a member page reads "Log in to open Watch." (`features/auth/loginHint.ts`) and comes
+- A visitor sent to `/login` from a member page reads "Log in to open Players." (`features/auth/loginHint.ts`) and comes
   back there after logging in.
 - Signing up does not log in: the backend emails a 6-digit code and the app opens `/verify-email`
   (`pages/auth/VerifyEmailPage.tsx`), where six boxes take it (`components/ui/OtpInput.tsx`, an empty box is a space
@@ -166,14 +169,16 @@ Written here instead of taken from a library:
 
 ### Play (`pages/play/`, `features/game/`)
 
-- Every game screen is built from the same pieces in `features/game/components/`: `GameLayout` (board column and side
-  panel), `PlayersBar`, `GameStatus` (the banner), `GameBoard` (draws every board) and `MoveAnnouncer` (the line
-  screen readers hear).
-- The same-screen and computer pages share `offline/OfflineGamePage.tsx`, which shows `OfflineSetup` (the form) or
-  `OfflineGame` (the game). The game state lives in the `useOfflineGame` hook; every sentence (whose turn, who won,
-  after how many moves) comes from `offline/offlineText.ts`.
+- The two game screens, same screen and online, are built from the same pieces in `features/game/components/`:
+  `GameLayout` (board column and side panel), `PlayersBar`, `GameStatus` (the banner), `GameBoard` (draws every board)
+  and `MoveAnnouncer` (the line screen readers hear).
+- The same-screen page, `LocalGamePage.tsx`, shows `offline/OfflineSetup` (two names and the board) or
+  `offline/OfflineGame` (the game). The game is the list of moves kept by the `useOfflineGame` hook: the board is
+  rebuilt from it, and Undo removes the last one. Every sentence (whose turn, who won, after how many moves) comes from
+  `offline/offlineText.ts`.
+- "Against the computer" is an online match against one of the server's computer players (section 6).
 - `MatchPage.tsx` only loads the online match and picks a screen from `pages/play/online/`: `JoinMatch`,
-  `WaitingRoom`, `OnlineGame` (with `ResultActions`: rematch, replay, new match) or `Unavailable`.
+  `WaitingRoom`, `OnlineGame` (with `ResultActions`: rematch, new match) or `Unavailable`.
 - The board stands in a box, the stage (`GameBoard.tsx` and `boardStage.css`): full column width, as high as the
   board's shape or the screen allows, in the page's surface color. Size the parent, not the board: a class on
   `<Board>` cannot change its width (`AuthLayout` does it with a 20 rem box).
@@ -183,14 +188,14 @@ Written here instead of taken from a library:
   who asked their system for less motion, and none for a game that was already won when the page opened
   (`useJustWon.ts`, next to it).
 - The setup forms start from the board of the last game on this device (`features/game/lastSettings.ts`, key
-  `board-settings`). "Play again" on the hub starts a game at once with those settings.
+  `board-settings`). "Play again" on the hub starts a same-screen game at once with those settings.
 
 ### Tournaments (`pages/tournaments/`, `features/tournaments/`)
 
-- Four short route files: `TournamentsPage`, `TournamentPage`, `NewTournamentPage`, `LocalTournamentPage`. Their pieces
-  are in `online/` and `local/` next to them.
+- Three short route files: `TournamentsPage`, `TournamentPage`, `NewTournamentPage`. Their pieces are in `online/`
+  next to them. Tournaments are online only: the backend builds the bracket and creates the matches.
 - Decisions are plain functions in `features/tournaments/view.ts`: `roundName` (Final, Semi-finals...), `canJoin`,
-  `canLeave`, `canStart`, `canCancel` (which buttons show), `pairingToPlay`, `countMatches`.
+  `canLeave`, `canStart`, `canCancel` (which buttons show), `pairingToPlay`.
 - Online tournaments (list, create, join, leave, cancel, start, the bracket and its matches) all talk to the real
   backend, which also writes "your match is ready" in the chat of the two players. The two warnings in
   `Registration.tsx` (`startUnavailable` when Start now finds no route, and `fullWaiting` when a full tournament is
@@ -198,13 +203,10 @@ Written here instead of taken from a library:
   place is taken, so neither shows. `TournamentPage` checks the address with `isUuid` (`lib/ids.ts`) before asking the
   server.
 - Each registered player's name links to their profile.
-- The same-screen tournament is saved in the browser (`useLocalTournament.ts`, key `local-tournament`) after every
-  result. Coming back to an unfinished one shows "Resume your tournament?" first. A match left halfway is not saved:
-  only results are.
-- `features/tournaments/components/BracketView.tsx` draws both kinds of tournament from one simple list of pairings;
-  on a phone the bracket scrolls inside its own box, never the page. That box is `components/ui/ScrollFade.tsx`, the
-  same piece as the row of tabs uses (`TabLinks`): `lib/useScrollEdges.ts` tells which edge hides more content and the
-  `.scroll-fade` class draws the fade, so it follows the reading direction in Arabic.
+- `features/tournaments/components/BracketView.tsx` draws the bracket from one simple list of pairings, which
+  `online/TournamentBracket.tsx` makes from the server's rounds. On a phone the bracket scrolls sideways inside its own
+  box (`overflow-x-auto`), never the page, like the row of tabs (`TabLinks`). The box can take the keyboard focus, so
+  the arrow keys scroll it too.
 
 ### Profile and settings (`pages/profile/`, `pages/settings/`)
 
@@ -214,11 +216,12 @@ Written here instead of taken from a library:
   loss, a new level every 100 XP, and six badges that are simple comparisons. They can never disagree with the match
   history, and the page says how they are computed.
 - `/settings` has four tabs (`TabLinks`): Profile (picture, display name), Security (two-factor, log out), Preferences
-  (language, light or dark, accent color, page background, board colors for new games) and Blocked players. `resolveSection` in
-  `settings/sections.ts` reads the tab from the address; an unknown tab goes back to `/settings`.
+  (language, light or dark, board colors for new games) and Blocked players. `resolveSection` in `settings/sections.ts`
+  reads the tab from the address; an unknown tab goes back to `/settings`.
 - Two-factor shows only the button that fits when the backend says whether it is on; it does not send that yet, so
-  "Turn on" is the main button and a quiet "Already on? Turn it off" sits under it (section 10). The backend's backup
-  codes are not shown yet (section 10).
+  "Turn on" is the main button and a quiet "Already on? Turn it off" sits under it (section 10). Right after turning it
+  on, the 10 backup codes are shown once (`features/account/BackupCodes.tsx`, with a copy button); the login code field
+  and "Turn off" accept one of them instead of the 6 digits (`validateCodeOrBackupCode`).
 
 ### Community (`pages/community/`, `features/chat/`, `features/friends/`)
 
@@ -233,32 +236,23 @@ Written here instead of taken from a library:
 - Chat: on a phone only the list or one conversation shows (`features/chat/panes.ts`). `ChatThread` finds the player
   and handles errors, `Conversation` shows messages and the composer.
 
-### Watch and history (`pages/watch/`, `pages/history/`)
+### History (`pages/history/`)
 
-- `features/matches/replay.ts` replays the list of columns of a match through the game engine and keeps every
-  position. A replay therefore follows the real rules; a move the rules refuse stops the list instead of crashing.
-- `pages/watch/useReplay.ts` holds the current move and the play timer; `ReplayControls` is only buttons, a slider and
-  keys (left and right arrows, Home, End), and announces "Move 5 of 23".
-- `WatchMatchPage` follows a live match, and turns into a replay once the match is over.
-- `BoardShape` draws a small picture of a board from its size and colors. The live list has no positions, so each
-  card on the Watch page asks for its own match once (`useMatchPreview`, the same cache entry as the match page,
-  refreshed every 15 seconds) and passes the position as the optional `board` prop. That is at most 12 extra requests
-  per page, well under the backend's limit.
-- The live list asks again every 5 seconds, even when live events are on (`features/spectate/hooks.ts`): those events
-  only cover matches you play or watch, never a new match of other people.
-- History keeps its filter and page in the address (`historyQuery.ts`). Each row has one big link to the match and a
-  Replay link above it (no link inside a link). Match rows follow the width of their list (`@container`), because the
-  same list is shown full width in History and in a narrow card on the home page.
+- The statistics at the top (`HistoryStats.tsx`) are the server's numbers for your profile (`useProfile`, the `stats`
+  of `GET /api/users/:displayName`), so they always equal your profile page. They count finished matches only.
+- `BoardShape` draws a small picture of a board from its size and colors (used by the rows of the match list).
+- History keeps its filter and page in the address (`historyQuery.ts`). Each row is one big link to the match. Match
+  rows follow the width of their list (`@container`), because the same list is shown full width in History and in a
+  narrow card on the home page.
 
 ### Design system and identity (`styles/index.css`, `components/`, `pages/info/`)
 
 - Every color is a token in `styles/index.css` (`--c-bg`, `--c-primary`...), with one value for light and one for
   dark. Tailwind classes such as `bg-surface` read the tokens, so no component has a raw color.
 - Corner radii, shadows and animation durations are tokens too (`rounded-card`, `shadow-card`, `--duration-*`).
-- The accent color only replaces the primary color (`lib/accent.ts`, `data-accent` on `<html>`). Blue is the default.
-- Every text and background pair keeps a contrast of at least 4.5 to 1 (the WCAG AA level) in both themes and with each
-  accent. A test used to check it and was removed, so after changing a color, check the ratio by hand (the browser's
-  developer tools show it).
+- Every text and background pair keeps a contrast of at least 4.5 to 1 (the WCAG AA level) in both themes. A test used
+  to check it and was removed, so after changing a color, check the ratio by hand (the browser's developer tools show
+  it).
 - Four illustrations in `components/illustrations/` are small inline SVGs, hidden from screen readers; `EmptyState`
   shows one.
 
@@ -279,26 +273,32 @@ Written here instead of taken from a library:
 - Dialogs and menus close on Escape and give the focus back; icon-only buttons have a label (`IconButton`).
 - Animations stop when the system asks for reduced motion.
 
-## 6. The page background: on, off, removed
+## 6. Games against the computer
 
-The page background is optional (`features/backdrop/`). Members pick a background for every page in Settings >
-Preferences: plain (the default), a soft glow in the accent color, dots, a fine grid or a faint Connect Four board. The
-choice is saved on this device (key `backdrop`) and the name goes in `data-backdrop` on `<html>`, the same idea as the
-accent color. `backdrop.css` draws each one on a single fixed layer behind the page (`body::before`, `z-index: -1`),
-with CSS only and the color tokens, so it follows light and dark mode and the accent color, is mirrored in Arabic and
-never moves. The strengths are small on purpose, so text keeps its contrast.
+The computer opponents belong to the backend: three accounts, `AI_Easy`, `AI_Medium` and `AI_Hard`, whose moves the
+server chooses (the root README explains how). The frontend never chooses a move for them:
 
-How it is connected: one line in `src/main.tsx`, `import '@/features/backdrop/register'`. The picker reaches Settings
-through `src/app/extensions.ts`, a short list that Settings reads (empty when the feature is absent).
+1. The Play page shows three buttons, Easy, Medium and Hard (`COMPUTER_PLAYERS` in
+   `features/users/computerPlayers.ts`). Each opens the online match form with that player filled in, for example
+   `/play/online?opponent=AI_Medium`, the same address as the Challenge button of a profile. A visitor logs in first
+   and comes back to the form. The dashboard's "Against the computer" button opens it with `AI_Medium`.
+2. "Create match" sends `POST /api/matches` with `opponentDisplayName`, exactly like an invitation to a person.
+3. The server makes the computer join at once, often before the page has asked for the match's live events. So
+   `useMatch` asks for the match again whenever the page opens, and keeps polling every 2 seconds while a match waits,
+   even with live events (`features/matches/hooks.ts`). The game starts within a second.
+4. From then on it is an ordinary online match (`OnlineGame`): your move goes to `POST /api/matches/:id/moves`, and the
+   computer's answer arrives a second or two later as a `match:update` event. The results count in History, on the
+   profile and on the leaderboard like any other match.
 
-Remove it: `rm -r src/features/backdrop` and delete that one line in `src/main.tsx`. `npm run typecheck` and
-`npm run build` pass after that (checked). The lines about `backdrop` in `index.html` can stay.
+The computer players are hidden where a person would be expected: the friends pages, the player search and the
+leaderboard (`withoutComputerPlayers`). Their names are not links, and they have no profile page and no chat
+(`isComputerPlayer`).
 
 ## 7. Where the data comes from
 
 Every page that shows players, friends, chat, matches or tournaments reads them from the real backend: every route in
-[`api-contract.md`](api-contract.md) is served there. Only the games on one screen, the games against the computer
-and the same-screen tournament run in the browser alone, as the subject allows.
+[`api-contract.md`](api-contract.md) is served there. Only the game on one screen runs in the browser alone, as the
+subject allows; a game against the computer is an online match (section 6).
 
 While the backend was being written, an in-browser demo server answered the missing routes with made-up players. It
 was removed once chat, the last missing part, was built.
@@ -310,8 +310,8 @@ The frontend has no automated tests at the moment (they were removed). The check
 
 Every page was also opened by hand in a real Chromium browser, in English at 1280 and 390 pixels wide, in Arabic at
 390, in light and dark mode, looking for console messages, sideways scrolling and accessibility problems (color
-contrast included). Two members also played a real online match against the backend and opened its replay. Repeat
-this after a big change.
+contrast included). Two members also played a real online match against the backend, and the computer was played at
+the easy and hard levels, on the classic board and on a 9 by 7 board. Repeat this after a big change.
 
 ## 9. Questions evaluators are likely to ask
 
@@ -335,19 +335,30 @@ for comfort: the real protection is the backend, which answers `401` without a v
 
 **How are forms validated?** Twice: in the browser before sending (`lib/validation.ts` and the `validation.ts` files of
 the features), and by the backend, whose error codes are shown as sentences (`lib/errorMessage.ts`).
+The email and password rules live in `features/auth/validation.ts` and copy the backend's DTOs: an email is
+`local@domain` (local part at most 64 characters, no leading, trailing or double dot; domain labels of letters, digits
+and hyphens; a last label of at least 2 letters; 254 characters in all), a new password has 8 to 128 characters
+(counted like the backend, one emoji is one character), and login only checks that the password is not empty and not
+longer than 128. Length limits are shown as messages instead of cutting what is typed with `maxLength`.
 
 **What stops a player from injecting HTML or scripts (XSS)?** React escapes every text it shows, and the app never
 inserts raw HTML (no `dangerouslySetInnerHTML`). Chat messages and names are shown as plain text.
 
 **Show me where a page gets its data.** Section 3, with `/matches` as the example.
 
-**How does online play stay in sync?** In the Docker build (`VITE_REALTIME: socket`), the backend sends each move as
-a `match:update` event, which goes straight into the cache (`src/app/realtime.ts`); the match is then reloaded only
-every 30 seconds, in case an event was missed. Without live events it is reloaded every 2 seconds while waiting for
-the other player (`pollInterval`). Either way, your own move shows at once and is confirmed by the server.
+**How does online play stay in sync?** After login the app keeps one Socket.IO connection. The backend sends each
+move as a `match:update` event, which goes straight into the cache (`src/app/realtime.ts`); the match is then reloaded
+only every 30 seconds, in case an event was missed. While the connection is down, it is reloaded every 2 seconds while
+waiting for the other player (`pollInterval`). Either way, your own move shows at once and is confirmed by the server.
 
-**How does the computer play? Is it unbeatable?** Section 4 ("Written here"): a search over the next moves, in a Web
-Worker, with three levels that sometimes slip on purpose, so it is not perfect.
+**What if a player closes the tab or loses the network?** The backend waits `DISCONNECT_GRACE_SECONDS` (30 by
+default) for them to come back, so a reload or a short cut does not end the match. Meanwhile the other player sees
+"bob lost the connection…" (`pages/play/online/useOpponentAway.ts`, from the live `presence` event). If they do not
+come back, they lose (`endReason: "disconnect"`) and the banner says "bob left the match."
+
+**How does the computer play? Is it unbeatable?** The server plays it (section 6): the app only creates an online
+match against `AI_Easy`, `AI_Medium` or `AI_Hard`. The backend's search sometimes slips on purpose, more at the easy
+level, so it is not perfect (the root README explains it).
 
 **How do translations work, and how would you add a language?** Section 5, "Translations". A new language is a new
 folder in `locales/` with the same files, and one entry in `LANGUAGES` and in `resources` in `i18n/index.ts` (the
@@ -356,8 +367,6 @@ language menu reads that list).
 **How is accessibility handled?** Labels linked to their errors, keyboard play with announcements, focus management,
 reduced motion, and color pairs that keep a contrast of 4.5 to 1 (section 5, "Accessibility"). It was checked by hand in
 the browser, with no automatic test at the moment.
-
-**How do you remove the page background?** Two steps: delete its folder and one line in `src/main.tsx` (section 6).
 
 **Can you make a small change now?** Places that change one behavior each:
 
@@ -368,21 +377,21 @@ the browser, with no automatic test at the moment.
 | A text                        | `src/i18n/locales/<en, fr, ar>/<area>.ts` (all three languages)                    |
 | A color                       | the tokens at the top of `styles/index.css` (keep text and background at 4.5 to 1) |
 | How often a match is reloaded | `pollInterval` in `features/matches/model.ts`                                      |
-| How fast a replay plays       | the timer in `pages/watch/useReplay.ts`                                            |
-| The computer's levels         | `PROFILES` in `features/game/bot/bot.ts`                                           |
+| The level the dashboard opens | `DEFAULT_COMPUTER_PLAYER` in `features/users/computerPlayers.ts`                   |
 
 After a change: `npm run typecheck && npm run format:check`.
 
 ## 10. Known limits
 
 - The backend does not yet send `twoFactorEnabled` with the user, so Settings shows both two-factor buttons with a hint.
-- The backend makes 10 two-factor backup codes when 2FA is turned on and accepts them at login, but the app neither
-  shows them nor accepts one in the login code field (it takes 6 digits only).
-- The backend allows 100 requests a minute per route and per address. With live events on, a minute of chat between
-  two windows on one computer uses about 40 of them, but many busy tabs or fast reloads on one computer can still reach
-  it. The app retries and keeps the logged-in user when it happens.
+- The app does not count or renew the backup codes (`GET` and `POST /auth/2fa/backup-codes`): turning two-factor off
+  and on again gives 10 new ones.
+- The backend allows 100 requests a minute per route and per address. A minute of chat between two windows on one
+  computer uses about 40 of them, but many busy tabs or fast reloads on one computer can still reach it. The app
+  retries and keeps the logged-in user when it happens.
 - Any answer of 400 or more prints a red line in Chrome's console, even an expected one, such as a blocked player
-  trying to send a message (`403 BLOCKED`).
+  trying to send a message (`403 BLOCKED`), or a player opening an invitation link: only the players can read a match,
+  so `GET /api/matches/:id` answers `404` and the app shows the Join button.
 - Tested in Chromium only. Firefox and Safari (or Edge) must be checked by hand for the browser support module.
 - On a 1280 by 800 laptop screen the game board starts well below the top (header, title, players, status), so the page
   scrolls a little to see all of it. The board is already as large as the screen allows; making it fit would need a

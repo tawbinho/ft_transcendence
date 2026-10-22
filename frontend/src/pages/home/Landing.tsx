@@ -10,7 +10,7 @@ import { FeaturePoints } from './FeaturePoints';
 // A finished game for the hero picture: seat 1 wins on a diagonal.
 const SHOWCASE = replay({}, [0, 1, 1, 2, 3, 2, 2, 3, 6, 3, 3]);
 
-/** What a visitor sees: the game, three ways to play (the online one needs an account) and what else is here. */
+/** What a visitor sees: the game, three ways to play (only the same-screen one works without an account) and what else is here. */
 export function Landing() {
   const { t } = useTranslation();
 
@@ -48,12 +48,7 @@ export function Landing() {
         </h2>
         <div className="grid gap-4 md:grid-cols-3">
           <ModeCard to="/play/local" icon={<UsersIcon />} title={t('home.local.title')} body={t('home.local.body')} />
-          <ModeCard
-            to="/play/computer"
-            icon={<ChipIcon />}
-            title={t('home.computer.title')}
-            body={t('home.computer.body')}
-          />
+          <ModeCard to="/signup" icon={<ChipIcon />} title={t('home.computer.title')} body={t('home.computer.body')} />
           <ModeCard to="/signup" icon={<GlobeIcon />} title={t('home.onlineGuestTitle')} body={t('home.online.body')} />
         </div>
       </section>

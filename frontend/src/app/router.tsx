@@ -18,16 +18,8 @@ const publicRoutes: RouteObject[] = [
     lazy: () => import('@/pages/play/LocalGamePage').then((m) => ({ Component: m.LocalGamePage })),
   },
   {
-    path: 'play/computer',
-    lazy: () => import('@/pages/play/ComputerGamePage').then((m) => ({ Component: m.ComputerGamePage })),
-  },
-  {
     path: 'tournaments',
     lazy: () => import('@/pages/tournaments/TournamentsPage').then((m) => ({ Component: m.TournamentsPage })),
-  },
-  {
-    path: 'tournaments/local',
-    lazy: () => import('@/pages/tournaments/LocalTournamentPage').then((m) => ({ Component: m.LocalTournamentPage })),
   },
   {
     path: 'forgot-password',
@@ -52,11 +44,6 @@ const memberRoutes: RouteObject[] = [
   { path: 'play/online', lazy: () => import('@/pages/play/NewMatchPage').then((m) => ({ Component: m.NewMatchPage })) },
   { path: 'matches/:matchId', lazy: () => import('@/pages/play/MatchPage').then((m) => ({ Component: m.MatchPage })) },
   { path: 'matches', lazy: () => import('@/pages/history/HistoryPage').then((m) => ({ Component: m.HistoryPage })) },
-  { path: 'watch', lazy: () => import('@/pages/watch/WatchPage').then((m) => ({ Component: m.WatchPage })) },
-  {
-    path: 'watch/:matchId',
-    lazy: () => import('@/pages/watch/WatchMatchPage').then((m) => ({ Component: m.WatchMatchPage })),
-  },
   {
     path: 'tournaments/new',
     lazy: () => import('@/pages/tournaments/NewTournamentPage').then((m) => ({ Component: m.NewTournamentPage })),

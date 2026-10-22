@@ -1,26 +1,28 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CrownIcon } from '@/components/icons';
-import { Avatar, ScrollFade } from '@/components/ui';
+import { Avatar } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import type { Slot } from '../bracket';
 import { roundName } from '../view';
 
-/** A player as the bracket shows them: a name, and their avatar for online tournaments. */
+/** A place in a pairing: 0 is the first player, 1 the second. */
+export type Slot = 0 | 1;
+
+/** A player as the bracket shows them: a name and an avatar. */
 export interface BracketEntrant {
   name: string;
   user?: { displayName: string; avatarUrl: string | null };
 }
 
-/** One pairing, ready to draw. Both tournament modes map their data to this. */
+/** One pairing, ready to draw. The online bracket (TournamentBracket.tsx) maps the server's pairings to this. */
 export interface BracketPairingView {
   key: string;
   players: [BracketEntrant | null, BracketEntrant | null];
   winner: Slot | null;
   bye: boolean;
-  /** Highlighted: the viewer's pairing, or the next one to play. */
+  /** Highlighted: the viewer's pairing. */
   current?: boolean;
-  /** A link or button under the pairing, e.g. "Watch" or "Play". */
+  /** A link or button under the pairing, e.g. "Play". */
   action?: ReactNode;
 }
 
@@ -39,7 +41,7 @@ export function BracketView({
   rounds: BracketPairingView[][];
   /** Names the scrolling box for screen readers. */
   label: string;
-  /** A short word on the highlighted pairing, e.g. "Next match". */
+  /** A short word on the highlighted pairing, e.g. "Your match". */
   currentLabel?: string;
   /** The winner's name, shown in a last column with a crown. */
   champion?: string | null;
@@ -47,8 +49,8 @@ export function BracketView({
   const { t } = useTranslation();
   return (
     <div className="rounded-2xl border border-border bg-surface-2/50 p-4">
-      {/* When the rounds do not fit, the box scrolls and fades the edge that has more. */}
-      <ScrollFade label={label}>
+      {/* When the rounds do not fit, this box scrolls sideways. It takes the focus, so the arrow keys scroll it too. */}
+      <div role="group" aria-label={label} tabIndex={0} className="max-w-full overflow-x-auto">
         <ol className="flex w-full min-w-max">
           {rounds.map((pairings, round) => {
             const isFinal = round === rounds.length - 1;
@@ -86,7 +88,7 @@ export function BracketView({
             </li>
           )}
         </ol>
-      </ScrollFade>
+      </div>
     </div>
   );
 }

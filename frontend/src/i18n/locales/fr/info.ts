@@ -12,12 +12,4 @@ export const infoMessages: InfoMessages = {
     home: 'Retour à l’accueil',
     play: 'Jouer une partie',
   },
-  accent: {
-    label: 'Couleur d’accentuation',
-    blue: 'Bleu',
-    violet: 'Violet',
-    teal: 'Turquoise',
-    rose: 'Rose',
-    orange: 'Orange',
-  },
 };

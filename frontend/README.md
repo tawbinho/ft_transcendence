@@ -1,7 +1,7 @@
 # Frontend
 
 The web app of ft_transcendence: Connect Four on one screen, against the computer or online, with profiles, friends,
-chat, tournaments, a leaderboard, replays and a spectator mode, in English, French and Arabic. Sign-up asks for a
+chat, tournaments and a leaderboard, in English, French and Arabic. Sign-up asks for a
 6-digit code sent by email, and there is a "forgot password" page that works the same way.
 
 Built with React 19, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router and i18next.
@@ -29,9 +29,8 @@ npm run dev
 ```
 
 Then open http://localhost:5173. The development server forwards `/api` and `/socket.io` to the HTTPS proxy on
-https://localhost:8443, so logins, cookies and routes behave as in production. The home page, the games on one screen
-and against the computer, the same-screen tournament and the legal pages also work without the
-backend.
+https://localhost:8443, so logins, cookies, routes and live updates behave as in production. The home page, the game on
+one screen and the legal pages also work without the backend.
 
 **Creating an account:** the sign-up form sends a 6-digit code by email, and the account works only after the code is
 typed on the next page. If the root `.env` has no Gmail settings (`SMTP_USER` and `SMTP_PASSWORD`), nothing is sent;
@@ -42,8 +41,9 @@ docker compose logs backend | grep "Code for"
 ```
 
 The "forgot password" page uses the same kind of code. The computer opponents (`AI_Easy`, `AI_Medium`, `AI_Hard`) are
-accounts of the backend, but the app hides them from the friends pages, the player search and the leaderboard (see
-`src/features/users/computerPlayers.ts`).
+accounts of the backend, which also chooses their moves: the Easy, Medium and Hard buttons of the Play page open an
+online match against one of them, so they need an account. The app hides them from the friends pages, the player
+search and the leaderboard (see `src/features/users/computerPlayers.ts`).
 
 ## Scripts
 
@@ -60,14 +60,12 @@ Before a commit: `npm run format`, then `npm run typecheck && npm run format:che
 
 ## Settings
 
-Build-time settings, listed in `.env.example`. For `npm run dev`, copy it to `.env.local` (ignored by git) and change
-what you need. With Docker, pass them as build arguments (`args:` of the `frontend` service in the root
-`docker-compose.yml`).
+One setting, for `npm run dev` only, listed in `.env.example`: copy it to `.env.local` (ignored by git) to change it.
+The Docker build needs none.
 
-| Name               | What it does                                                           | Default                             |
-| ------------------ | ---------------------------------------------------------------------- | ----------------------------------- |
-| `VITE_REALTIME`    | `socket` to receive live updates over Socket.IO                        | Polling only (Docker sets `socket`) |
-| `API_PROXY_TARGET` | Development only: where `npm run dev` forwards `/api` and `/socket.io` | `https://localhost:8443`            |
+| Name               | What it does                                         | Default                  |
+| ------------------ | ---------------------------------------------------- | ------------------------ |
+| `API_PROXY_TARGET` | Where `npm run dev` forwards `/api` and `/socket.io` | `https://localhost:8443` |
 
 ## Running with Docker
 
@@ -84,10 +82,10 @@ names change with their content. In front of it, the HTTPS proxy (`proxy/nginx.c
 ```text
 src/
   app/          The shell: route table, addresses, guards, data cache, live updates, navigation links
-  pages/        One folder per area: home, auth, play, tournaments, profile, settings, community, watch, history,
+  pages/        One folder per area: home, auth, play, tournaments, profile, settings, community, history,
                 info. One route component per address, with the pieces only that area uses next to it
   features/     Code shared by several areas, one folder per subject: api.ts (calls), types.ts (shapes),
-                hooks.ts (data), components/, and small helpers. backdrop/ is the optional page background
+                hooks.ts (data), components/, and small helpers
   components/   Shared components; ui/ is the design system (buttons, fields, dialogs, tabs...), plus icons,
                 the logo and illustrations
   layout/       Header, menus, footer
@@ -104,10 +102,12 @@ A few rules keep it easy to follow:
 - A page never calls `fetch`. It uses a feature's hooks, which call the feature's `api.ts`, which uses
   `lib/api/http.ts`. Data from the server lives in the TanStack Query cache; after a change the matching keys are
   refreshed and every page showing that data follows.
-- Every game screen (same screen, computer, online match, spectator, same-screen tournament) is built from the same
-  pieces in `features/game/components/`: `GameLayout`, `PlayersBar`, `GameStatus`, `GameBoard` and `MoveAnnouncer`.
+- The two game screens, same screen and online (which also serves the games against the computer), are built from the
+  same pieces in `features/game/components/`: `GameLayout`, `PlayersBar`, `GameStatus`, `GameBoard` and
+  `MoveAnnouncer`.
 - The game rules (`features/game/engine`) are plain TypeScript, with the same rules and error codes as the backend's
-  engine. The computer opponent (`features/game/bot`) runs in a Web Worker, so the page never freezes while it thinks.
+  engine. The same-screen game uses them, and an online match uses them only to show your disc before the server
+  answers. The server decides every online move, the computer's included.
 - Decisions (texts, ranks, which buttons show) are plain functions in small `*.ts` files; page components compose.
 - Live events only write into the cache (`app/realtime.ts`): pages never know where an update came from.
 
@@ -117,16 +117,6 @@ A few rules keep it easy to follow:
 files with exactly the same keys: TypeScript checks it, and checks every key given to `t()`. Arabic turns the
 whole page right-to-left (`dir="rtl"` on `<html>`), and layouts use logical properties (`ms-`, `me-`, `start`, `end`)
 so they mirror by themselves.
-
-## The page background (optional)
-
-Settings > Preferences also has the language, light or dark mode and the accent color (blue by default). Members choose a
-background for every page there too: plain (the default), a soft glow, dots, a fine
-grid or a faint game board. It is drawn with CSS only, saved on this device, and kept faint so text stays readable
-(text keeps a contrast of 4.5 to 1). It lives in `src/features/backdrop/`; one line in `src/main.tsx` switches it on.
-
-- **Remove it**: delete `src/features/backdrop` and the line `import '@/features/backdrop/register';` in
-  `src/main.tsx`. Type check and build pass after these two steps.
 
 ## Checks
 

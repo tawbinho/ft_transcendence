@@ -56,56 +56,6 @@
   color-scheme: dark;
 }
 
-/* ---------------------------------------------------------------------------
-   Accent colors. The member picks one (src/lib/accent.ts puts its name in
-   data-accent on <html>); it replaces the primary color in both themes.
-   Blue is the default and has no rule: it is the palette above.
-   The dark rules have two attributes, so they win over the light rules.
-   --------------------------------------------------------------------------- */
-[data-accent='violet'] {
-  --c-primary: #6a3fd1;
-  --c-primary-hover: #5731b0;
-  --c-ring: #6a3fd1;
-}
-[data-theme='dark'][data-accent='violet'] {
-  --c-primary: #b7a0ff;
-  --c-primary-hover: #cbbaff;
-  --c-ring: #cbbaff;
-}
-
-[data-accent='teal'] {
-  --c-primary: #096661;
-  --c-primary-hover: #07514d;
-  --c-ring: #096661;
-}
-[data-theme='dark'][data-accent='teal'] {
-  --c-primary: #3fd0c4;
-  --c-primary-hover: #6ae0d6;
-  --c-ring: #6ae0d6;
-}
-
-[data-accent='rose'] {
-  --c-primary: #b01d4f;
-  --c-primary-hover: #911640;
-  --c-ring: #b01d4f;
-}
-[data-theme='dark'][data-accent='rose'] {
-  --c-primary: #ff85ad;
-  --c-primary-hover: #ffa3c2;
-  --c-ring: #ffa3c2;
-}
-
-[data-accent='orange'] {
-  --c-primary: #934107;
-  --c-primary-hover: #7a3505;
-  --c-ring: #934107;
-}
-[data-theme='dark'][data-accent='orange'] {
-  --c-primary: #ffa24d;
-  --c-primary-hover: #ffb773;
-  --c-ring: #ffb773;
-}
-
 /* Motion: how long things take, shared by every transition. */
 :root {
   --duration-fast: 120ms;
@@ -437,36 +387,5 @@ button.board-column:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .typing-dots span {
     animation: none;
-  }
-}
-
-/* ---------------------------------------------------------------------------
-   Scroll fade: a row that scrolls sideways fades out at an edge that still has
-   hidden content (see lib/useScrollEdges; ScrollFade and TabLinks use it). Set
-   --fade-start or --fade-end to a length to turn that edge on; both are 0 by
-   default. In the components layer so that a utility such as [--fade-end:2rem]
-   wins over the defaults.
-   --------------------------------------------------------------------------- */
-@layer components {
-  .scroll-fade {
-    --fade-start: 0px;
-    --fade-end: 0px;
-    mask-image: linear-gradient(
-      to right,
-      transparent,
-      #000 var(--fade-start),
-      #000 calc(100% - var(--fade-end)),
-      transparent
-    );
-  }
-
-  html[dir='rtl'] .scroll-fade {
-    mask-image: linear-gradient(
-      to left,
-      transparent,
-      #000 var(--fade-start),
-      #000 calc(100% - var(--fade-end)),
-      transparent
-    );
   }
 }

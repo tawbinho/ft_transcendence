@@ -12,12 +12,4 @@ export const infoMessages: InfoMessages = {
     home: 'العودة إلى الصفحة الرئيسية',
     play: 'العب مباراة',
   },
-  accent: {
-    label: 'لون التمييز',
-    blue: 'أزرق',
-    violet: 'بنفسجي',
-    teal: 'فيروزي',
-    rose: 'وردي',
-    orange: 'برتقالي',
-  },
 };

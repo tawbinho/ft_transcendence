@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/PageHeader';
 import type { User } from '@/features/auth/types';
 import { FriendsOnlinePanel } from './FriendsOnlinePanel';
-import { LiveMatchesPanel } from './LiveMatchesPanel';
 import { QuickActions } from './QuickActions';
 import { RecentResultsPanel } from './RecentResultsPanel';
 import { YourTurnPanel } from './YourTurnPanel';
@@ -28,7 +27,6 @@ export function Dashboard({ user }: { user: User }) {
           </div>
           <div className="flex min-w-0 flex-col gap-6">
             <FriendsOnlinePanel />
-            <LiveMatchesPanel />
           </div>
         </div>
       </div>

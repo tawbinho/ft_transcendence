@@ -1,30 +1,37 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { userKeys } from '@/features/users/hooks';
 import { LIVE_POLL_MS, useRealtimeStatus, watchMatch } from '@/lib/realtime';
 import { matchesApi } from './api';
 import { pollInterval, withMove } from './model';
-import type { CreateMatchInput, ListMatchesParams, Match, MatchSummary } from './types';
+import type { CreateMatchInput, ListMatchesParams, Match } from './types';
 
 export const matchKeys = {
   all: ['matches'] as const,
   lists: () => [...matchKeys.all, 'list'] as const,
   list: (params: ListMatchesParams) => [...matchKeys.lists(), params] as const,
-  finished: () => [...matchKeys.all, 'finished'] as const,
   detail: (id: string) => [...matchKeys.all, 'detail', id] as const,
   move: (id: string) => [...matchKeys.all, 'move', id] as const,
 };
 
-/** Lists and statistics are stale as soon as any match changes. */
-function refreshLists(queryClient: QueryClient) {
+/**
+ * Lists are stale as soon as any match starts or ends, and so are the players'
+ * numbers (profiles, History, the leaderboard), which the server counts.
+ */
+export function refreshLists(queryClient: QueryClient) {
   void queryClient.invalidateQueries({ queryKey: matchKeys.lists() });
-  void queryClient.invalidateQueries({ queryKey: matchKeys.finished() });
+  void queryClient.invalidateQueries({ queryKey: userKeys.all });
 }
 
 /**
- * One match, for its players and spectators alike. It is polled while it can
+ * One match, for its players. It is polled while it can
  * still change (slowly when live events arrive, see src/app/realtime.ts).
  * Polling pauses while the viewer's own move is being sent, so an older
  * answer cannot hide the disc they just dropped.
+ *
+ * A computer opponent joins a new match at once, often before this page starts
+ * listening for its events. So the match is asked again whenever the page
+ * opens, and a match still waiting keeps its fast polling even with live events.
  */
 export function useMatch(id: string, { paused = false }: { paused?: boolean } = {}) {
   const live = useRealtimeStatus() === 'live';
@@ -32,25 +39,14 @@ export function useMatch(id: string, { paused = false }: { paused?: boolean } = 
   return useQuery({
     queryKey: matchKeys.detail(id),
     queryFn: ({ signal }) => matchesApi.get(id, signal),
+    refetchOnMount: 'always',
     refetchInterval: (query) => {
-      const interval = paused ? false : pollInterval(query.state.data);
-      return interval !== false && live ? Math.max(interval, LIVE_POLL_MS) : interval;
+      const match = query.state.data;
+      const interval = paused ? false : pollInterval(match);
+      if (interval === false || !live || match?.status === 'waiting') return interval;
+      return Math.max(interval, LIVE_POLL_MS);
     },
     refetchOnWindowFocus: !paused,
-  });
-}
-
-/**
- * A match only to draw its position in a list (the list answers carry no
- * positions). It does not watch the match live: it asks again every 15 seconds,
- * and shares its cache entry with the match page.
- */
-export function useMatchPreview(id: string) {
-  return useQuery({
-    queryKey: matchKeys.detail(id),
-    queryFn: ({ signal }) => matchesApi.get(id, signal),
-    staleTime: 10_000,
-    refetchInterval: 15_000,
   });
 }
 
@@ -59,34 +55,6 @@ export function useMatchList(params: ListMatchesParams) {
     queryKey: matchKeys.list(params),
     queryFn: ({ signal }) => matchesApi.listMine(params, signal),
     placeholderData: keepPreviousData,
-  });
-}
-
-const STATS_PAGE_SIZE = 50;
-const STATS_MAX_PAGES = 6;
-
-/**
- * Finished matches for the statistics, newest first. The backend has no
- * statistics route yet, so they are computed from the history: up to
- * 300 matches, which `complete` says whether it covers.
- */
-export function useFinishedMatches() {
-  return useQuery({
-    queryKey: matchKeys.finished(),
-    queryFn: async ({ signal }) => {
-      const items: MatchSummary[] = [];
-      let total = 0;
-      for (let page = 0; page < STATS_MAX_PAGES; page++) {
-        const result = await matchesApi.listMine(
-          { status: 'finished', limit: STATS_PAGE_SIZE, offset: page * STATS_PAGE_SIZE },
-          signal,
-        );
-        items.push(...result.items);
-        total = result.total;
-        if (items.length >= total || result.items.length === 0) break;
-      }
-      return { items, total, complete: items.length >= total };
-    },
   });
 }
 

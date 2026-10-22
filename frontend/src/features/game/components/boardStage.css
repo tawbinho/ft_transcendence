@@ -9,7 +9,7 @@
   width: 100%;
   border: 1px solid var(--c-border);
   border-radius: 1rem;
-  
+
   background: var(--c-surface-2);
   /* The shape of the board with the row above it, where the disc to drop is previewed
      (the extra 0.35 is the room for the gaps and the margin). On a phone the box is

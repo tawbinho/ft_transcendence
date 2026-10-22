@@ -25,7 +25,8 @@ export const authApi = {
 
   setupTwoFactor: () => http.post<TwoFactorSetup>('/auth/2fa/setup'),
 
-  enableTwoFactor: (code: string) => http.post<null>('/auth/2fa/enable', { code }),
+  /** The first code from the app turns 2FA on; the answer holds the 10 backup codes, sent only this once. */
+  enableTwoFactor: (code: string) => http.post<{ backupCodes: string[] }>('/auth/2fa/enable', { code }),
 
   disableTwoFactor: (code: string) => http.post<null>('/auth/2fa/disable', { code }),
 };

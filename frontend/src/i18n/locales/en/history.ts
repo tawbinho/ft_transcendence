@@ -2,19 +2,11 @@ export const historyMessages = {
   history: {
     title: 'My matches',
     statsTitle: 'Statistics',
-    statsPartial: 'Based on your {{count}} most recent finished matches.',
     played: 'Played',
     wins: 'Wins',
     losses: 'Losses',
     draws: 'Draws',
     winRate: 'Win rate',
-    streak: 'Current streak',
-    bestStreak: 'Best win streak',
-    streakOf: {
-      won: 'Winning streak',
-      lost: 'Losing streak',
-      draw: 'Drawing streak',
-    },
     none: '—',
     filterLabel: 'Show',
     filters: {
@@ -42,10 +34,6 @@ export const historyMessages = {
     result: 'Result',
     board: 'Board',
     date: 'Date',
-    replay: 'Replay',
-    replayMatch: 'Replay the match against {{name}}',
-    recent: 'Latest results',
-    recentHint: 'Newest first',
     winRateBar: 'Share of matches won',
   },
 };
