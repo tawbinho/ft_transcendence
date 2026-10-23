@@ -60,14 +60,9 @@ export function PlayerFilters({
       <SelectField
         label={t('players.sortLabel')}
         value={filters.sort}
-        onChange={(event) => onChange({ sort: event.target.value as PlayerSort })}
-      >
-        {PLAYER_SORTS.map((value) => (
-          <option key={value} value={value}>
-            {t(`players.sort.${value}`)}
-          </option>
-        ))}
-      </SelectField>
+        options={PLAYER_SORTS.map((sort) => ({ value: sort, label: t(`players.sort.${sort}`) }))}
+        onChange={(sort) => onChange({ sort: sort as PlayerSort })}
+      />
       <div className="flex flex-wrap gap-x-6 gap-y-2 sm:col-span-2">
         <CheckboxField
           label={t('players.onlineOnly')}

@@ -20,15 +20,10 @@ export function HistoryFilters({
       <SelectField
         label={t('history.filterLabel')}
         value={value}
-        onChange={(event) => isFilter(event.target.value) && onChange(event.target.value)}
+        options={options}
+        onChange={(next) => isFilter(next) && onChange(next)}
         className="sm:hidden"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </SelectField>
+      />
       <OptionGroup
         legend={t('history.filterLabel')}
         value={value}
