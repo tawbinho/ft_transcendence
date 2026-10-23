@@ -31,7 +31,9 @@ export function ModeCard({
         to={to}
         className="group flex flex-col gap-3 rounded-card border border-border bg-surface p-6 shadow-card transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-pop"
       >
-        <span className="grid size-11 place-items-center rounded-xl bg-primary/12 text-2xl text-primary">{icon}</span>
+        <span className="grid size-11 place-items-center rounded-xl bg-linear-to-br from-primary/25 to-primary/8 text-2xl text-primary">
+          {icon}
+        </span>
         <Heading className="text-lg font-bold group-hover:text-primary">{title}</Heading>
         <p className="text-muted">{body}</p>
       </Link>
@@ -40,7 +42,9 @@ export function ModeCard({
 
   return (
     <section className="flex flex-col gap-4 rounded-card border border-border bg-surface p-6 shadow-card">
-      <span className="grid size-12 place-items-center rounded-xl bg-primary/12 text-2xl text-primary">{icon}</span>
+      <span className="grid size-12 place-items-center rounded-xl bg-linear-to-br from-primary/25 to-primary/8 text-2xl text-primary">
+        {icon}
+      </span>
       <div className="flex-1">
         <Heading className="text-xl font-bold">{title}</Heading>
         <p className="mt-1 text-muted">{body}</p>

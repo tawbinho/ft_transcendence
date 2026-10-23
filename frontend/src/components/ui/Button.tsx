@@ -6,10 +6,10 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-primary text-primary-fg hover:bg-primary-hover shadow-card',
-  secondary: 'border border-border bg-surface text-fg hover:bg-surface-2',
+  primary: 'bg-primary text-primary-fg shadow-button hover:-translate-y-px hover:bg-primary-hover',
+  secondary: 'border border-border bg-surface text-fg shadow-sm hover:border-primary/40 hover:bg-surface-2',
   ghost: 'text-fg hover:bg-surface-2',
-  danger: 'bg-danger text-danger-fg hover:bg-danger-hover shadow-card',
+  danger: 'bg-danger text-danger-fg shadow-card hover:-translate-y-px hover:bg-danger-hover',
 };
 
 const SIZES: Record<ButtonSize, string> = {
@@ -26,7 +26,7 @@ export function buttonClass({
   className,
 }: { variant?: ButtonVariant; size?: ButtonSize; block?: boolean; className?: string } = {}) {
   return cn(
-    'inline-flex select-none items-center justify-center gap-2 rounded-control font-semibold transition active:translate-y-px',
+    'inline-flex select-none items-center justify-center gap-2 rounded-control font-semibold transition active:translate-y-0 active:scale-[0.98]',
     'disabled:cursor-not-allowed disabled:opacity-55 aria-disabled:cursor-not-allowed aria-disabled:opacity-55',
     VARIANTS[variant],
     SIZES[size],

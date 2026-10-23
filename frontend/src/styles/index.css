@@ -13,10 +13,10 @@
    --------------------------------------------------------------------------- */
 :root,
 [data-theme='light'] {
-  --c-bg: #f3f5fc;
+  --c-bg: #eef1fb;
   --c-surface: #ffffff;
   --c-surface-2: #e8ecf6;
-  --c-border: #d3d9e9;
+  --c-border: #d5dbed;
   --c-fg: #121a2f;
   --c-muted: #4d5772;
   --c-primary: #2b4fd8;
@@ -31,14 +31,15 @@
   --c-success-soft: #e1f4ea;
   --c-warning: #94530a;
   --c-warning-soft: #fff2da;
+  --glow: 14%; /* how strong the brand-color glow behind the page is */
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --c-bg: #0b0f1a;
-  --c-surface: #131a29;
-  --c-surface-2: #1b2336;
-  --c-border: #2b354d;
+  --c-bg: #090d17;
+  --c-surface: #141c2e;
+  --c-surface-2: #1d2740;
+  --c-border: #2d3856;
   --c-fg: #e8ebf5;
   --c-muted: #a0a9c0;
   --c-primary: #8ba5ff;
@@ -53,6 +54,7 @@
   --c-success-soft: #12291e;
   --c-warning: #f2a93f;
   --c-warning-soft: #33240e;
+  --glow: 20%;
   color-scheme: dark;
 }
 
@@ -88,11 +90,14 @@
 
   /* Corner radii: rounded-control for buttons and fields, rounded-card for panels. */
   --radius-control: 0.75rem;
-  --radius-card: 1rem;
+  --radius-card: 1.25rem;
 
   /* Shadows: shadow-card rests on the page, shadow-pop floats above it (menus, dialogs). */
-  --shadow-card: 0 1px 2px rgb(16 24 48 / 0.06), 0 1px 3px rgb(16 24 48 / 0.08);
-  --shadow-pop: 0 12px 32px -8px rgb(16 24 48 / 0.28), 0 2px 6px rgb(16 24 48 / 0.12);
+  --shadow-card: 0 1px 2px rgb(16 24 48 / 0.05), 0 6px 16px -6px rgb(16 24 48 / 0.12);
+  --shadow-pop: 0 16px 36px -8px rgb(16 24 48 / 0.3), 0 2px 6px rgb(16 24 48 / 0.12);
+  /* shadow-button: a lit top edge and a soft shadow, so primary buttons look raised. */
+  --shadow-button:
+    inset 0 1px 0 rgb(255 255 255 / 0.2), 0 1px 2px rgb(16 24 48 / 0.2), 0 4px 10px -4px var(--c-primary);
 
   --default-transition-duration: var(--duration-fast);
   --default-transition-timing-function: var(--ease-out);
@@ -105,7 +110,14 @@
 
   body {
     min-height: 100dvh;
-    background: var(--c-bg);
+    /* A soft glow of the brand color at the top, so the page is not one flat color. */
+    background:
+      radial-gradient(
+        70rem 24rem at 50% -6rem,
+        color-mix(in srgb, var(--c-primary) var(--glow), transparent),
+        transparent
+      ),
+      var(--c-bg);
     color: var(--c-fg);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -129,6 +141,25 @@
 
   input:focus-visible {
     outline: none;
+  }
+
+  /* Fields: the border turns to the brand color on hover and focus. */
+  input:not([type='checkbox'], [type='range'], [type='radio']),
+  select,
+  textarea {
+    transition:
+      border-color var(--duration-fast),
+      box-shadow var(--duration-fast);
+  }
+  input:not([type='checkbox'], [type='range'], [type='radio']):hover,
+  select:hover,
+  textarea:hover {
+    border-color: color-mix(in srgb, var(--c-primary) 45%, var(--c-border));
+  }
+  input:not([type='checkbox'], [type='range'], [type='radio']):focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    border-color: var(--c-ring);
   }
 }
 

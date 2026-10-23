@@ -35,11 +35,14 @@ export function PlayerResults({
 
   // Computer opponents cannot be friends, so the search does not offer them.
   const players = withoutComputerPlayers(results.data.items);
+  // The server's total still counts them. Taking away the ones hidden on this page makes the
+  // count right when all players fit on one page; with more pages it can be off by a few.
+  const total = results.data.total - (results.data.items.length - players.length);
 
   return (
     <section aria-label={t('players.results')} className="flex flex-col gap-4">
       <p role="status" className="text-sm text-muted">
-        {t('players.resultCount', { count: results.data.total })}
+        {t('players.resultCount', { count: total })}
       </p>
       {players.length === 0 ? (
         <EmptyState>{t('players.empty')}</EmptyState>
@@ -52,7 +55,7 @@ export function PlayerResults({
       )}
       <Pagination
         page={filters.page}
-        pages={pageCount(results.data.total, PAGE_SIZE)}
+        pages={pageCount(total, PAGE_SIZE)}
         label={t('players.title')}
         onChange={onPageChange}
       />

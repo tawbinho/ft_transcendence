@@ -11,7 +11,10 @@ export function StatTiles({
   return (
     <dl className={cn('grid grid-cols-2 gap-3 sm:grid-cols-4', className)}>
       {tiles.map(([label, value]) => (
-        <div key={label} className="flex flex-col-reverse gap-1 rounded-xl border border-border bg-surface p-4">
+        <div
+          key={label}
+          className="flex flex-col-reverse gap-1 rounded-xl border border-border bg-surface p-4 shadow-card"
+        >
           <dt className="text-sm text-muted">{label}</dt>
           <dd className="text-2xl font-extrabold tabular-nums">{value}</dd>
         </div>
