@@ -234,7 +234,9 @@ The computer opponent is not written here: the server plays it (section 6).
 - Friends: requests, friend list (online first, `friends/friendOrder.ts`) and sent requests. Blocked players are
   managed in Settings.
 - Chat: on a phone only the list or one conversation shows (`features/chat/panes.ts`). `ChatThread` finds the player
-  and handles errors, `Conversation` shows messages and the composer.
+  and handles errors, `Conversation` shows messages and the composer. "Invite to play" opens the online match form
+  with the player filled in (`paths.chatInvite`); after "Create match" the invitation is posted in that chat, unless the
+  opponent was changed (`pages/play/NewMatchPage.tsx`).
 
 ### History (`pages/history/`)
 

@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { Alert, Button, Card, TextField } from '@/components/ui';
 import { useUser } from '@/features/auth/hooks';
 import { validateDisplayName } from '@/features/auth/validation';
+import { useSendMessage } from '@/features/chat/hooks';
 import { Board } from '@/features/game/components/Board';
 import { BoardSettingsFields } from '@/features/game/components/BoardSettingsFields';
 import { createGame } from '@/features/game/engine';
@@ -28,6 +29,9 @@ export function NewMatchPage() {
   // "Challenge" buttons on profiles and in the friend list fill in the opponent.
   const [params] = useSearchParams();
   const [opponent, setOpponent] = useState(() => params.get('opponent') ?? '');
+  // A chat's Invite button also gives the friend's id: the match is then sent to that chat.
+  const invitePeerId = params.get('invite');
+  const sendInvite = useSendMessage(invitePeerId ?? '');
   const [settings, setSettings] = useState<BoardSettings>(loadLastSettings);
   const [submitted, setSubmitted] = useState(false);
 
@@ -51,7 +55,18 @@ export function NewMatchPage() {
     saveLastSettings(settings);
     create.mutate(
       { settings, ...(name ? { opponentDisplayName: name } : {}) },
-      { onSuccess: (match) => navigate(paths.match(match.id)) },
+      {
+        onSuccess: (match) => {
+          const open = () => void navigate(paths.match(match.id));
+          // Only while the opponent is still that friend: the invitation must be for them.
+          // The match opens even if the message fails: its link can still be shared from there.
+          if (invitePeerId && name === params.get('opponent')) {
+            sendInvite.mutate({ matchId: match.id }, { onSettled: open });
+          } else {
+            open();
+          }
+        },
+      },
     );
   }
 
@@ -96,7 +111,7 @@ export function NewMatchPage() {
             />
             <FriendPicks selected={name} onPick={pickFriend} />
             <BoardSettingsFields value={settings} onChange={setSettings} />
-            <Button type="submit" size="lg" className="self-start" loading={create.isPending}>
+            <Button type="submit" size="lg" className="self-start" loading={create.isPending || sendInvite.isPending}>
               {t('online.create')}
             </Button>
           </form>

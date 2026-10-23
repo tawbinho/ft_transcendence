@@ -12,4 +12,7 @@ export const paths = {
   settings: (section?: string) => (section ? `/settings/${segment(section)}` : '/settings'),
   /** The online match form, with the opponent already filled in. */
   challenge: (displayName: string) => `/play/online?opponent=${segment(displayName)}`,
+  /** The same form from a chat: the match is then sent to that chat as an invitation. */
+  chatInvite: (peer: { id: string; displayName: string }) =>
+    `/play/online?opponent=${segment(peer.displayName)}&invite=${segment(peer.id)}`,
 };

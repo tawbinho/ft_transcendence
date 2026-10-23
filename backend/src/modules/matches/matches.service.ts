@@ -215,10 +215,11 @@ export class MatchesService {
   // Read
   // ---------------------------------------------------------------------------
 
-  // The full state of one match. Only its players may read it; anyone else
-  // gets "not found", so nobody can discover which match ids exist.
+  // The full state of one match: anyone with the link while it waits for its
+  // second player, then only its players (anyone else gets "not found").
   async get(userId: string, matchId: string): Promise<MatchView> {
     const view = await this.load(userId, matchId);
+    if (view.status === 'waiting') return view;
     if (view.yourSeat === null) throw this.notFound();
     return view;
   }
