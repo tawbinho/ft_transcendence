@@ -310,8 +310,8 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 If a port is already used on your machine, change it in `.env`.
 Do not change `TWO_FACTOR_KEY` once users have enabled 2FA: their stored
 secrets can no longer be decrypted.
-`SESSION_TTL_DAYS` is optional and is not passed to the container by
-`docker-compose.yml` yet; add it there to change the default.
+`SESSION_TTL_DAYS` counts from the moment of login: using the app does not
+extend it, so after that many days the user logs in again.
 
 ## Database migrations
 

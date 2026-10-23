@@ -34,8 +34,10 @@ services:
       # Gmail sending of verification emails; empty SMTP_USER = link only in the log.
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      # Optional, with these defaults: how long a tournament player may take to
-      # move, and how long a player may be disconnected from a running match.
+      # Optional, with these defaults: how long a login lasts (in days), how
+      # long a tournament player may take to move, and how long a player may be
+      # disconnected from a running match.
+      SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-7}
       TOURNAMENT_TURN_TIMEOUT_SECONDS: ${TOURNAMENT_TURN_TIMEOUT_SECONDS:-180}
       DISCONNECT_GRACE_SECONDS: ${DISCONNECT_GRACE_SECONDS:-30}
     # Not published to the host on purpose: the only way in from outside is
