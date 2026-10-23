@@ -8,7 +8,7 @@ export const matchesApi = {
   listMine: (params: ListMatchesParams = {}, signal?: AbortSignal) =>
     http.get<MatchPage>('/matches/mine', { query: { ...params }, signal }),
 
-  /** Only for the players of the match; anyone else gets a 404. */
+  /** Anyone while the match waits for its second player, then only its players; anyone else gets a 404. */
   get: (id: string, signal?: AbortSignal) => http.get<Match>(`/matches/${encodeURIComponent(id)}`, { signal }),
 
   join: (id: string) => http.post<Match>(`/matches/${encodeURIComponent(id)}/join`),

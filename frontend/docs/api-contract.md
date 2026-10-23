@@ -206,10 +206,11 @@ interface MatchSummary {
 | `POST /matches/:id/moves`  | `{ col }`                             | `Match`                                                   |
 | `POST /matches/:id/resign` |                                       | `Match` (a match still waiting is cancelled: `abandoned`) |
 
-### Only the players can read a match
+### Who can read a match
 
-`GET /matches/:id` answers `404 MATCH_NOT_FOUND` to anyone who does not play in the match, so nobody can discover which
-match ids exist. The app shows the join screen on that 404, because an invited player has not joined yet.
+While a match waits for its second player, `GET /matches/:id` answers anyone logged in, with `yourSeat: null`, so the
+person who got the link sees the join screen. Once it starts, only its players can read it: anyone else gets
+`404 MATCH_NOT_FOUND`, and the app shows the join screen, where joining is then refused.
 
 ### Computer opponents
 

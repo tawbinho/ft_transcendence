@@ -580,8 +580,8 @@ paths:
       - matches
       operationId: getMatch
       summary: One match
-      description: 'Only the players of a match can read it; anyone else gets 404 `MATCH_NOT_FOUND`, so nobody can
-        discover which match ids exist.'
+      description: 'While a match waits for its second player, anyone logged in with its link can read it, to join it.
+        Once it starts, only its players can read it; anyone else gets 404 `MATCH_NOT_FOUND`.'
       x-status: implemented
       parameters:
       - $ref: '#/components/parameters/MatchId'

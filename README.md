@@ -334,7 +334,7 @@ including the `data` / `error` wrapper. The browser must send requests with
 | `POST /api/auth/2fa/backup-codes` | make 10 new backup codes, the old ones stop working (needs a valid code) |
 | `POST /api/matches`           | create a match (optional settings, optional invited player) |
 | `GET  /api/matches/mine`      | my matches, newest first (`status`, `limit`, `offset`) |
-| `GET  /api/matches/:id`       | the full state of a match (its players only; anyone else gets `MATCH_NOT_FOUND`) |
+| `GET  /api/matches/:id`       | the full state of a match (anyone with the link while it waits, then its players only; anyone else gets `MATCH_NOT_FOUND`) |
 | `POST /api/matches/:id/join`  | join a waiting match, the match starts         |
 | `POST /api/matches/:id/moves` | play a column, body `{ "col": 3 }`             |
 | `POST /api/matches/:id/resign`| give up, or cancel a match still waiting       |
@@ -424,8 +424,9 @@ waiting). The board is never stored: it is rebuilt from the saved moves
 Settings you can choose: 5 to 10 columns, 5 to 9 rows, 3 to 5 in a row to win
 (never more than the smaller side), and a theme (`classic`, `ocean`,
 `sunset`, `midnight`). A match can be reserved for one player with
-`opponentDisplayName`. A user can have at most 3 matches waiting at once, and
-someone who is not a player in a match gets `MATCH_NOT_FOUND`.
+`opponentDisplayName`. A user can have at most 3 matches waiting at once. A
+waiting match can be read by anyone with its link, so they can join it; once it
+starts, someone who is not a player in it gets `MATCH_NOT_FOUND`.
 
 Concurrent actions are safe: every change to a match runs in a database
 transaction that first locks the match row, so two players cannot take the

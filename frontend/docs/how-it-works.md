@@ -400,8 +400,8 @@ After a change: `npm run typecheck && npm run format:check`.
   computer uses about 40 of them, but many busy tabs or fast reloads on one computer can still reach it. The app
   retries and keeps the logged-in user when it happens.
 - Any answer of 400 or more prints a red line in Chrome's console, even an expected one, such as a blocked player
-  trying to send a message (`403 BLOCKED`), or a player opening an invitation link: only the players can read a match,
-  so `GET /api/matches/:id` answers `404` and the app shows the Join button.
+  trying to send a message (`403 BLOCKED`), or someone opening the link of a match that has already started without
+  playing in it (`404`: only its players can read it then).
 - Tested in Chromium only. Firefox and Safari (or Edge) must be checked by hand for the browser support module.
 - On a 1280 by 800 laptop screen the game board starts well below the top (header, title, players, status), so the page
   scrolls a little to see all of it. The board is already as large as the screen allows; making it fit would need a
