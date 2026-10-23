@@ -6,9 +6,9 @@ import { User } from './entities/user.entity.js';
 // A user is online while they were seen in the last minute. Two things keep
 // them "seen": the live connection (the server refreshes every connected user
 // every 20 seconds) and, for an app that does not use sockets, a request at
-// least every 30 seconds while a tab is visible. After the last socket closes
-// the REST value can still say online for up to a minute; the `presence`
-// event is immediate.
+// least every 30 seconds while a tab is visible. When the last socket closes,
+// markOffline() stores a date that is already outside the window, so the user
+// is offline at once everywhere, not only in the `presence` event.
 export const ONLINE_WINDOW_MS = 60_000;
 
 // We write "seen" to the database at most this often per user, so a busy
@@ -93,12 +93,30 @@ export class PresenceService {
   }
 
   // Writes "seen now" at once, without the 30 s limit of touch(). Used when a
-  // socket opens or closes, so `lastSeenAt` is exact.
+  // socket opens, so `lastSeenAt` is exact.
   async markSeen(userId: string): Promise<void> {
     const now = Date.now();
     this.lastWrite.set(userId, now);
     try {
       await this.users.update({ id: userId }, { lastSeenAt: new Date(now) });
+    } catch (error) {
+      this.logger.warn(`Could not record presence: ${String(error)}`);
+    }
+  }
+
+  // Used when the user's last socket closes (logout, closed tab). Stores a date
+  // one window ago: the user counts as offline immediately, and "last seen"
+  // is only about a minute early. Writing "now" here would keep them online
+  // for another minute in every list and profile.
+  async markOffline(userId: string): Promise<void> {
+    const now = Date.now();
+    // Stops a late touch() from making them look online again.
+    this.lastWrite.set(userId, now);
+    try {
+      await this.users.update(
+        { id: userId },
+        { lastSeenAt: new Date(now - ONLINE_WINDOW_MS) },
+      );
     } catch (error) {
       this.logger.warn(`Could not record presence: ${String(error)}`);
     }

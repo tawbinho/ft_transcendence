@@ -94,7 +94,7 @@ export class RealtimeGateway
 
     // The user's last open socket closed: they went offline.
     if (this.presence.disconnect(userId)) {
-      void this.presence.markSeen(userId);
+      void this.presence.markOffline(userId);
       this.realtime.emitToAll(EVENTS.presence, { userId, online: false });
     }
   }
