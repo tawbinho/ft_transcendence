@@ -88,6 +88,13 @@ below. The frontend has its own README in [frontend/README.md](frontend/README.m
 
 PostgreSQL, 15 tables (all primary keys are UUIDs unless a composite key is shown). `⟶` means a foreign key.
 
+
+// to access the db:
+psql -h localhost -p 5433 -U dbUser(from env) 
+pass
+\x
+\dt
+query
 ```
 users (id, email UNIQUE, display_name UNIQUE, password_hash, avatar_url, locale, is_bot,
        last_seen_at, created_at, updated_at)
