@@ -13,7 +13,8 @@ tournaments, and the whole interface is available in English, French and Arabic 
 - Online Connect Four with live updates, reconnection after a refresh or a network cut, and server-side rules (the
   server judges every move).
 - Computer opponents (3 levels) that run on the server and can be beaten.
-- Accounts with email and password (Argon2), database sessions, optional two-factor authentication with backup codes.
+- Accounts with email and password (Argon2), email verification and password reset with a 6-digit code sent by email,
+  database sessions, optional two-factor authentication with backup codes.
 - Profiles, avatars, friends with online status, blocking, private chat with invitations and read receipts.
 - Single-elimination tournaments (4 or 8 places, byes, turn timeout).
 - Statistics, match history, leaderboard, levels and badges.
@@ -30,13 +31,22 @@ tournaments, and the whole interface is available in English, French and Arabic 
 cp .env.example .env
 # 2. put a real key in .env: TWO_FACTOR_KEY must be 64 hex characters
 #      openssl rand -hex 32
-# 3. one command builds and starts everything (database, backend, frontend, HTTPS proxy)
+# 3. optional: to really send the sign-up emails, set SMTP_USER and SMTP_PASSWORD in .env
+#      (a Gmail address and an app password, see Configuration below)
+# 4. one command builds and starts everything (database, backend, frontend, HTTPS proxy)
 docker compose up --build -d
 ```
 
 Open **https://localhost:8443** (the port is `HTTPS_PORT` in `.env`). The certificate is self-signed and created
 automatically at the first start, so the browser shows a warning: click *Advanced*, then *Proceed to localhost*.
 Database tables are created automatically at startup (migrations run when the backend starts).
+
+**Creating an account:** sign-up emails a 6-digit code, and the account can log in only after that code is typed on
+the next page. Without `SMTP_USER` no email is sent: the code is written in the backend log instead.
+
+```bash
+docker compose logs backend | grep "Code for"
+```
 
 Useful addresses: the app at `/` and the legal pages at `/privacy` and `/terms`.
 More commands, the configuration table and every API route are in [Technical documentation](#technical-documentation)
@@ -46,26 +56,26 @@ below. The frontend has its own README in [frontend/README.md](frontend/README.m
 
 | Login | Role(s) | Responsibilities |
 | ----- | ------- | ---------------- |
-| **atawbi** | Technical Lead, Developer, Project Manager | Chose the architecture and stack (NestJS, TypeORM, PostgreSQL, Docker, HTTPS proxy). Built the backend core: authentication, sessions, 2FA, the game engine, matches, real-time (Socket.IO), the AI opponent, tournaments and chat. Organised the work and reviewed merges. |
+| **atawbi** | Technical Lead, Developer, Project Manager | Chose the architecture and stack (NestJS, TypeORM, PostgreSQL, Docker, HTTPS proxy). Built the backend core: authentication, email verification and password reset, sessions, 2FA, the game engine, matches, real-time (Socket.IO), the AI opponent, tournaments and chat. Organised the work and reviewed merges. |
 | **rnehme** | Frontend Developer, Product Owner | Built the whole frontend: pages, game board, design system, three languages with RTL, accessibility, legal pages. Defined what the product must do and validated finished features. |
 | **fel-ghaz** | Backend Developer, Product Owner | Built the backend social side: player search and presence, profiles and match history, display name, avatars, friends and blocks. Defined what the product must do and validated finished features. |
 
 ## Project Management
 
 - **Organisation:** the work was split by area: backend core (atawbi), social backend (fel-ghaz) and frontend
-  (rnehme). The backend API was designed and documented first (`backend/docs/openapi.yaml`, Swagger), so the frontend
+  (rnehme). The backend API was designed and documented first (`backend/docs/openapi.yaml`, OpenAPI), so the frontend
   could be built against a stable contract. Each area was developed on its own branch and merged into `main`.
 - **Meetings:** TODO (team to fill in: how often the team met).
-- **Tools:** Git and GitHub (branches and merges), the Swagger page and `frontend/docs/api-contract.md` as the
-  shared API contract.
-- **Communication:** Gmail, Whatsapp , OnCampus Meetings
+- **Tools:** Git and GitHub (branches and merges), `backend/docs/openapi.yaml` and `frontend/docs/api-contract.md` as
+  the shared API contract.
+- **Communication:** Gmail, WhatsApp and on-campus meetings.
 
 ## Technical Stack
 
 | Part | Technology |
 | ---- | ---------- |
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, i18next, Socket.IO client |
-| Backend | NestJS (Node 22), TypeScript, TypeORM, Socket.IO, Argon2, class-validator |
+| Backend | NestJS (Node 22), TypeScript, TypeORM, Socket.IO, Argon2, class-validator, Nodemailer (Gmail SMTP) |
 | Database | PostgreSQL 17 |
 | Deployment | Docker Compose: `db`, `backend`, `frontend` (nginx), `proxy` (nginx, HTTPS) |
 | Tests | Vitest (backend) |
@@ -87,17 +97,12 @@ below. The frontend has its own README in [frontend/README.md](frontend/README.m
 ## Database Schema
 
 PostgreSQL, 15 tables (all primary keys are UUIDs unless a composite key is shown). `⟶` means a foreign key.
+To look at the real tables, see [Connect to the database](#everyday-commands).
 
-
-// to access the db:
-psql -h localhost -p 5433 -U dbUser(from env) 
-pass
-\x
-\dt
-query
 ```
 users (id, email UNIQUE, display_name UNIQUE, password_hash, avatar_url, locale, is_bot,
-       last_seen_at, created_at, updated_at)
+       last_seen_at, email_verified_at, email_verify_hash, email_verify_expires_at, email_verify_attempts,
+       password_reset_hash, password_reset_expires_at, password_reset_attempts, created_at, updated_at)
  ├─ sessions            (id, user_id ⟶ users, token_hash UNIQUE, pending_two_factor, expires_at)
  ├─ two_factor          (user_id ⟶ users [PK], secret [AES-256-GCM], enabled, last_used_step)
  ├─ two_factor_backup_codes (id, user_id ⟶ users, code_hash [HMAC-SHA256], used_at)
@@ -122,13 +127,15 @@ tournaments (id, name, status, size 4|8, cols, rows, win_length, theme,
 
 Design notes: the board is never stored, it is rebuilt from `match_moves`; pairs (friendships, messages) store the
 smaller user id first so one row represents both directions; CHECK constraints enforce board limits and what each
-message kind may contain; wins, losses and draws are computed from finished matches, never stored.
+message kind may contain; wins, losses and draws are computed from finished matches, never stored; the emailed
+codes are stored only as a SHA-256 hash, like the session tokens.
 
 ## Features List
 
 | Feature | Description | Who |
 | ------- | ----------- | --- |
 | Signup, login, logout | Email and password (Argon2), database session in an httpOnly cookie, rate limited | atawbi |
+| Email verification and forgot password | 6-digit code sent by email (Gmail), 15 minutes, locked after 5 wrong tries; a reset ends every login | atawbi |
 | Two-factor authentication | TOTP with an authenticator app, 10 one-time backup codes | atawbi |
 | Game engine and matches | Connect Four rules on any board size, server-side validation, concurrency-safe transactions | atawbi |
 | Real-time | Socket.IO: live moves, presence, reconnection with a 30 s grace period, forfeit after a disconnection | atawbi |
@@ -161,10 +168,10 @@ message kind may contain; wins, losses and draws are computed from finished matc
 | 10 | User management: game statistics and match history | Minor | 1 | fel-ghaz, rnehme | Wins/losses/draws, win rate, history with opponents and dates, leaderboard |
 | 11 | Gaming: tournament system | Minor | 1 | atawbi, rnehme | Bracket, registration, matchups tracked, automatic match creation |
 | 12 | Gaming: game customization | Minor | 1 | atawbi, rnehme | Board size (5-10 x 5-9), win length (3-5), themes; defaults available; the AI uses them |
-| 14 | Accessibility and i18n: multiple languages | Minor | 1 | rnehme | i18next, English / French / Arabic, language switcher, all texts translatable |
-| 15 | Accessibility and i18n: RTL support | Minor | 1 | rnehme | Arabic with mirrored layout (logical Tailwind classes), switch without reload |
-| 16 | Gaming: advanced chat features | Minor | 1 | atawbi, rnehme | Block users, invite to a match from chat, tournament notices, profile access, persistent history, typing indicator and read receipts |
-| 17 | Web: custom design system | Minor | 1 | rnehme | 21 reusable components (`frontend/src/components/ui`), colour tokens with light/dark, typography and icons |
+| 13 | Accessibility and i18n: multiple languages | Minor | 1 | rnehme | i18next, English / French / Arabic, language switcher, all texts translatable |
+| 14 | Accessibility and i18n: RTL support | Minor | 1 | rnehme | Arabic with mirrored layout (logical Tailwind classes), switch without reload |
+| 15 | Gaming: advanced chat features | Minor | 1 | atawbi, rnehme | Block users, invite to a match from chat, tournament notices, profile access, persistent history, typing indicator and read receipts |
+| 16 | Web: custom design system | Minor | 1 | rnehme | 21 reusable components (`frontend/src/components/ui`), colour tokens with light/dark, typography and icons |
 
 **Total: 7 Major x 2 = 14, 9 Minor x 1 = 9, giving 23 points** against the 14 required. The bonus counts at most 5
 points beyond 14, so the modules above the first 14 points are the safety margin if one is not validated.
@@ -176,8 +183,8 @@ consistent. Every module builds on the web game (module 6), which is implemented
 
 ## Individual Contributions
 
-**atawbi** — Authentication and sessions, 2FA and backup codes, the pure Connect Four engine with its tests,
-matches (create, join, move, resign) with row-locking transactions, Socket.IO real-time layer, disconnection
+**atawbi** — Authentication and sessions, email verification and password reset by emailed code, 2FA and backup
+codes, the pure Connect Four engine with its tests, matches (create, join, move, resign) with row-locking transactions, Socket.IO real-time layer, disconnection
 forfeit, the AI opponent (worker thread), tournaments and bracket, chat, Docker Compose, the HTTPS proxy, automatic
 migrations, rate limiting, the API documentation. *Challenges:* concurrent actions (two players taking the same
 seat or racing a move) were solved with transactions that lock the match row; blocking the event loop with the AI
@@ -198,7 +205,7 @@ without trusting the declared type.
 - NestJS: https://docs.nestjs.com — TypeORM: https://typeorm.io — PostgreSQL: https://www.postgresql.org/docs/
 - Socket.IO: https://socket.io/docs/v4/ — React: https://react.dev — Tailwind CSS: https://tailwindcss.com/docs
 - i18next: https://www.i18next.com — TanStack Query: https://tanstack.com/query/latest
-- Docker Compose: https://docs.docker.com/compose/ — nginx: https://nginx.org/en/docs/
+- Docker Compose: https://docs.docker.com/compose/ — nginx: https://nginx.org/en/docs/ — Nodemailer: https://nodemailer.com
 - Argon2 (RFC 9106), TOTP (RFC 6238), OWASP session management and password storage cheat sheets
 - Minimax and alpha-beta pruning: https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
 - WCAG 2.1: https://www.w3.org/TR/WCAG21/
@@ -220,7 +227,8 @@ mechanism.
 Requirements: Docker with the Compose plugin.
 
 ```bash
-# 1. create your local env file and set TWO_FACTOR_KEY (openssl rand -hex 32)
+# 1. create your local env file and set TWO_FACTOR_KEY (openssl rand -hex 32),
+#    and SMTP_USER / SMTP_PASSWORD if the emails must really be sent
 cp .env.example .env
 
 # 2. build and start everything
@@ -245,14 +253,16 @@ container, so saving a file reloads the server.
 | Service  | URL / port                                          |
 | -------- | --------------------------------------------------- |
 | backend  | https://localhost:8443/api (`HTTPS_PORT`)           |
-| database | `localhost:5433` (`DB_PORT`), from the host         |
+| database | `127.0.0.1:5433` (`DB_PORT`), from this computer only |
 
 The only way in from outside is the **proxy** container (nginx): it decrypts
 HTTPS (TLS 1.2 and 1.3 only) and forwards to the backend over plain HTTP inside
 the Docker network. The backend's own port 3000 is not published, so there is
 no plain-HTTP door. WebSockets (`wss://`) go through the same proxy. Port
 8443 is used instead of 443 because rootless Docker cannot bind ports below
-1024. Inside Docker the backend reaches the database at `db:5432`.
+1024. Inside Docker the backend reaches the database at `db:5432`. The database
+port is published on `127.0.0.1` only, so other machines on the network cannot
+reach it.
 
 ### Everyday commands
 
@@ -274,6 +284,9 @@ psql -h localhost -p 5433 -U connect4 connect4    # password: connect4
 docker compose exec db psql -U connect4 -d connect4
 ```
 
+The values are `DB_PORT`, `DB_USER`, `DB_PASSWORD` and `DB_NAME` from `.env`. Inside `psql`, `\dt` lists the
+tables, `\x` switches to one-column-per-line output (easier to read for wide rows), and a query ends with `;`.
+
 ### Configuration
 
 All settings are in `.env` (copied from `.env.example`, never committed):
@@ -290,6 +303,8 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 | `TOURNAMENT_TURN_TIMEOUT_SECONDS` | `180` | how long a tournament player may take to move before losing, optional |
 | `DISCONNECT_GRACE_SECONDS` | `30`     | how long a player may be disconnected from a running match before losing, optional |
 | `AVATAR_DIR`             | `./uploads/avatars` | where profile pictures are stored; Docker sets it to a volume |
+| `SMTP_USER`              | empty      | Gmail address that sends the codes, optional; empty: the code is only written in the backend log |
+| `SMTP_PASSWORD`          | empty      | a Gmail **app password** (Google account > Security > 2-Step Verification > App passwords), not the normal password |
 
 If a port is already used on your machine, change it in `.env`.
 Do not change `TWO_FACTOR_KEY` once users have enabled 2FA: their stored
@@ -326,8 +341,12 @@ must send requests with `credentials: "include"` so the cookies travel.
 
 | Route                    | Description                                        |
 | ------------------------ | -------------------------------------------------- |
-| `POST /api/auth/signup`  | create an account and log in                       |
-| `POST /api/auth/login`   | log in with email and password (see 2FA below)     |
+| `POST /api/auth/signup`  | create an unverified account and email a 6-digit code; does NOT log in |
+| `POST /api/auth/verify-email` | `{ email, code }`: verify the email, the account can log in |
+| `POST /api/auth/resend-verification` | `{ email }`: send a new code (always answers 200) |
+| `POST /api/auth/login`   | log in with email and password (see 2FA below); refused until the email is verified |
+| `POST /api/auth/forgot-password` | `{ email }`: email a reset code (always answers 200) |
+| `POST /api/auth/reset-password`  | `{ email, code, password }`: set a new password and end every login |
 | `POST /api/auth/logout`  | end the session on the server and clear the cookie |
 | `GET  /api/auth/me`      | the logged-in user, or `data: null` if not logged in (status 200, never 401) |
 | `POST /api/auth/2fa/setup`   | start 2FA setup, returns a QR code (logged in) |
@@ -401,9 +420,24 @@ for a run without Docker). The old file is deleted when a picture is replaced
 or removed. The app shrinks pictures to 256 x 256 before sending; the backend
 does not re-encode them, so it only accepts what the checks above let through.
 
-**Login uses database sessions.** Signup and login set one httpOnly cookie,
-`session`, holding a random token (valid `SESSION_TTL_DAYS`, 7 by default).
-The `sessions` table stores only the SHA-256 hash of that token, so a leaked
+**Email verification and forgot password.** Signup creates the account
+unverified and emails a 6-digit code; `login` answers `EMAIL_NOT_VERIFIED` (and
+sends a new code) until `verify-email` gets the right one. A code works once,
+lasts 15 minutes and dies after 5 wrong tries; only its SHA-256 hash is stored.
+An unverified account does not hold its email or display name: signing up again
+with either replaces it. `forgot-password` sends the same kind of code to a
+verified account, and `reset-password` sets the new password and ends every
+session of that user. `resend-verification` and `forgot-password` always answer
+200, so they cannot reveal which emails are registered. The emails go through
+Gmail SMTP (`SMTP_USER`, `SMTP_PASSWORD`); without them the code is only written
+in the backend log. If the sign-up email cannot be sent, the account is removed
+and signup answers `EMAIL_SEND_FAILED`. Error codes: `EMAIL_TAKEN`,
+`DISPLAY_NAME_TAKEN`, `INVALID_CREDENTIALS`, `EMAIL_NOT_VERIFIED`,
+`INVALID_VERIFICATION_CODE`, `INVALID_RESET_CODE`, `EMAIL_SEND_FAILED`.
+
+**Login uses database sessions.** Login (or the 2FA step after it) sets one
+httpOnly cookie, `session`, holding a random token (valid `SESSION_TTL_DAYS`, 7
+by default). The `sessions` table stores only the SHA-256 hash of that token, so a leaked
 database cannot be used to hijack a login. Logout deletes the row, so it takes
 effect immediately. A frontend only has to send requests with
 `credentials: "include"` and call `GET /api/auth/me` to know who is logged in:
@@ -479,11 +513,11 @@ cannot; for the same reason, changing `TWO_FACTOR_KEY` also invalidates the
 codes). Making new codes replaces the whole list. Turning 2FA off deletes them.
 Only the app's 6-digit code can turn 2FA on.
 
-**Presence.** A player is online if they made a request while logged in during
-the last minute: the session guard writes `users.last_seen_at` (at most every
-30 seconds per user), and by the live connection (see below). The wins, losses and
-draws of the search are counted from the finished matches on every request,
-never stored. 
+**Presence.** A player is online if they were seen during the last minute,
+which is stored in `users.last_seen_at`. Two things keep it fresh: the session
+guard on every request (at most one write every 30 seconds per user) and the
+live connection (see below). The wins, losses and draws of the search are
+counted from the finished matches on every request, never stored.
 
 **Live updates (Socket.IO).** The app opens a WebSocket on `/socket.io` (same
 origin, through the proxy). The server refuses the connection unless the
@@ -495,9 +529,9 @@ the match page does), `presence` (`{ userId, online }`, to everyone), `friends:u
 (both players of a request or block), the three `chat:*` events and `tournament:update` (`{ id }`, to
 everyone). They are hints: the app also polls, so a missed event only delays an
 update. A user counts as online while they have a socket open (or made a
-request in the last minute), and the REST `online` value can lag the `presence`
-event by up to a minute after the last tab closes. The frontend opens its
-socket after login.
+request in the last minute). When their last tab closes they are offline at
+once, in the `presence` event and in the REST `online` value. The frontend
+opens its socket after login.
 
 **Leaving a running match.** When a player's LAST socket closes, each running
 match of theirs gets a countdown (`DISCONNECT_GRACE_SECONDS`, 30 by default).
@@ -542,11 +576,15 @@ readable. Live events: `chat:message` (to both players, each seeing the other as
 `peerId`, so the sender's other tabs update too), `chat:typing` and `chat:read`.
 Sending is limited to 30 per minute per address.
 
-All parts of the API design (`backend/docs/openapi.yaml`) are now built.
+Every route of the API design (`backend/docs/openapi.yaml`) is built. That file
+does not describe the email verification and password reset routes yet; they
+are in the table above and in `frontend/docs/api-contract.md`.
 
-**Rate limits** (per IP, per minute): 100 requests overall; login 10; signup 5;
-2FA verify, enable and disable 5; creating a match or a tournament 20;
-renaming and uploading a picture 10. Beyond that the API answers `429` with the
+**Rate limits** (per IP, per minute, counted separately for each route): 100 by
+default; login 10; signup 5; 2FA setup 10; 2FA verify, enable, disable and new
+backup codes 5; verify-email and reset-password 10; resend-verification and
+forgot-password 3; creating a match or a tournament 20; renaming and uploading
+a picture 10; sending a chat message 30. Beyond that the API answers `429` with the
 code `RATE_LIMITED`. The counters are kept in memory and reset when the
 backend restarts.
 
