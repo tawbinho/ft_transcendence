@@ -38,7 +38,7 @@ Open **https://localhost:8443** (the port is `HTTPS_PORT` in `.env`). The certif
 automatically at the first start, so the browser shows a warning: click *Advanced*, then *Proceed to localhost*.
 Database tables are created automatically at startup (migrations run when the backend starts).
 
-Useful addresses: the app at `/`, the API docs (Swagger) at `/api/docs`, the legal pages at `/privacy` and `/terms`.
+Useful addresses: the app at `/` and the legal pages at `/privacy` and `/terms`.
 More commands, the configuration table and every API route are in [Technical documentation](#technical-documentation)
 below. The frontend has its own README in [frontend/README.md](frontend/README.md).
 
@@ -238,7 +238,6 @@ container, so saving a file reloads the server.
 | Service  | URL / port                                          |
 | -------- | --------------------------------------------------- |
 | backend  | https://localhost:8443/api (`HTTPS_PORT`)           |
-| API docs | https://localhost:8443/api/docs (Swagger)           |
 | database | `localhost:5433` (`DB_PORT`), from the host         |
 
 The only way in from outside is the **proxy** container (nginx): it decrypts
@@ -315,10 +314,8 @@ generator also does not notice tables whose entity you deleted: add the
 ## API
 
 All routes are under `/api` and answer `{ "data": ... }` on success or
-`{ "error": { "code": "...", "message": "..." } }` on failure. Try them in
-Swagger at https://localhost:8443/api/docs, which shows the exact shapes,
-including the `data` / `error` wrapper. The browser must send requests with
-`credentials: "include"` so the cookies travel.
+`{ "error": { "code": "...", "message": "..." } }` on failure. The browser
+must send requests with `credentials: "include"` so the cookies travel.
 
 | Route                    | Description                                        |
 | ------------------------ | -------------------------------------------------- |

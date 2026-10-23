@@ -11,4 +11,4 @@ npm test                         # unit tests (Vitest)
 ```
 
 Structure: `src/modules/<name>` (auth, users, matches, tournaments, friends, chat, realtime), `src/common` (guards,
-filters, interceptors), `src/database/migrations`. API contract: `docs/openapi.yaml` and Swagger at `/api/docs`.
+filters, interceptors), `src/database/migrations`. API contract: `docs/openapi.yaml`.
