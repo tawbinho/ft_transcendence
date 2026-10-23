@@ -65,7 +65,8 @@ below. The frontend has its own README in [frontend/README.md](frontend/README.m
 - **Organisation:** the work was split by area: backend core (atawbi), social backend (fel-ghaz) and frontend
   (rnehme). The backend API was designed and documented first (`backend/docs/openapi.yaml`, OpenAPI), so the frontend
   could be built against a stable contract. Each area was developed on its own branch and merged into `main`.
-- **Meetings:** TODO (team to fill in: how often the team met).
+- **Meetings:** short daily check-ins on WhatsApp, plus an on-campus meeting each week to plan the next steps and
+  review the merged work.
 - **Tools:** Git and GitHub (branches and merges), `backend/docs/openapi.yaml` and `frontend/docs/api-contract.md` as
   the shared API contract.
 - **Communication:** Gmail, WhatsApp and on-campus meetings.
