@@ -10,9 +10,7 @@ export const paths = {
   tournament: (id: string) => `/tournaments/${segment(id)}`,
   /** The settings page, optionally opened on one section: profile, security, preferences or blocked. */
   settings: (section?: string) => (section ? `/settings/${segment(section)}` : '/settings'),
-  /** The online match form, with the opponent already filled in. */
-  challenge: (displayName: string) => `/play/online?opponent=${segment(displayName)}`,
-  /** The same form from a chat: the match is then sent to that chat as an invitation. */
-  chatInvite: (peer: { id: string; displayName: string }) =>
-    `/play/online?opponent=${segment(peer.displayName)}&invite=${segment(peer.id)}`,
+  /** The online match form with the opponent picked: the match is kept for them, and the chat invites them. */
+  challenge: (player: { id: string; displayName: string }) =>
+    `/play/online?opponent=${segment(player.displayName)}&invite=${segment(player.id)}`,
 };

@@ -8,7 +8,7 @@ import { buttonClass } from '@/components/ui';
 export function InviteButton({ peer }: { peer: { id: string; displayName: string } }) {
   const { t } = useTranslation();
   return (
-    <Link to={paths.chatInvite(peer)} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+    <Link to={paths.challenge(peer)} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
       <PlayIcon />
       {t('chat.invite')}
     </Link>

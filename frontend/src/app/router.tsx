@@ -42,6 +42,10 @@ const visitorRoutes: RouteObject[] = [
 /** Logged-in users only: visitors are sent to the login page. */
 const memberRoutes: RouteObject[] = [
   { path: 'play/online', lazy: () => import('@/pages/play/NewMatchPage').then((m) => ({ Component: m.NewMatchPage })) },
+  {
+    path: 'play/computer',
+    lazy: () => import('@/pages/play/ComputerGamePage').then((m) => ({ Component: m.ComputerGamePage })),
+  },
   { path: 'matches/:matchId', lazy: () => import('@/pages/play/MatchPage').then((m) => ({ Component: m.MatchPage })) },
   { path: 'matches', lazy: () => import('@/pages/history/HistoryPage').then((m) => ({ Component: m.HistoryPage })) },
   {

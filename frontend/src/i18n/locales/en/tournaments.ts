@@ -2,8 +2,6 @@ export const tournamentsMessages = {
   tournaments: {
     title: 'Tournaments',
     subtitle: 'Knockout brackets: win your match to reach the next round, until one player is left.',
-    onlineTitle: 'Online tournaments',
-    onlineBody: 'Create a tournament or join one. Each match is played online and the bracket updates by itself.',
     listTitle: 'All online tournaments',
     loginRequired: 'Log in to join online tournaments.',
     create: 'Create a tournament',

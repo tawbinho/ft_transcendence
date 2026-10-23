@@ -10,7 +10,7 @@ export function PlayersPanel({ tournament }: { tournament: Tournament }) {
       <h2 id="players-title" className="mb-3 font-bold">
         {t('tournaments.players')}{' '}
         <span className="font-normal text-muted">
-          {t('tournaments.playerCount', { count: tournament.players.length, size: tournament.size })}
+          {tournament.players.length}/{tournament.size}
         </span>
       </h2>
       <ul className="flex flex-col gap-2">

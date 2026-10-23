@@ -1,14 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { paths } from '@/app/paths';
 import { ChipIcon, GlobeIcon, TrophyIcon, UsersIcon } from '@/components/icons';
 import { ModeCard } from '@/components/ModeCard';
 import { PageHeader } from '@/components/PageHeader';
 import { buttonClass } from '@/components/ui';
 import { useCurrentUser } from '@/features/auth/hooks';
-import { COMPUTER_PLAYERS } from '@/features/users/computerPlayers';
 import { HowToPlay } from './components/HowToPlay';
 import { PlayAgain } from './components/PlayAgain';
+import { OpenMatchNotice } from './online/OpenMatchNotice';
 
 /** The play hub: the four ways to play, a quick restart of the same-screen game and the rules. */
 export function PlayPage() {
@@ -19,6 +18,7 @@ export function PlayPage() {
     <>
       <PageHeader title={t('play.title')} subtitle={t('play.subtitle')} />
       <div className="flex flex-col gap-6">
+        {user && <OpenMatchNotice />}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <ModeCard icon={<UsersIcon />} title={t('play.local.title')} body={t('play.local.body')}>
             <Link to="/play/local" className={buttonClass({ variant: 'secondary', block: true })}>
@@ -26,18 +26,9 @@ export function PlayPage() {
             </Link>
           </ModeCard>
           <ModeCard icon={<ChipIcon />} title={t('play.computer.title')} body={t('play.computer.body')}>
-            {/* The online match form, with a computer player already filled in: the server plays its moves. */}
-            <div className="flex flex-col gap-2">
-              {COMPUTER_PLAYERS.map((player) => (
-                <Link
-                  key={player.displayName}
-                  to={paths.challenge(player.displayName)}
-                  className={buttonClass({ variant: 'secondary', size: 'sm', block: true })}
-                >
-                  {t(`difficulty.${player.level}`)}
-                </Link>
-              ))}
-            </div>
+            <Link to="/play/computer" className={buttonClass({ variant: 'secondary', block: true })}>
+              {t('play.computer.action')}
+            </Link>
           </ModeCard>
           <ModeCard icon={<GlobeIcon />} title={t('play.online.title')} body={t('play.online.body')}>
             {user ? (

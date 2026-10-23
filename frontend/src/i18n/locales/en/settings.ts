@@ -20,7 +20,7 @@ export const settingsMessages = {
     tabProfile: 'Profile',
     tabSecurity: 'Security',
     tabPreferences: 'Preferences',
-    tabBlocked: 'Blocked players',
+    tabBlocked: 'Blocked',
     security: 'Security',
     loggedInAs: 'Logged in as {{email}}',
     appearance: 'Language and appearance',

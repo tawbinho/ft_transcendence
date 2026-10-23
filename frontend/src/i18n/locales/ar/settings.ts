@@ -22,7 +22,7 @@ export const settingsMessages: SettingsMessages = {
     tabProfile: 'الملف الشخصي',
     tabSecurity: 'الأمان',
     tabPreferences: 'التفضيلات',
-    tabBlocked: 'اللاعبون المحظورون',
+    tabBlocked: 'المحظورون',
     security: 'الأمان',
     loggedInAs: 'مسجَّل الدخول بالبريد {{email}}',
     appearance: 'اللغة والمظهر',

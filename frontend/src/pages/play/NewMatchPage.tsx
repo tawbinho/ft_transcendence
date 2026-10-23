@@ -3,9 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { paths } from '@/app/paths';
 import { PageHeader } from '@/components/PageHeader';
-import { Alert, Button, Card, TextField } from '@/components/ui';
-import { useUser } from '@/features/auth/hooks';
-import { validateDisplayName } from '@/features/auth/validation';
+import { Alert, Button, Card } from '@/components/ui';
 import { useSendMessage } from '@/features/chat/hooks';
 import { Board } from '@/features/game/components/Board';
 import { BoardSettingsFields } from '@/features/game/components/BoardSettingsFields';
@@ -15,56 +13,42 @@ import type { BoardSettings } from '@/features/game/settings';
 import { useCreateMatch } from '@/features/matches/hooks';
 import { isApiError } from '@/lib/api/errors';
 import { useErrorMessage } from '@/lib/errorMessage';
-import { FriendPicks } from './online/FriendPicks';
-
-const OPPONENT_ERRORS = ['USER_NOT_FOUND', 'CANNOT_INVITE_SELF'];
+import { OpenMatchNotice } from './online/OpenMatchNotice';
+import { OpponentPicks, type Opponent } from './online/OpponentPicks';
 
 export function NewMatchPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const errorMessage = useErrorMessage();
-  const user = useUser();
   const create = useCreateMatch();
 
-  // "Challenge" buttons on profiles and in the friend list fill in the opponent.
+  // A profile's Challenge and a chat's Invite fill in the opponent: ?opponent=<name>&invite=<id>.
   const [params] = useSearchParams();
-  const [opponent, setOpponent] = useState(() => params.get('opponent') ?? '');
-  // A chat's Invite button also gives the friend's id: the match is then sent to that chat.
-  const invitePeerId = params.get('invite');
-  const sendInvite = useSendMessage(invitePeerId ?? '');
+  const [opponent, setOpponent] = useState<Opponent | null>(() => {
+    const displayName = params.get('opponent');
+    const id = params.get('invite');
+    return displayName && id ? { id, displayName } : null;
+  });
+  // The match is kept for that player, and they are told in the chat: the invitation opens it.
+  const sendInvite = useSendMessage(opponent?.id ?? '');
   const [settings, setSettings] = useState<BoardSettings>(loadLastSettings);
-  const [submitted, setSubmitted] = useState(false);
 
-  const name = opponent.trim();
-  const localError =
-    name && submitted
-      ? (validateDisplayName(name) ?? (name === user?.displayName ? 'errors.CANNOT_INVITE_SELF' : null))
-      : null;
-  const serverOpponentError = OPPONENT_ERRORS.some((code) => isApiError(create.error, code));
-  const opponentError = localError ? t(localError) : serverOpponentError ? errorMessage(create.error) : null;
-
-  function pickFriend(displayName: string) {
-    setOpponent(displayName);
-    if (serverOpponentError) create.reset();
+  function pick(next: Opponent | null) {
+    setOpponent(next);
+    create.reset();
   }
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    setSubmitted(true);
-    if (name && validateDisplayName(name)) return;
     saveLastSettings(settings);
     create.mutate(
-      { settings, ...(name ? { opponentDisplayName: name } : {}) },
+      { settings, ...(opponent ? { opponentDisplayName: opponent.displayName } : {}) },
       {
         onSuccess: (match) => {
           const open = () => void navigate(paths.match(match.id));
-          // Only while the opponent is still that friend: the invitation must be for them.
           // The match opens even if the message fails: its link can still be shared from there.
-          if (invitePeerId && name === params.get('opponent')) {
-            sendInvite.mutate({ matchId: match.id }, { onSettled: open });
-          } else {
-            open();
-          }
+          if (opponent) sendInvite.mutate({ matchId: match.id }, { onSettled: open });
+          else open();
         },
       },
     );
@@ -78,7 +62,7 @@ export function NewMatchPage() {
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <Card>
           <form onSubmit={submit} noValidate className="flex flex-col gap-7">
-            {create.error && !serverOpponentError && (
+            {create.error && (
               <Alert
                 tone="danger"
                 action={
@@ -92,24 +76,8 @@ export function NewMatchPage() {
                 {errorMessage(create.error)}
               </Alert>
             )}
-            <TextField
-              label={
-                <>
-                  {t('online.opponent')} <span className="font-normal text-muted">({t('common.optional')})</span>
-                </>
-              }
-              hint={t('online.opponentHint')}
-              value={opponent}
-              onChange={(event) => {
-                setOpponent(event.target.value);
-                if (serverOpponentError) create.reset();
-              }}
-              error={opponentError}
-              maxLength={20}
-              autoComplete="off"
-              spellCheck={false}
-            />
-            <FriendPicks selected={name} onPick={pickFriend} />
+            <OpenMatchNotice />
+            <OpponentPicks selected={opponent} onPick={pick} />
             <BoardSettingsFields value={settings} onChange={setSettings} />
             <Button type="submit" size="lg" className="self-start" loading={create.isPending || sendInvite.isPending}>
               {t('online.create')}

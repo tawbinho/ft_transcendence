@@ -31,7 +31,7 @@ export function ProfileActions({ player }: { player: Profile }) {
           <ChatIcon />
           {t('profile.message')}
         </Link>
-        <Link to={paths.challenge(player.displayName)} className={buttonClass({ variant: 'secondary' })}>
+        <Link to={paths.challenge(player)} className={buttonClass({ variant: 'secondary' })}>
           <PlayIcon />
           {t('profile.challenge')}
         </Link>

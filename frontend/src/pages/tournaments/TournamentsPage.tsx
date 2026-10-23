@@ -1,38 +1,40 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { GlobeIcon, PlusIcon } from '@/components/icons';
-import { ModeCard } from '@/components/ModeCard';
+import { PlusIcon } from '@/components/icons';
 import { PageHeader } from '@/components/PageHeader';
 import { buttonClass } from '@/components/ui';
 import { useCurrentUser } from '@/features/auth/hooks';
 import { TournamentList } from './online/TournamentList';
 
-/** The tournaments hub: how online tournaments work, then their list for members. */
+/** The tournaments hub: their list and a "Create" button for members, a way to log in for visitors. */
 export function TournamentsPage() {
   const { t } = useTranslation();
   const { data: user } = useCurrentUser();
 
   return (
     <>
-      <PageHeader title={t('tournaments.title')} subtitle={t('tournaments.subtitle')} />
-      <div className="mb-10 max-w-xl">
-        <ModeCard icon={<GlobeIcon />} title={t('tournaments.onlineTitle')} body={t('tournaments.onlineBody')}>
-          {user ? (
-            <Link to="/tournaments/new" className={buttonClass({ block: true })}>
+      <PageHeader
+        title={t('tournaments.title')}
+        subtitle={t('tournaments.subtitle')}
+        actions={
+          user && (
+            <Link to="/tournaments/new" className={buttonClass()}>
               <PlusIcon />
               {t('tournaments.create')}
             </Link>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-muted">{t('tournaments.loginRequired')}</p>
-              <Link to="/login" state={{ from: { pathname: '/tournaments' } }} className={buttonClass({ block: true })}>
-                {t('nav.login')}
-              </Link>
-            </div>
-          )}
-        </ModeCard>
-      </div>
-      {user && <TournamentList />}
+          )
+        }
+      />
+      {user ? (
+        <TournamentList />
+      ) : (
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-muted">{t('tournaments.loginRequired')}</p>
+          <Link to="/login" state={{ from: { pathname: '/tournaments' } }} className={buttonClass()}>
+            {t('nav.login')}
+          </Link>
+        </div>
+      )}
     </>
   );
 }

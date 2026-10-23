@@ -177,8 +177,14 @@ The computer opponent is not written here: the server plays it (section 6).
   rebuilt from it, and Undo removes the last one. Every sentence (whose turn, who won, after how many moves) comes from
   `offline/offlineText.ts`.
 - "Against the computer" is an online match against one of the server's computer players (section 6).
+- The online form, `NewMatchPage.tsx`, has nothing to type: the opponent is "Anyone with the link" or a friend
+  (`online/OpponentPicks.tsx`), or the player a Challenge or Invite link filled in (`?opponent=<name>&invite=<id>`).
+  The server tells a picked player nothing, so after "Create match" the form posts the invitation in your chat with
+  them. The Play page and the form show `online/OpenMatchNotice.tsx`: your match in progress or still waiting, with a
+  link back to it.
 - `MatchPage.tsx` only loads the online match and picks a screen from `pages/play/online/`: `JoinMatch`,
-  `WaitingRoom`, `OnlineGame` (with `ResultActions`: rematch, new match) or `Unavailable`.
+  `WaitingRoom`, `OnlineGame` (with `ResultActions`: rematch, which invites a person in the chat again, and new match)
+  or `Unavailable`.
 - The board stands in a box, the stage (`GameBoard.tsx` and `boardStage.css`): full column width, as high as the
   board's shape or the screen allows, in the page's surface color. Size the parent, not the board: a class on
   `<Board>` cannot change its width (`AuthLayout` does it with a 20 rem box).
@@ -216,8 +222,9 @@ The computer opponent is not written here: the server plays it (section 6).
   loss, a new level every 100 XP, and six badges that are simple comparisons. They can never disagree with the match
   history, and the page says how they are computed.
 - `/settings` has four tabs (`TabLinks`): Profile (picture, display name), Security (two-factor, log out), Preferences
-  (language, light or dark, board colors for new games) and Blocked players. `resolveSection` in `settings/sections.ts`
-  reads the tab from the address; an unknown tab goes back to `/settings`.
+  (language, light or dark, board colors for new games) and Blocked (the players you blocked). `resolveSection` in
+  `settings/sections.ts` reads the tab from the address; an unknown tab goes back to `/settings`. On a phone the tabs
+  are smaller, so the four fit at 360 px in the three languages.
 - Two-factor shows only the button that fits when the backend says whether it is on; it does not send that yet, so
   "Turn on" is the main button and a quiet "Already on? Turn it off" sits under it (section 10). Right after turning it
   on, the 10 backup codes are shown once (`features/account/BackupCodes.tsx`, with a copy button); the login code field
@@ -235,8 +242,8 @@ The computer opponent is not written here: the server plays it (section 6).
   managed in Settings.
 - Chat: on a phone only the list or one conversation shows (`features/chat/panes.ts`). `ChatThread` finds the player
   and handles errors, `Conversation` shows messages and the composer. "Invite to play" opens the online match form
-  with the player filled in (`paths.chatInvite`); after "Create match" the invitation is posted in that chat, unless the
-  opponent was changed (`pages/play/NewMatchPage.tsx`).
+  with the player picked (`paths.challenge`); after "Create match" the invitation is posted in the chat of whoever is
+  picked (`pages/play/NewMatchPage.tsx`).
 
 ### History (`pages/history/`)
 
@@ -280,17 +287,18 @@ The computer opponent is not written here: the server plays it (section 6).
 The computer opponents belong to the backend: three accounts, `AI_Easy`, `AI_Medium` and `AI_Hard`, whose moves the
 server chooses (the root README explains how). The frontend never chooses a move for them:
 
-1. The Play page shows three buttons, Easy, Medium and Hard (`COMPUTER_PLAYERS` in
-   `features/users/computerPlayers.ts`). Each opens the online match form with that player filled in, for example
-   `/play/online?opponent=AI_Medium`, the same address as the Challenge button of a profile. A visitor logs in first
-   and comes back to the form. The dashboard's "Against the computer" button opens it with `AI_Medium`.
-2. "Create match" sends `POST /api/matches` with `opponentDisplayName`, exactly like an invitation to a person.
+1. The Play page's "Against the computer" card and the dashboard's button open `/play/computer`
+   (`pages/play/ComputerGamePage.tsx`): a level (`COMPUTER_PLAYERS` in `features/users/computerPlayers.ts`, Medium
+   first), the board and a preview. A visitor logs in first and comes back to the page.
+2. "Start game" sends `POST /api/matches` with the computer's name as `opponentDisplayName`, exactly like a match kept
+   for a person (but no chat invitation: a computer has no chat).
 3. The server makes the computer join at once, often before the page has asked for the match's live events. So
    `useMatch` asks for the match again whenever the page opens, and keeps polling every 2 seconds while a match waits,
    even with live events (`features/matches/hooks.ts`). The game starts within a second.
 4. From then on it is an ordinary online match (`OnlineGame`): your move goes to `POST /api/matches/:id/moves`, and the
-   computer's answer arrives a second or two later as a `match:update` event. The results count in History, on the
-   profile and on the leaderboard like any other match.
+   computer's answer arrives a second or two later as a `match:update` event ("The computer is thinking…" meanwhile).
+   After it, New match goes back to `/play/computer`. The results count in History, on the profile and on the
+   leaderboard like any other match.
 
 The computer players are hidden where a person would be expected: the friends pages, the player search and the
 leaderboard (`withoutComputerPlayers`). Their names are not links, and they have no profile page and no chat
@@ -379,7 +387,7 @@ the browser, with no automatic test at the moment.
 | A text                        | `src/i18n/locales/<en, fr, ar>/<area>.ts` (all three languages)                    |
 | A color                       | the tokens at the top of `styles/index.css` (keep text and background at 4.5 to 1) |
 | How often a match is reloaded | `pollInterval` in `features/matches/model.ts`                                      |
-| The level the dashboard opens | `DEFAULT_COMPUTER_PLAYER` in `features/users/computerPlayers.ts`                   |
+| The level picked first        | `DEFAULT_COMPUTER_PLAYER` in `features/users/computerPlayers.ts`                   |
 
 After a change: `npm run typecheck && npm run format:check`.
 

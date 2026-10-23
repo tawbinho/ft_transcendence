@@ -41,8 +41,8 @@ docker compose logs backend | grep "Code for"
 ```
 
 The "forgot password" page uses the same kind of code. The computer opponents (`AI_Easy`, `AI_Medium`, `AI_Hard`) are
-accounts of the backend, which also chooses their moves: the Easy, Medium and Hard buttons of the Play page open an
-online match against one of them, so they need an account. The app hides them from the friends pages, the player
+accounts of the backend, which also chooses their moves: the computer page of Play (`/play/computer`) creates an
+online match against the chosen one, so it needs an account. The app hides them from the friends pages, the player
 search and the leaderboard (see `src/features/users/computerPlayers.ts`).
 
 ## Scripts

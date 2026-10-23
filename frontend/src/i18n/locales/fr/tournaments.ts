@@ -5,9 +5,6 @@ export const tournamentsMessages: TournamentsMessages = {
     title: 'Tournois',
     subtitle:
       'Élimination directe : gagnez votre match pour passer au tour suivant, jusqu’à ce qu’il ne reste qu’un joueur.',
-    onlineTitle: 'Tournois en ligne',
-    onlineBody:
-      'Créez un tournoi ou rejoignez-en un. Chaque match se joue en ligne et le tableau se met à jour tout seul.',
     listTitle: 'Tous les tournois en ligne',
     loginRequired: 'Connectez-vous pour rejoindre les tournois en ligne.',
     create: 'Créer un tournoi',

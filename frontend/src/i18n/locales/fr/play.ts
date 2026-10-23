@@ -8,6 +8,8 @@ export const playMessages: PlayMessages = {
     computer: {
       title: 'Contre l’ordinateur',
       body: 'Trois niveaux, joués par le serveur. Il faut un compte.',
+      action: 'Préparer une partie',
+      subtitle: 'Le serveur joue les coups de l’ordinateur. Le premier joueur est tiré au sort.',
     },
     online: {
       title: 'En ligne',
@@ -56,9 +58,13 @@ export const playMessages: PlayMessages = {
     midnight: { name: 'Minuit', seat1: 'Turquoise', seat2: 'Rose' },
   },
   difficulty: {
+    label: 'Niveau',
     easy: 'Facile',
     medium: 'Moyen',
     hard: 'Difficile',
+    easyHint: 'Fait des erreurs.',
+    mediumHint: 'Voit quelques coups à l’avance.',
+    hardHint: 'Joue pour gagner.',
   },
   offline: {
     localTitle: 'Même écran',
@@ -93,8 +99,13 @@ export const playMessages: PlayMessages = {
   online: {
     createTitle: 'Nouvelle partie en ligne',
     createSubtitle: 'Vous recevez un lien à envoyer à votre adversaire. Le premier joueur est tiré au sort.',
-    opponent: 'Inviter un joueur',
-    opponentHint: 'Son pseudo. Laissez vide pour que toute personne ayant le lien puisse rejoindre.',
+    opponent: 'Adversaire',
+    anyone: 'Toute personne ayant le lien',
+    anyoneHint: 'Toute personne qui ouvre le lien peut rejoindre.',
+    opponentHint: 'La partie est réservée à {{name}}, qui reçoit une invitation dans Messages.',
+    waitingNotice: 'Une de vos parties attend un adversaire.',
+    playingNotice: 'Vous avez une partie en cours.',
+    openMatch: 'L’ouvrir',
     create: 'Créer la partie',
     joinTitle: 'Rejoindre cette partie ?',
     joinBody: 'Quelqu’un vous a partagé cette partie. Rejoignez-la pour prendre la place libre et commencer.',
@@ -112,6 +123,7 @@ export const playMessages: PlayMessages = {
     resignTitle: 'Abandonner cette partie ?',
     resignBody: 'Votre adversaire remporte la partie.',
     waitingFor: 'En attente de {{name}}…',
+    computerThinking: 'L’ordinateur réfléchit…',
     you: 'vous',
     vs: 'contre',
     resultWon: 'Vous avez gagné !',
@@ -127,8 +139,6 @@ export const playMessages: PlayMessages = {
     moveRejected: 'Votre coup n’a pas été accepté.',
     syncError: 'Impossible d’actualiser la partie. Nouvelle tentative…',
     opponentAway: '{{name}} a perdu la connexion. Sans retour rapide de sa part, vous gagnez la partie.',
-    friendsOnline: 'Amis en ligne maintenant',
-    friendsNone: 'Aucun de vos amis n’est en ligne pour le moment.',
     friendsError: 'Impossible de charger vos amis.',
   },
 };

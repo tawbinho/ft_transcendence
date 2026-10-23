@@ -45,7 +45,7 @@ export function FriendList({ friends }: { friends: Friend[] }) {
                   {t('profile.message')}
                 </Link>
                 <Link
-                  to={paths.challenge(friend.displayName)}
+                  to={paths.challenge(friend)}
                   className={buttonClass({ variant: 'secondary', size: 'sm' })}
                   aria-label={t('friends.challengeName', { name: friend.displayName })}
                 >

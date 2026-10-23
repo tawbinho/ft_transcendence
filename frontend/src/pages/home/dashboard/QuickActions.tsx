@@ -1,16 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { paths } from '@/app/paths';
 import { ChipIcon, GlobeIcon, TrophyIcon, UsersIcon } from '@/components/icons';
 import { buttonClass } from '@/components/ui';
-import { DEFAULT_COMPUTER_PLAYER } from '@/features/users/computerPlayers';
 
 /** Buttons that start a game in one click. */
 export function QuickActions() {
   const { t } = useTranslation();
   const actions = [
     { to: '/play/online', icon: <GlobeIcon />, label: t('home.quick.online'), primary: true },
-    { to: paths.challenge(DEFAULT_COMPUTER_PLAYER), icon: <ChipIcon />, label: t('home.quick.computer') },
+    { to: '/play/computer', icon: <ChipIcon />, label: t('home.quick.computer') },
     { to: '/play/local', icon: <UsersIcon />, label: t('home.quick.local') },
     { to: '/tournaments', icon: <TrophyIcon />, label: t('home.quick.tournaments') },
   ];

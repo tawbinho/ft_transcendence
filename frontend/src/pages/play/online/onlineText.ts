@@ -3,6 +3,7 @@ import type { GameStatusTone } from '@/features/game/components/GameStatus';
 import type { Seat } from '@/features/game/engine';
 import { isMyTurn, opponentOf, outcomeOf, playerInSeat } from '@/features/matches/model';
 import type { Match } from '@/features/matches/types';
+import { isComputerPlayer } from '@/features/users/computerPlayers';
 
 // The words of an online match, as plain functions so they can be tested without a screen.
 
@@ -16,12 +17,13 @@ export function playerLabel(match: Match, seat: Seat, t: TFunction): string {
   return seat === match.yourSeat ? `${name} (${t('online.you')})` : name;
 }
 
-/** "Your turn", "Waiting for bob…" while playing, then the result. */
+/** "Your turn", "Waiting for bob…" (or "The computer is thinking…") while playing, then the result. */
 export function matchStatus(match: Match, t: TFunction): string {
   if (match.status === 'in_progress') {
-    return isMyTurn(match)
-      ? t('game.yourTurn')
-      : t('online.waitingFor', { name: opponentOf(match)?.displayName ?? '?' });
+    const opponent = opponentOf(match);
+    if (isMyTurn(match)) return t('game.yourTurn');
+    if (opponent && isComputerPlayer(opponent)) return t('online.computerThinking');
+    return t('online.waitingFor', { name: opponent?.displayName ?? '?' });
   }
   switch (outcomeOf(match)) {
     case 'won':

@@ -42,7 +42,7 @@ export function TabLinks({ label, tabs, className }: { label: string; tabs: read
               end={tab.end}
               className={({ isActive }) =>
                 cn(
-                  '-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 font-semibold transition',
+                  '-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-2 py-2.5 text-sm font-semibold transition sm:px-4 sm:text-base',
                   isActive
                     ? 'border-primary text-primary'
                     : 'border-transparent text-muted hover:border-border hover:text-fg',

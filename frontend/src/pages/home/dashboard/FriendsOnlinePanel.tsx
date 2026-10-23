@@ -30,7 +30,7 @@ export function FriendsOnlinePanel() {
             <li key={friend.id} className="flex items-center justify-between gap-3">
               <PlayerLink user={friend} presence className="flex-1" />
               <Link
-                to={paths.challenge(friend.displayName)}
+                to={paths.challenge(friend)}
                 aria-label={t('home.friendsOnline.challengeName', { name: friend.displayName })}
                 className={buttonClass({ variant: 'secondary', size: 'sm', className: 'flex-none' })}
               >

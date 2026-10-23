@@ -4,8 +4,6 @@ export const tournamentsMessages: TournamentsMessages = {
   tournaments: {
     title: 'البطولات',
     subtitle: 'خروج المغلوب: اربح مباراتك لتتأهل إلى الدور التالي، حتى يبقى لاعب واحد.',
-    onlineTitle: 'البطولات عبر الإنترنت',
-    onlineBody: 'أنشئ بطولة أو انضم إلى واحدة. تُلعب كل مباراة عبر الإنترنت، ويتحدّث الجدول تلقائيًا.',
     listTitle: 'كل البطولات عبر الإنترنت',
     loginRequired: 'سجّل الدخول للانضمام إلى البطولات عبر الإنترنت.',
     create: 'إنشاء بطولة',

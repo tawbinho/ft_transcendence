@@ -10,7 +10,7 @@ export const COMPUTER_PLAYERS = [
   { level: 'hard', displayName: 'AI_Hard' },
 ] as const;
 
-/** The level offered first, where a page has room for only one button. */
+/** The level picked at first on the computer page. */
 export const DEFAULT_COMPUTER_PLAYER = 'AI_Medium';
 
 /**

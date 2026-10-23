@@ -64,7 +64,7 @@ export function MatchList({ matches }: { matches: readonly MatchSummary[] }) {
                 {formatDateTime(match.createdAt, i18n.language)}
               </time>
             </div>
-            <span className="flex-none @md:w-24">
+            <span className="flex-none text-end @md:w-24">
               <StatusBadge match={match} />
             </span>
           </li>

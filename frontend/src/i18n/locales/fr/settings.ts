@@ -22,7 +22,7 @@ export const settingsMessages: SettingsMessages = {
     tabProfile: 'Profil',
     tabSecurity: 'Sécurité',
     tabPreferences: 'Préférences',
-    tabBlocked: 'Joueurs bloqués',
+    tabBlocked: 'Bloqués',
     security: 'Sécurité',
     loggedInAs: 'Connecté en tant que {{email}}',
     appearance: 'Langue et apparence',
