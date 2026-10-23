@@ -27,7 +27,7 @@ export class User {
   @Column({ name: 'display_name', type: 'text', unique: true })
   displayName: string;
 
-  // null for accounts that only log in through OAuth (no password set).
+  // null for the computer opponents (bots): no password, so nobody can log in as them.
   @Column({ name: 'password_hash', type: 'text', nullable: true })
   passwordHash: string | null;
 

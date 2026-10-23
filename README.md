@@ -97,7 +97,7 @@ below. The frontend has its own README in [frontend/README.md](frontend/README.m
 
 ## Database Schema
 
-PostgreSQL, 15 tables (all primary keys are UUIDs unless a composite key is shown). `⟶` means a foreign key.
+PostgreSQL, 14 tables (all primary keys are UUIDs unless a composite key is shown). `⟶` means a foreign key.
 To look at the real tables, see [Connect to the database](#everyday-commands).
 
 ```
@@ -107,7 +107,6 @@ users (id, email UNIQUE, display_name UNIQUE, password_hash, avatar_url, locale,
  ├─ sessions            (id, user_id ⟶ users, token_hash UNIQUE, pending_two_factor, expires_at)
  ├─ two_factor          (user_id ⟶ users [PK], secret [AES-256-GCM], enabled, last_used_step)
  ├─ two_factor_backup_codes (id, user_id ⟶ users, code_hash [HMAC-SHA256], used_at)
- ├─ oauth_accounts      (id, user_id ⟶ users, provider, provider_account_id)   -- table only, not used yet
  ├─ friendships         (user_low_id ⟶ users, user_high_id ⟶ users [PK pair], requester_id, status, accepted_at)
  ├─ blocks              (blocker_id ⟶ users, blocked_id ⟶ users [PK pair])
  ├─ messages            (id, user_low_id, user_high_id, sender_id ⟶ users, kind text|invite|system, body,

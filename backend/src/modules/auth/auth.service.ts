@@ -107,8 +107,8 @@ export class AuthService {
     const user = await this.users.findByEmail(dto.email);
 
     // Unknown email and wrong password must be indistinguishable: same error
-    // AND same duration. So when there is no user (or an OAuth-only user with
-    // no password), we still verify against the dummy hash, which can never
+    // AND same duration. So when there is no user (or a bot, which has no
+    // password), we still verify against the dummy hash, which can never
     // match. Otherwise the response time would reveal which emails exist.
     const hash = user?.passwordHash ?? (await this.dummyHash);
     const passwordOk = await argon2.verify(hash, dto.password);
@@ -245,7 +245,7 @@ export class AuthService {
   // Forgot password, step 1: emails a 6-digit code. Always succeeds from the
   // outside, so it cannot be used to find out which emails are registered.
   // Unverified accounts get nothing (they must verify first), nor do accounts
-  // with no password (bots, OAuth).
+  // with no password (the bots).
   async forgotPassword(email: string): Promise<void> {
     const user = await this.users.findByEmail(email);
     if (!user || !user.emailVerifiedAt || !user.passwordHash) {
