@@ -26,12 +26,13 @@ tournaments, and the whole interface is available in English, French and Arabic 
 **Prerequisites:** Docker with the Compose plugin (nothing else is needed to run the project).
 
 ```bash
-# 1. create the local env file (it is ignored by Git)
+# 1. create the local env file (it is ignored by Git, so no secret is ever committed)
 cp .env.example .env
-# 2. optional: dont forget the 2factor key 
-# 3. optional: to really send the sign-up emails, set SMTP_USER and SMTP_PASSWORD in .env
-#      (a Gmail address and an app password, see Configuration below)
-# 4. one command builds and starts everything (database, backend, frontend, HTTPS proxy)
+# 2. fill in every empty value of .env (see Configuration below):
+#      HTTPS_PORT (e.g. 8443), DB_PORT (e.g. 5433), DB_USER, DB_PASSWORD and DB_NAME of your choice,
+#      TWO_FACTOR_KEY: the output of `openssl rand -hex 32`
+#    optional: SMTP_USER and SMTP_PASSWORD (a Gmail address and an app password) to really send the emails
+# 3. one command builds and starts everything (database, backend, frontend, HTTPS proxy)
 docker compose up --build -d
 ```
 
@@ -54,9 +55,9 @@ below. The frontend has its own README in [frontend/README.md](frontend/README.m
 
 | Login | Role(s) | Responsibilities |
 | ----- | ------- | ---------------- |
-| **atawbi** | Technical Lead, Developer, Project Manager | Chose the architecture and stack (NestJS, TypeORM, PostgreSQL, Docker, HTTPS proxy). Built the backend core: authentication, email verification and password reset, sessions, 2FA, the game engine, matches, real-time (Socket.IO), the AI opponent, tournaments and chat. Organised the work and reviewed merges. |
+| **atawbi** | Technical Lead, Developer, Project Manager | Chose the architecture and stack (NestJS, TypeORM, PostgreSQL, Docker, HTTPS proxy). Built the backend core: authentication and sessions, email verification and password reset (with their frontend pages), 2FA, the game engine, matches, real-time (Socket.IO), the AI opponent, the tournament bracket and chat. Organised the work and reviewed merges. |
 | **rnehme** | Frontend Developer, Product Owner | Built the whole frontend: pages, game board, design system, three languages with RTL, accessibility, legal pages. Defined what the product must do and validated finished features. |
-| **fel-ghaz** | Backend Developer, Product Owner | Built the backend social side: player search and presence, profiles and match history, display name, avatars, friends and blocks. Defined what the product must do and validated finished features. |
+| **fel-ghaz** | Backend Developer, Product Owner | Built the backend social side: player search and presence, profiles and match history, display name, avatars, friends and blocks, and tournament registration. Wrote the OpenAPI contract (`backend/docs/openapi.yaml`). Defined what the product must do and validated finished features. |
 
 ## Project Management
 
@@ -138,9 +139,11 @@ codes are stored only as a SHA-256 hash, like the session tokens.
 | Game engine and matches | Connect Four rules on any board size, server-side validation, concurrency-safe transactions | atawbi |
 | Real-time | Socket.IO: live moves, presence, reconnection with a 30 s grace period, forfeit after a disconnection | atawbi |
 | Computer opponent | 3 levels, minimax with alpha-beta, deliberate mistakes, runs in a worker thread | atawbi |
-| Tournaments | Single elimination, byes, automatic matches, replayed draws, turn timeout | atawbi |
+| Tournament registration | Create, list, cancel, join and leave; the tournament row is locked so two players cannot take the last place | fel-ghaz |
+| Tournament bracket | Start, single elimination with byes, automatic matches, replayed draws, turn timeout | atawbi |
 | Private chat | Messages, match invitations, system notices, typing indicator, read receipts, history | atawbi |
-| Player search and presence | Search, filters, sorting, pagination, online status | fel-ghaz |
+| Player search and presence | Search, filters, sorting, pagination, online status | fel-ghaz (presence over sockets: atawbi) |
+| API contract | OpenAPI description of every route (`backend/docs/openapi.yaml`), shown with Swagger UI at `/api/docs` in development | fel-ghaz, atawbi |
 | Profiles, statistics, match history | Public profile, stats, finished matches | fel-ghaz (API), rnehme (UI) |
 | Display name and avatars | Rename, upload (type checked from file bytes), default avatar | fel-ghaz (API), rnehme (UI) |
 | Friends and blocks | Requests, accept/decline, remove, block | fel-ghaz (API), rnehme (UI) |
@@ -164,7 +167,7 @@ codes are stored only as a SHA-256 hash, like the session tokens.
 | 8 | AI: opponent for games | Major | 2 | atawbi | Server-side bots (Easy, Medium, Hard): win/block rules, minimax with alpha-beta and iterative deepening, deliberate mistakes; works with every board size and win length |
 | 9 | User management: 2FA | Minor | 1 | atawbi, rnehme | TOTP (authenticator app) with QR setup, one-time backup codes, replay protection |
 | 10 | User management: game statistics and match history | Minor | 1 | fel-ghaz, rnehme | Wins/losses/draws, win rate, history with opponents and dates, leaderboard |
-| 11 | Gaming: tournament system | Minor | 1 | atawbi, rnehme | Bracket, registration, matchups tracked, automatic match creation |
+| 11 | Gaming: tournament system | Minor | 1 | atawbi, fel-ghaz, rnehme | Registration (fel-ghaz), bracket, matchups tracked, automatic match creation (atawbi) |
 | 12 | Gaming: game customization | Minor | 1 | atawbi, rnehme | Board size (5-10 x 5-9), win length (3-5), themes; defaults available; the AI uses them |
 | 13 | Accessibility and i18n: multiple languages | Minor | 1 | rnehme | i18next, English / French / Arabic, language switcher, all texts translatable |
 | 14 | Accessibility and i18n: RTL support | Minor | 1 | rnehme | Arabic with mirrored layout (logical Tailwind classes), switch without reload |
@@ -181,10 +184,13 @@ consistent. Every module builds on the web game (module 6), which is implemented
 
 ## Individual Contributions
 
-**atawbi** — Authentication and sessions, email verification and password reset by emailed code, 2FA and backup
-codes, the pure Connect Four engine with its tests, matches (create, join, move, resign) with row-locking transactions, Socket.IO real-time layer, disconnection
-forfeit, the AI opponent (worker thread), tournaments and bracket, chat, Docker Compose, the HTTPS proxy, automatic
-migrations, rate limiting, the API documentation. *Challenges:* concurrent actions (two players taking the same
+**atawbi** — The backend skeleton (NestJS, database connection, environment checks, the `{ data }` / `{ error }`
+format and the validation pipe), authentication and sessions, email verification and password reset by emailed code
+(backend and frontend pages), 2FA and backup codes, the pure Connect Four engine with its tests, matches (create,
+join, move, resign) with row-locking transactions, the Socket.IO real-time layer and presence over sockets,
+disconnection forfeit, the AI opponent (worker thread), the tournament bracket (start, byes, automatic matches, turn
+timeout), chat, Docker Compose, the HTTPS proxy, automatic migrations, rate limiting, and the documentation of these
+routes in the API contract. *Challenges:* concurrent actions (two players taking the same
 seat or racing a move) were solved with transactions that lock the match row; blocking the event loop with the AI
 search was solved by running it in a worker thread; HTTPS everywhere on rootless Docker was solved with a proxy on
 port 8443.
@@ -193,10 +199,15 @@ port 8443.
 the three languages and RTL, accessibility, the legal pages and the frontend documentation. *Challenges:* a layout
 that mirrors correctly in Arabic, and keeping the browser console free of errors and warnings.
 
-**fel-ghaz** — Player search and online presence, public profiles and match history, display-name change, avatar
-upload with validation of the real file type, friends and blocks (one row per pair, safe when both players ask at
-the same moment). *Challenges:* making friend requests idempotent and race-safe, and validating uploaded images
-without trusting the declared type.
+**fel-ghaz** — Tournament registration (create, list, cancel, join, leave, and the `tournaments` and
+`tournament_players` tables), the OpenAPI contract (`backend/docs/openapi.yaml`) and its Swagger UI page at
+`/api/docs`, player search and online presence (`last_seen_at`, refreshed by the session guard), public profiles and
+match history with statistics counted from finished matches, display-name change, avatar upload with validation of
+the real file type, friends and blocks (one row per pair, safe when both players ask at the same moment). Before
+submission: only the players of a match may follow it live, the database port is reachable from this computer only,
+and the unused `oauth_accounts` table and dead code were removed. *Challenges:* making friend requests idempotent
+and race-safe, validating uploaded images without trusting the declared type, and closing a gap where any logged-in
+user could follow a running match over the socket while the REST route refused them.
 
 ## Resources
 
@@ -225,8 +236,8 @@ mechanism.
 Requirements: Docker with the Compose plugin.
 
 ```bash
-# 1. create your local env file (SMTP_USER / SMTP_PASSWORD only if the emails must really be sent;
-#    TWO_FACTOR_KEY: replace the throwaway one with openssl rand -hex 32 for real use)
+# 1. create your local env file and fill in every empty value (SMTP_USER / SMTP_PASSWORD only if the
+#    emails must really be sent; TWO_FACTOR_KEY: the output of openssl rand -hex 32)
 cp .env.example .env
 
 # 2. build and start everything
@@ -277,9 +288,9 @@ docker compose up --build -d -V   # rebuild after adding an npm package
 Connect to the database from the host:
 
 ```bash
-psql -h localhost -p 5433 -U connect4 connect4    # password: connect4
-# or without installing psql:
-docker compose exec db psql -U connect4 -d connect4
+psql -h localhost -p <DB_PORT> -U <DB_USER> <DB_NAME>    # asks for DB_PASSWORD
+# or without installing psql (the container already knows the user and database):
+docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 ```
 
 The values are `DB_PORT`, `DB_USER`, `DB_PASSWORD` and `DB_NAME` from `.env`. Inside `psql`, `\dt` lists the
@@ -291,11 +302,11 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 
 | Variable                 | Default    | Meaning                                                 |
 | ------------------------ | ---------- | ------------------------------------------------------- |
-| `HTTPS_PORT`             | `8443`     | host port of the HTTPS entry point                      |
-| `DB_PORT`                | `5433`     | host port of PostgreSQL                                 |
-| `DB_USER`                | `connect4` | database user                                           |
-| `DB_PASSWORD`            | `connect4` | database password                                       |
-| `DB_NAME`                | `connect4` | database name                                           |
+| `HTTPS_PORT`             | none       | **required**, host port of the HTTPS entry point (e.g. `8443`) |
+| `DB_PORT`                | none       | **required**, host port of PostgreSQL (e.g. `5433`)     |
+| `DB_USER`                | none       | **required**, database user                             |
+| `DB_PASSWORD`            | none       | **required**, database password                         |
+| `DB_NAME`                | none       | **required**, database name                             |
 | `TWO_FACTOR_KEY`         | none       | **required**, 64 hex chars, encrypts the 2FA secrets    |
 | `SESSION_TTL_DAYS`       | `7`        | how long a login lasts, optional                        |
 | `TOURNAMENT_TURN_TIMEOUT_SECONDS` | `180` | how long a tournament player may take to move before losing, optional |
