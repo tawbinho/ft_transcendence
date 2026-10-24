@@ -10,8 +10,7 @@ info:
     The TARGET API of the Connect Four app: what the backend already does plus what the frontend needs.
 
     **How this file was made.** From `frontend/docs/api-contract.md` and the TypeScript types in `frontend/src/features/*/types.ts` (the app is compiled against them),
-    checked against the real backend routes. It is a DESIGN: the backend implements it step by step. The Swagger page served by the running backend (`/api/docs`,
-    generated from the code) shows what exists today.
+    checked against the real backend routes. It is a DESIGN: the backend implements it step by step. The backend serves this file with Swagger UI at `/api/docs` (development only).
 
     **Status of each route** (`x-status`):
     - `implemented`: the backend already does this, exactly as written (checked with real requests).
@@ -20,12 +19,12 @@ info:
 
     **Conventions** (the existing backend already follows these; the new routes keep them)
     - Every route is under `/api`, on the same origin as the app (an HTTPS proxy sends `/api` and `/socket.io` to the backend, everything else to the frontend).
-    - Login is the httpOnly `session` cookie. Every route needs it except signup, login, 2FA verify, logout and `GET /auth/me`. Without a valid session: `401 UNAUTHORIZED`.
+    - Login is the httpOnly `session` cookie. Every route needs it except signup, login, 2FA verify, email verification, password reset, logout and `GET /auth/me`. Without a valid session: `401 UNAUTHORIZED`.
     - Success: any 2xx with `{ "data": ... }` (`{ "data": null }` when there is nothing to return). Failure: `{ "error": { "code", "message" } }`.
     - A body or query that breaks a rule: `400 VALIDATION_ERROR`. An id in a path that is not a UUID is `VALIDATION_ERROR` too.
     - Ids are UUID strings. Dates are ISO 8601 in UTC.
     - Long lists take `limit` (1 to 50, default 20) and `offset` (default 0) and answer `{ items, total, limit, offset }`.
-    - Rate limit: 100 requests a minute per client address and per route; less on signup (5), login (10), 2FA (5) and creating a match (20). Over: `429 RATE_LIMITED`.
+    - Rate limit: 100 requests a minute per client address and per route; less on signup (5), login (10), 2FA (5), email verification and password reset (3 to send a code, 10 to enter one) and creating a match (20). Over: `429 RATE_LIMITED`.
     - Online presence: a player is online while they have the app open. With sockets: at least one open socket. Before sockets exist: a request in the last minute (the app sends one at least every 30 s while a tab is visible).
 
     **Not in this document:** the real-time events are described under the `x-realtime` extension at the top level (OpenAPI cannot describe sockets).
@@ -59,7 +58,8 @@ paths:
       - auth
       operationId: signup
       summary: Create an account and log in
-      description: 'Sets the `session` cookie. Rate limit: 5 per minute.'
+      description: 'Creates the account and emails a 6-digit code. It does NOT log in: login works only after the code is
+        entered (`/auth/verify-email`). Rate limit: 5 per minute.'
       x-status: implemented
       security: []
       requestBody:
@@ -70,7 +70,7 @@ paths:
               $ref: '#/components/schemas/SignupRequest'
       responses:
         '201':
-          description: Account created, logged in
+          description: Account created, verification email sent
           content:
             application/json:
               schema:
@@ -79,7 +79,13 @@ paths:
                 - data
                 properties:
                   data:
-                    $ref: '#/components/schemas/SessionResult'
+                    type: object
+                    required:
+                    - verificationSent
+                    properties:
+                      verificationSent:
+                        type: boolean
+                        example: true
         '400':
           $ref: '#/components/responses/ValidationError'
         '409':
@@ -94,6 +100,16 @@ paths:
                   message: See the error code table
         '429':
           $ref: '#/components/responses/RateLimited'
+        '502':
+          description: 'Code `EMAIL_SEND_FAILED`: the email could not be sent, nothing is created.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: EMAIL_SEND_FAILED
+                  message: See the error code table
   /auth/login:
     post:
       tags:
@@ -134,6 +150,16 @@ paths:
               example:
                 error:
                   code: INVALID_CREDENTIALS
+                  message: See the error code table
+        '403':
+          description: 'Code `EMAIL_NOT_VERIFIED`: the email code was not entered yet. A new code is emailed.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: EMAIL_NOT_VERIFIED
                   message: See the error code table
         '429':
           $ref: '#/components/responses/RateLimited'
@@ -184,6 +210,150 @@ paths:
               example:
                 error:
                   code: UNAUTHORIZED
+                  message: See the error code table
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/verify-email:
+    post:
+      tags:
+      - auth
+      operationId: verifyEmail
+      summary: Verify the email with the 6-digit code
+      description: 'The code lasts 15 minutes, works once and stops after 5 wrong tries. Afterwards the user can log in. Rate limit: 10 per minute.'
+      x-status: implemented
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEmailRequest'
+      responses:
+        '200':
+          description: Done
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    nullable: true
+                    example: null
+        '400':
+          description: 'Codes: `VALIDATION_ERROR`, `INVALID_VERIFICATION_CODE`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: INVALID_VERIFICATION_CODE
+                  message: See the error code table
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/resend-verification:
+    post:
+      tags:
+      - auth
+      operationId: resendVerification
+      summary: Send a new verification code
+      description: 'Always answers 200, it never says whether the email exists. The new code replaces the old one. Rate limit: 3 per minute.'
+      x-status: implemented
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+      responses:
+        '200':
+          description: Done
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    nullable: true
+                    example: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/forgot-password:
+    post:
+      tags:
+      - auth
+      operationId: forgotPassword
+      summary: Email a password reset code
+      description: 'Always answers 200, it never says whether the email exists. A verified account gets a reset code. Rate limit: 3 per minute.'
+      x-status: implemented
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+      responses:
+        '200':
+          description: Done
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    nullable: true
+                    example: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/reset-password:
+    post:
+      tags:
+      - auth
+      operationId: resetPassword
+      summary: Set a new password with the reset code
+      description: 'Sets the new password and ends every login of the user. Rate limit: 10 per minute.'
+      x-status: implemented
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Done
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - data
+                properties:
+                  data:
+                    nullable: true
+                    example: null
+        '400':
+          description: 'Codes: `VALIDATION_ERROR`, `INVALID_RESET_CODE`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: INVALID_RESET_CODE
                   message: See the error code table
         '429':
           $ref: '#/components/responses/RateLimited'
@@ -1832,7 +2002,7 @@ components:
       type: apiKey
       in: cookie
       name: session
-      description: 'httpOnly cookie set by signup, login and 2FA verify. The browser sends it by itself: use `credentials:
+      description: 'httpOnly cookie set by login and 2FA verify. The browser sends it by itself: use `credentials:
         "include"`.'
   parameters:
     Limit:
@@ -1940,6 +2110,10 @@ components:
       - RATE_LIMITED
       - INTERNAL_ERROR
       - INVALID_CREDENTIALS
+      - EMAIL_NOT_VERIFIED
+      - INVALID_VERIFICATION_CODE
+      - INVALID_RESET_CODE
+      - EMAIL_SEND_FAILED
       - EMAIL_TAKEN
       - DISPLAY_NAME_TAKEN
       - INVALID_2FA_CODE
@@ -2004,6 +2178,49 @@ components:
       - displayName
       - avatarUrl
       - locale
+    EmailRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          description: Trimmed and lowercased by the server
+      required:
+      - email
+    VerifyEmailRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        code:
+          type: string
+          pattern: '^\d{6}$'
+          description: The 6 digits from the email
+      required:
+      - email
+      - code
+    ResetPasswordRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        code:
+          type: string
+          pattern: '^\d{6}$'
+          description: The 6 digits from the reset email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+      required:
+      - email
+      - code
+      - password
     SignupRequest:
       type: object
       properties:

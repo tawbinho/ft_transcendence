@@ -576,9 +576,9 @@ readable. Live events: `chat:message` (to both players, each seeing the other as
 `peerId`, so the sender's other tabs update too), `chat:typing` and `chat:read`.
 Sending is limited to 30 per minute per address.
 
-Every route of the API design (`backend/docs/openapi.yaml`) is built. That file
-does not describe the email verification and password reset routes yet; they
-are in the table above and in `frontend/docs/api-contract.md`.
+Every route of the API design (`backend/docs/openapi.yaml`) is built. In
+development the backend serves that file with Swagger UI at
+https://localhost:8443/api/docs, to read the routes and try them from the browser.
 
 **Rate limits** (per IP, per minute, counted separately for each route): 100 by
 default; login 10; signup 5; 2FA setup 10; 2FA verify, enable, disable and new
