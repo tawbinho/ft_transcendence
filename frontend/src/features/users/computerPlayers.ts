@@ -19,10 +19,12 @@ export const DEFAULT_COMPUTER_PLAYER = 'AI_Medium';
  * leaderboard hide them.
  *
  * The player routes send an `isBot` flag. The friends route sends only a name and a picture,
- * so the name is the fallback: every computer opponent is called "AI_" followed by its level.
+ * so the name is the fallback. It must be one of the three exact names: a real person
+ * may call themselves "AI_Fan", and that account must stay visible. Names are unique and
+ * the three are created when the server starts, so nobody else can hold one.
  */
 export function isComputerPlayer(user: { displayName: string; isBot?: boolean }): boolean {
-  return user.isBot === true || user.displayName.startsWith('AI_');
+  return user.isBot === true || COMPUTER_PLAYERS.some((computer) => computer.displayName === user.displayName);
 }
 
 /** The same list without the computer opponents. */
