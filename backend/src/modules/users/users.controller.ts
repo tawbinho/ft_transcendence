@@ -22,7 +22,6 @@ import { Throttle } from '@nestjs/throttler';
 import { AvatarUploadFilter } from './avatar-upload.filter.js';
 import { AvatarService, type UploadedImage } from './avatar.service.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
-import { PublicUserResponse } from './dto/public-user.response.js';
 import { toPublicUser, type PublicUser } from './public-user.js';
 import {
   AVATAR_MAX_BYTES,
@@ -30,11 +29,6 @@ import {
 } from './user.constants.js';
 import { ListProfileMatchesQuery } from './dto/list-profile-matches.query.js';
 import { ListUsersQuery } from './dto/list-users.query.js';
-import {
-  PlayerPageResponse,
-  ProfileMatchPageResponse,
-  ProfileResponse,
-} from './dto/user.responses.js';
 import type { ProfileView } from './user-view.js';
 import {
   UsersService,

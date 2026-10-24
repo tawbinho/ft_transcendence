@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../chat.constants.js';
+import { MAX_PAGE_SIZE } from '../chat.constants.js';
 
 // WHY THIS FILE EXISTS
 // The query string of GET /chat/:userId/messages. Without `before` it gives the

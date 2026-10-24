@@ -15,7 +15,6 @@ import {
   type AuthenticatedUser,
 } from '../../common/decorators/current-user.decorator.js';
 import { AppError } from '../../common/errors/app-error.js';
-import { PublicUserResponse } from '../users/dto/public-user.response.js';
 import type { PublicUser } from '../users/public-user.js';
 import {
   SESSION_COOKIE,
@@ -23,13 +22,7 @@ import {
   setSessionCookie,
 } from './auth-cookies.js';
 import { AuthService, type AuthResult } from './auth.service.js';
-import {
-  LoginResponse,
-  SessionResponse,
-  BackupCodesRemainingResponse,
-  BackupCodesResponse,
-  TwoFactorSetupResponse,
-} from './dto/auth.responses.js';
+import { LoginResponse } from './dto/auth.responses.js';
 import { LoginDto } from './dto/login.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto.js';

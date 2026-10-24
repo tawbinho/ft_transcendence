@@ -524,8 +524,9 @@ origin, through the proxy). The server refuses the connection unless the
 `session` cookie belongs to a real login, and every 20 seconds it closes the
 sockets whose login ended (logout, expiry). Every tab of a user is in the room
 `user:<id>`. Events (names in `backend/src/modules/realtime/realtime.constants.ts`):
-`match:update` (the whole match, to every socket that sent `match:watch` for it:
-the match page does), `presence` (`{ userId, online }`, to everyone), `friends:update`
+`match:update` (the whole match, to every socket that sent `match:watch` for it,
+as the match page does; like `GET /api/matches/:id`, only its players may watch a
+match, or anyone while it waits for a second player), `presence` (`{ userId, online }`, to everyone), `friends:update`
 (both players of a request or block), the three `chat:*` events and `tournament:update` (`{ id }`, to
 everyone). They are hints: the app also polls, so a missed event only delays an
 update. A user counts as online while they have a socket open (or made a

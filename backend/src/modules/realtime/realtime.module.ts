@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module.js';
+import { MatchesModule } from '../matches/matches.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { RealtimeGateway } from './realtime.gateway.js';
 import { RealtimeService } from './realtime.service.js';
@@ -12,6 +13,7 @@ import { RealtimeService } from './realtime.service.js';
   imports: [
     AuthModule, // SessionsService: who is behind this connection
     UsersModule, // PresenceService: who is online
+    MatchesModule, // MatchesService: who may follow a match live
   ],
   providers: [RealtimeGateway, RealtimeService],
   exports: [RealtimeService],

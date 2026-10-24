@@ -1,7 +1,5 @@
 import { MatchSettingsResponse } from '../../matches/dto/match.responses.js';
 import {
-  TOURNAMENT_SIZES,
-  TOURNAMENT_STATUSES,
   type TournamentSize,
   type TournamentStatus,
 } from '../tournament.constants.js';

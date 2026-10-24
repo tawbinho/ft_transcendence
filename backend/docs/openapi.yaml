@@ -3210,7 +3210,7 @@ x-realtime:
     authentication: The browser sends the `session` cookie with the handshake. Check it there and refuse the connection
       without a valid (non-pending) session.
     rooms: Put every socket in the room `user:<id>` so an event reaches every tab of that user. `match:watch` adds
-      it to the room of that match.
+      it to the room of that match. Once a match has started, the sockets of other users are removed from its room.
     reconnection: 'After a reconnection the server has forgotten the watched matches: the app sends `match:watch`
       again.'
   clientToServer:
@@ -3218,7 +3218,8 @@ x-realtime:
       x-status: implemented
       payload:
         $ref: '#/components/schemas/RtMatchWatch'
-      does: Adds the socket to the room of that match (the app sends it for the matches its user plays).
+      does: Adds the socket to the room of that match, only if its user may read the match as with `GET /matches/{id}`
+        (its players, or anyone while it is `waiting`). Otherwise nothing happens.
     match:unwatch:
       x-status: implemented
       payload:

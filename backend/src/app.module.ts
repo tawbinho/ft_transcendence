@@ -3,8 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { HttpThrottlerGuard } from './common/guards/http-throttler.guard.js';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
 import { validateEnv } from './config/env.validation.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
@@ -38,9 +36,7 @@ import { UsersModule } from './modules/users/users.module.js';
     ChatModule,
     RealtimeModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     // Applies the rate limit to every route of the app.
     { provide: APP_GUARD, useClass: HttpThrottlerGuard },
   ],

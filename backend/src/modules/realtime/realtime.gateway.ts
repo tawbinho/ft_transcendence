@@ -10,6 +10,7 @@ import {
 } from '@nestjs/websockets';
 import type { Server, Socket } from 'socket.io';
 import { SessionsService } from '../auth/sessions.service.js';
+import { MatchesService } from '../matches/matches.service.js';
 import { PresenceService } from '../users/presence.service.js';
 import {
   EVENTS,
@@ -35,7 +36,7 @@ interface SocketData {
 //     cookie with the handshake).
 //  2. Puts every socket in the room of its user, so an event reaches every tab.
 //  3. Keeps track of who is online.
-//  4. Lets a client start and stop watching a match.
+//  4. Lets a client start and stop watching a match it may read.
 // Sending events is RealtimeService's job, not this class's.
 //
 // Only the WebSocket transport is allowed: it is what the frontend asks for,
@@ -52,6 +53,7 @@ export class RealtimeGateway
     private readonly sessions: SessionsService,
     private readonly presence: PresenceService,
     private readonly realtime: RealtimeService,
+    private readonly matches: MatchesService,
   ) {}
 
   afterInit(server: Server): void {
@@ -100,13 +102,23 @@ export class RealtimeGateway
   }
 
   // match:watch { matchId }: from now on this socket receives match:update for
-  // that match. Only players have a reason to ask: nobody else can read it.
+  // that match, if its user may read it: the rule of GET /matches/:id (anyone
+  // while it waits for its second player, then only its players). Anything
+  // else is ignored, so knowing a match id is not enough to follow the game.
   @SubscribeMessage(MESSAGES.matchWatch)
-  watch(@ConnectedSocket() socket: Socket, @MessageBody() body: unknown): void {
+  async watch(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() body: unknown,
+  ): Promise<void> {
     const matchId = readMatchId(body);
-    if (!matchId) return;
+    const userId = (socket.data as SocketData).userId;
+    if (!matchId || !userId) return;
     if (socket.rooms.size >= MAX_ROOMS_PER_SOCKET) return;
-    void socket.join(matchRoom(matchId));
+    // A check that fails counts as "no": the page also polls.
+    const allowed = await this.matches
+      .canWatch(userId, matchId)
+      .catch(() => false);
+    if (allowed) await socket.join(matchRoom(matchId));
   }
 
   @SubscribeMessage(MESSAGES.matchUnwatch)

@@ -18,10 +18,6 @@ import {
 import { SessionGuard } from '../auth/session.guard.js';
 import { CreateTournamentDto } from './dto/create-tournament.dto.js';
 import { ListTournamentsQuery } from './dto/list-tournaments.query.js';
-import {
-  TournamentPageResponse,
-  TournamentResponse,
-} from './dto/tournament.responses.js';
 import { CREATE_LIMIT_PER_MINUTE } from './tournament.constants.js';
 import type { TournamentView } from './tournament-view.js';
 import {

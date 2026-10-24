@@ -17,12 +17,6 @@ import {
 import { SessionGuard } from '../auth/session.guard.js';
 import { SEND_LIMIT_PER_MINUTE } from './chat.constants.js';
 import { ChatService } from './chat.service.js';
-import {
-  ConversationResponse,
-  MessagePageResponse,
-  MessageResponse,
-  ReadResultResponse,
-} from './dto/chat.responses.js';
 import { ListMessagesQuery } from './dto/list-messages.query.js';
 import { SendMessageDto } from './dto/send-message.dto.js';
 import type {

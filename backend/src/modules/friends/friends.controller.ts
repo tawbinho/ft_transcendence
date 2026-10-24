@@ -12,10 +12,6 @@ import {
   type AuthenticatedUser,
 } from '../../common/decorators/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
-import {
-  FriendsOverviewResponse,
-  FriendshipResultResponse,
-} from './dto/friend.responses.js';
 import type { FriendsOverviewView } from './friend-view.js';
 import { FriendsService, type FriendshipAnswer } from './friends.service.js';
 

@@ -18,7 +18,6 @@ import { SessionGuard } from '../auth/session.guard.js';
 import { CreateMatchDto } from './dto/create-match.dto.js';
 import { ListMatchesQuery } from './dto/list-matches.query.js';
 import { MakeMoveDto } from './dto/make-move.dto.js';
-import { MatchPageResponse, MatchResponse } from './dto/match.responses.js';
 import type { MatchView } from './match-view.js';
 import { MatchesService, type MatchPage } from './matches.service.js';
 

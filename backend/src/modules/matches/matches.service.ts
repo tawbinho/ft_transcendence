@@ -224,6 +224,15 @@ export class MatchesService {
     return view;
   }
 
+  // May this user follow the match live (match:watch)? The same rule as get():
+  // anyone while it waits for its second player, then only its players.
+  async canWatch(userId: string, matchId: string): Promise<boolean> {
+    const match = await this.matches.findOneBy({ id: matchId });
+    if (!match) return false;
+    if (match.status === 'waiting') return true;
+    return this.players.existsBy({ matchId, userId });
+  }
+
   // Loads a match and builds its view for one viewer (null: nobody in
   // particular, used for live events).
   private async load(
@@ -259,11 +268,18 @@ export class MatchesService {
   // that already succeeded.
   private async broadcast(matchId: string): Promise<void> {
     try {
-      this.realtime.emitToMatch(
-        matchId,
-        EVENTS.matchUpdate,
-        await this.load(null, matchId),
-      );
+      const view = await this.load(null, matchId);
+      this.realtime.emitToMatch(matchId, EVENTS.matchUpdate, view);
+      // Once the match has started (or was cancelled), only its players may
+      // follow it, like get(): whoever watched it while it waited for a
+      // player gets this last update (their page then says it is
+      // unavailable) and nothing after it.
+      if (view.status !== 'waiting') {
+        await this.realtime.keepInMatchRoom(
+          matchId,
+          view.players.map((player) => player.userId),
+        );
+      }
     } catch {
       // ignored on purpose
     }

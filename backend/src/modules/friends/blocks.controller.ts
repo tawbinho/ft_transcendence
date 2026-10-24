@@ -13,7 +13,6 @@ import {
 } from '../../common/decorators/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { BlocksService } from './blocks.service.js';
-import { UserSummaryResponse } from './dto/friend.responses.js';
 import type { UserSummaryView } from './friend-view.js';
 
 // WHY THIS FILE EXISTS

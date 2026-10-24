@@ -32,6 +32,17 @@ export class RealtimeService {
     this.server?.to(matchRoom(matchId)).emit(event, payload);
   }
 
+  // Takes out of the room of a match every socket that does not belong to one
+  // of these users (see MatchesService.broadcast).
+  async keepInMatchRoom(matchId: string, userIds: string[]): Promise<void> {
+    if (!this.server) return;
+    const room = matchRoom(matchId);
+    for (const socket of await this.server.in(room).fetchSockets()) {
+      const userId = (socket.data as { userId?: string }).userId;
+      if (!userId || !userIds.includes(userId)) socket.leave(room);
+    }
+  }
+
   emitToAll(event: string, payload: unknown): void {
     this.server?.emit(event, payload);
   }
