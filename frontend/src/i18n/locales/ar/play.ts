@@ -9,6 +9,7 @@ export const playMessages: PlayMessages = {
       title: 'ضد الحاسوب',
       body: 'ثلاثة مستويات يلعبها الخادم. تحتاج إلى حساب.',
       action: 'جهّز مباراة',
+      loginAction: 'سجّل الدخول لتلعب ضد الحاسوب',
       subtitle: 'يلعب الخادم حركات الحاسوب. يُحدَّد من يبدأ عشوائيًا.',
     },
     online: {
@@ -22,6 +23,7 @@ export const playMessages: PlayMessages = {
       title: 'بطولة',
       body: 'جدول خروج المغلوب، يُلعب عبر الإنترنت.',
       action: 'عرض البطولات',
+      loginAction: 'سجّل الدخول لتلعب بطولة',
     },
     again: {
       title: 'العب مجددًا',

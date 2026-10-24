@@ -9,6 +9,35 @@ import { HowToPlay } from './components/HowToPlay';
 import { PlayAgain } from './components/PlayAgain';
 import { OpenMatchNotice } from './online/OpenMatchNotice';
 
+/** A card's button: for a visitor on a page that needs an account, it says so and leads to the login page. */
+function ActionLink({
+  to,
+  needsLogin,
+  label,
+  loginLabel,
+  primary,
+}: {
+  to: string;
+  needsLogin: boolean;
+  label: string;
+  loginLabel: string;
+  primary?: boolean;
+}) {
+  const className = buttonClass({ variant: primary ? 'primary' : 'secondary', block: true });
+  // After logging in, the visitor is sent on to the page they chose.
+  if (needsLogin)
+    return (
+      <Link to="/login" state={{ from: { pathname: to } }} className={className}>
+        {loginLabel}
+      </Link>
+    );
+  return (
+    <Link to={to} className={className}>
+      {label}
+    </Link>
+  );
+}
+
 /** The play hub: the four ways to play, a quick restart of the same-screen game and the rules. */
 export function PlayPage() {
   const { t } = useTranslation();
@@ -26,26 +55,29 @@ export function PlayPage() {
             </Link>
           </ModeCard>
           <ModeCard icon={<ChipIcon />} title={t('play.computer.title')} body={t('play.computer.body')}>
-            <Link to="/play/computer" className={buttonClass({ variant: 'secondary', block: true })}>
-              {t('play.computer.action')}
-            </Link>
+            <ActionLink
+              to="/play/computer"
+              needsLogin={!user}
+              label={t('play.computer.action')}
+              loginLabel={t('play.computer.loginAction')}
+            />
           </ModeCard>
           <ModeCard icon={<GlobeIcon />} title={t('play.online.title')} body={t('play.online.body')}>
-            {user ? (
-              <Link to="/play/online" className={buttonClass({ block: true })}>
-                {t('play.online.action')}
-              </Link>
-            ) : (
-              // A visitor is sent back to the online form after logging in.
-              <Link to="/login" state={{ from: { pathname: '/play/online' } }} className={buttonClass({ block: true })}>
-                {t('play.online.loginAction')}
-              </Link>
-            )}
+            <ActionLink
+              primary
+              to="/play/online"
+              needsLogin={!user}
+              label={t('play.online.action')}
+              loginLabel={t('play.online.loginAction')}
+            />
           </ModeCard>
           <ModeCard icon={<TrophyIcon />} title={t('play.tournament.title')} body={t('play.tournament.body')}>
-            <Link to="/tournaments" className={buttonClass({ variant: 'secondary', block: true })}>
-              {t('play.tournament.action')}
-            </Link>
+            <ActionLink
+              to="/tournaments"
+              needsLogin={!user}
+              label={t('play.tournament.action')}
+              loginLabel={t('play.tournament.loginAction')}
+            />
           </ModeCard>
         </div>
         <PlayAgain />

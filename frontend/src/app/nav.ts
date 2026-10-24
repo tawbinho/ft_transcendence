@@ -2,8 +2,7 @@ import type { ComponentType, SVGProps } from 'react';
 import { ChatIcon, ClockIcon, PlayIcon, TrophyIcon, UserPlusIcon, UsersIcon } from '@/components/icons';
 import type { Messages } from '@/i18n/locales/en';
 
-// The links of the top bar and of the phone menu, in one list, so the two menus
-// and the "Log in to open Players" hint always agree about where each page is.
+// The links of the top bar and of the phone menu, in one list, so the two menus agree about where each page is.
 
 /** The translation key of a link's name, for example 'nav.players'. */
 export type NavLabel = `nav.${keyof Messages['nav'] & string}`;
@@ -24,8 +23,7 @@ export interface NavItem {
   /** Visitors see this link in the bar too. */
   forVisitors: boolean;
   /**
-   * Whether the link is in the top bar and the phone menu. A page can stay reachable (route, other links,
-   * the "Log in to open Players" hint) while its link is out of the bars: set this to true to bring it back.
+   * Whether the link is in the top bar and the phone menu. A page can stay reachable (route, other links) while its link is out of the bars: set this to true to bring it back.
    */
   inMenus: boolean;
   /** The page needs an account: a visitor who follows the link is sent to the login page. */
@@ -115,11 +113,6 @@ export const NAV_ITEMS: NavItem[] = [
 /** The links of the bars shown to a visitor or to a member. */
 export function navItemsFor(isMember: boolean): NavItem[] {
   return NAV_ITEMS.filter((item) => item.inMenus && (isMember || item.forVisitors));
-}
-
-/** The name of the section an address belongs to (for "Log in to open Players."), or null. */
-export function sectionForPath(pathname: string): NavLabel | null {
-  return NAV_ITEMS.find((item) => item.isActive(pathname))?.label ?? null;
 }
 
 /** Whether any of the numbers is above zero (the dot on the phone menu button). */

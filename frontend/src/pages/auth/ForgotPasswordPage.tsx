@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
-import { Alert, Button, OtpInput, TextField } from '@/components/ui';
+import { Alert, Button, OtpInput, TextField, buttonClass } from '@/components/ui';
 import { ResendCode } from '@/features/auth/components/ResendCode';
 import { PasswordField } from '@/features/auth/components/PasswordField';
 import { useForgotPassword, useResetPassword } from '@/features/auth/hooks';
@@ -60,7 +60,7 @@ export function ForgotPasswordPage() {
   if (reset.isSuccess) {
     return (
       <AuthLayout title={t('auth.resetTitle')} subtitle={t('auth.passwordChanged')}>
-        <Link to="/login" className="font-semibold text-primary hover:underline">
+        <Link to="/login" className={buttonClass({ block: true })}>
           {t('nav.login')}
         </Link>
       </AuthLayout>

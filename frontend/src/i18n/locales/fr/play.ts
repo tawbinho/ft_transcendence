@@ -9,6 +9,7 @@ export const playMessages: PlayMessages = {
       title: 'Contre l’ordinateur',
       body: 'Trois niveaux, joués par le serveur. Il faut un compte.',
       action: 'Préparer une partie',
+      loginAction: 'Connectez-vous pour jouer contre l’ordinateur',
       subtitle: 'Le serveur joue les coups de l’ordinateur. Le premier joueur est tiré au sort.',
     },
     online: {
@@ -22,6 +23,7 @@ export const playMessages: PlayMessages = {
       title: 'Tournoi',
       body: 'Un tableau à élimination directe, joué en ligne.',
       action: 'Voir les tournois',
+      loginAction: 'Connectez-vous pour jouer un tournoi',
     },
     again: {
       title: 'Rejouer',

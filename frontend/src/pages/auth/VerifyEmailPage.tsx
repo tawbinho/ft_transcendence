@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
-import { Alert, Button, OtpInput, TextField } from '@/components/ui';
+import { Alert, Button, OtpInput, TextField, buttonClass } from '@/components/ui';
 import { ResendCode } from '@/features/auth/components/ResendCode';
 import { useResendVerification, useVerifyEmail } from '@/features/auth/hooks';
 import { validateEmail } from '@/features/auth/validation';
@@ -50,7 +50,7 @@ export function VerifyEmailPage() {
   if (verify.isSuccess) {
     return (
       <AuthLayout title={t('auth.verifyEmailTitle')} subtitle={t('auth.emailVerified')}>
-        <Link to="/login" state={{ email: email.trim() }} className="font-semibold text-primary hover:underline">
+        <Link to="/login" state={{ email: email.trim() }} className={buttonClass({ block: true })}>
           {t('nav.login')}
         </Link>
       </AuthLayout>

@@ -6,7 +6,6 @@ import { Alert, Button, TextField } from '@/components/ui';
 import { LoginHint } from '@/features/auth/components/LoginHint';
 import { PasswordField } from '@/features/auth/components/PasswordField';
 import { useLogin, useVerifyTwoFactor } from '@/features/auth/hooks';
-import { loginHint } from '@/features/auth/loginHint';
 import { useFocusFirstInvalid } from '@/features/auth/useFocusFirstInvalid';
 import {
   normalizeCode,
@@ -35,7 +34,8 @@ export function LoginPage() {
   // How many times the form was sent with mistakes: moves the focus to the first one.
   const [failedSubmits, setFailedSubmits] = useState(0);
   const form = useFocusFirstInvalid(failedSubmits);
-  const hint = loginHint(returnPath(location));
+  // A visitor sent here from another page (not one who opened the login page themselves) gets a short note.
+  const sentHere = returnPath(location) !== null;
 
   const emailError = submitted ? validateEmail(email) : null;
   const passwordError = submitted ? validateLoginPassword(password) : null;
@@ -121,7 +121,7 @@ export function LoginPage() {
       }
     >
       <form ref={form} onSubmit={submitCredentials} noValidate className="flex flex-col gap-4">
-        {hint && <LoginHint hint={hint} />}
+        {sentHere && <LoginHint />}
         {login.error && (
           <Alert tone="danger">
             {errorMessage(login.error)}

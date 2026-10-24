@@ -26,8 +26,7 @@ export const authMessages: AuthMessages = {
     hidePassword: 'Masquer',
     showPasswordLabel: 'Afficher le mot de passe',
     hidePasswordLabel: 'Masquer le mot de passe',
-    hintSection: 'Connectez-vous pour ouvrir « {{section}} ».',
-    hintGeneric: 'Connectez-vous pour continuer.',
+    hintGeneric: 'Veuillez vous connecter pour continuer.',
     verifyEmailTitle: 'Vérifiez votre e-mail',
     verifyEmailBody:
       'Nous avons envoyé un code à 6 chiffres à {{email}}. Saisissez-le ci-dessous pour activer votre compte.',
