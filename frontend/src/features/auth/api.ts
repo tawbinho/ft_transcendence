@@ -1,3 +1,4 @@
+import { isApiError } from '@/lib/api/errors';
 import { http } from '@/lib/api/http';
 import type { LoginInput, LoginResult, SignupInput, TwoFactorSetup, User } from './types';
 
@@ -29,4 +30,19 @@ export const authApi = {
   enableTwoFactor: (code: string) => http.post<{ backupCodes: string[] }>('/auth/2fa/enable', { code }),
 
   disableTwoFactor: (code: string) => http.post<null>('/auth/2fa/disable', { code }),
+
+  /**
+   * Is two-factor turned on? `GET /auth/me` does not say, so this asks for the
+   * number of backup codes left: the server answers when 2FA is on and with
+   * TWO_FACTOR_NOT_ENABLED when it is off. Nothing is changed by asking.
+   */
+  twoFactorEnabled: async (signal?: AbortSignal): Promise<boolean> => {
+    try {
+      await http.get<{ remaining: number }>('/auth/2fa/backup-codes', { signal });
+      return true;
+    } catch (error) {
+      if (isApiError(error, 'TWO_FACTOR_NOT_ENABLED')) return false;
+      throw error;
+    }
+  },
 };

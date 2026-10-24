@@ -48,7 +48,6 @@ export const settingsMessages: SettingsMessages = {
     confirmOff: 'Désactiver',
     enabled: 'L’authentification à deux facteurs est activée.',
     disabled: 'L’authentification à deux facteurs est désactivée.',
-    alreadyOn: 'Déjà activée ? La désactiver',
     backupTitle: 'Gardez vos codes de secours',
     backupBody:
       'Si vous perdez votre téléphone, chaque code permet de vous connecter une fois à la place d’un code de l’application. Gardez-les en lieu sûr : ils ne sont affichés que maintenant.',

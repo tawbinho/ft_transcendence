@@ -8,6 +8,10 @@ export const authKeys = {
   me: ['auth', 'me'] as const,
 };
 
+// Not under 'auth': startSession forgets every other key, so the next person
+// to log in never sees the answer for the previous one.
+export const twoFactorKey = ['two-factor-enabled'] as const;
+
 /**
  * Who is logged in. `data` is the user, `null` for a visitor, and `undefined`
  * while the first answer is loading.
@@ -31,8 +35,8 @@ function startSession(queryClient: QueryClient, user: User) {
   queryClient.setQueryData(authKeys.me, user);
 }
 
-function updateUser(queryClient: QueryClient, patch: Partial<User>) {
-  queryClient.setQueryData<User | null>(authKeys.me, (user) => (user ? { ...user, ...patch } : user));
+function rememberTwoFactor(queryClient: QueryClient, enabled: boolean) {
+  queryClient.setQueryData(twoFactorKey, enabled);
 }
 
 // Signing up does not log in: the email must be verified first.
@@ -72,7 +76,10 @@ export function useVerifyTwoFactor() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: authApi.verifyTwoFactor,
-    onSuccess: ({ user }) => startSession(queryClient, { ...user, twoFactorEnabled: true }),
+    onSuccess: ({ user }) => {
+      startSession(queryClient, user);
+      rememberTwoFactor(queryClient, true);
+    },
   });
 }
 
@@ -93,13 +100,25 @@ export function useLogout() {
   });
 }
 
+/**
+ * Whether the logged-in user has two-factor on: `true`, `false`, or `undefined`
+ * while the server is asked. It is asked again after a reload, so the Settings
+ * page always shows the right button.
+ */
+export function useTwoFactorStatus() {
+  return useQuery({
+    queryKey: twoFactorKey,
+    queryFn: ({ signal }) => authApi.twoFactorEnabled(signal),
+  });
+}
+
 export function useSetupTwoFactor() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: authApi.setupTwoFactor,
     onError: (error) => {
       if (isApiError(error, 'TWO_FACTOR_ALREADY_ENABLED')) {
-        updateUser(queryClient, { twoFactorEnabled: true });
+        rememberTwoFactor(queryClient, true);
       }
     },
   });
@@ -109,7 +128,7 @@ export function useEnableTwoFactor() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: authApi.enableTwoFactor,
-    onSuccess: () => updateUser(queryClient, { twoFactorEnabled: true }),
+    onSuccess: () => rememberTwoFactor(queryClient, true),
   });
 }
 
@@ -117,10 +136,10 @@ export function useDisableTwoFactor() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: authApi.disableTwoFactor,
-    onSuccess: () => updateUser(queryClient, { twoFactorEnabled: false }),
+    onSuccess: () => rememberTwoFactor(queryClient, false),
     onError: (error) => {
       if (isApiError(error, 'TWO_FACTOR_NOT_ENABLED')) {
-        updateUser(queryClient, { twoFactorEnabled: false });
+        rememberTwoFactor(queryClient, false);
       }
     },
   });

@@ -45,7 +45,6 @@ export const settingsMessages = {
     confirmOff: 'Turn off',
     enabled: 'Two-factor authentication is on.',
     disabled: 'Two-factor authentication is off.',
-    alreadyOn: 'Already on? Turn it off',
     backupTitle: 'Save your backup codes',
     backupBody:
       'If you lose your phone, each code lets you log in once instead of a code from the app. Keep them somewhere safe: they are shown only now.',

@@ -47,7 +47,6 @@ export const settingsMessages: SettingsMessages = {
     confirmOff: 'تعطيل',
     enabled: 'المصادقة الثنائية مفعّلة.',
     disabled: 'المصادقة الثنائية معطّلة.',
-    alreadyOn: 'مفعّلة بالفعل؟ عطّلها',
     backupTitle: 'احفظ رموزك الاحتياطية',
     backupBody:
       'إن فقدت هاتفك، يتيح لك كل رمز تسجيل الدخول مرة واحدة بدلًا من رمز التطبيق. احفظها في مكان آمن: لن تظهر إلا الآن.',

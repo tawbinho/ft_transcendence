@@ -5,11 +5,6 @@ export interface User {
   displayName: string;
   avatarUrl: string | null;
   locale: string;
-  /**
-   * Not sent by the backend yet. When it is, the account page uses it to show
-   * the right two-factor action; until then the page asks the server.
-   */
-  twoFactorEnabled?: boolean;
 }
 
 export interface SignupInput {

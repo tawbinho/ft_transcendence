@@ -13,7 +13,7 @@ export function SecuritySection({ user }: { user: User }) {
 
   return (
     <>
-      <TwoFactorPanel user={user} />
+      <TwoFactorPanel />
       <Card className="flex flex-col items-start gap-3">
         <h2 className="text-lg font-bold">{t('account.session')}</h2>
         <p className="max-w-full break-words text-muted">{t('account.loggedInAs', { email: user.email })}</p>

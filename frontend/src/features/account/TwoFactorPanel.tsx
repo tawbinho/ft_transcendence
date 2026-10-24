@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Badge, Button, Card, TextField } from '@/components/ui';
-import { useDisableTwoFactor, useEnableTwoFactor, useSetupTwoFactor } from '@/features/auth/hooks';
-import type { TwoFactorSetup, User } from '@/features/auth/types';
+import { Alert, Badge, Button, Card, Skeleton, TextField } from '@/components/ui';
+import { useDisableTwoFactor, useEnableTwoFactor, useSetupTwoFactor, useTwoFactorStatus } from '@/features/auth/hooks';
+import type { TwoFactorSetup } from '@/features/auth/types';
 import { normalizeCode, validateCode, validateCodeOrBackupCode } from '@/features/auth/validation';
 import { isApiError } from '@/lib/api/errors';
 import { useErrorMessage } from '@/lib/errorMessage';
@@ -17,25 +17,24 @@ type Step =
 /**
  * Turns two-factor authentication on (QR code, then a first code, then the
  * backup codes are shown once) or off (a code from the app or a backup
- * code). When the user says whether it is on, only the fitting action is
- * shown. The backend does not say yet: until it does, "Turn on" is the main
- * button and a quiet "Already on? Turn it off" sits beside it, and what the
- * server answers is remembered for this visit.
+ * code). Whether it is on is asked from the server each time the page opens
+ * (`useTwoFactorStatus`), so after a reload only the fitting action is shown:
+ * "Turn on" when it is off, "Turn off" when it is on.
  */
-export function TwoFactorPanel({ user }: { user: User }) {
+export function TwoFactorPanel() {
   const { t } = useTranslation();
   const errorMessage = useErrorMessage();
   const setup = useSetupTwoFactor();
   const enable = useEnableTwoFactor();
   const disable = useDisableTwoFactor();
+  const statusQuery = useTwoFactorStatus();
+  const status = statusQuery.data;
 
   const [step, setStep] = useState<Step>({ kind: 'idle' });
   const [code, setCode] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const [learned, setLearned] = useState<boolean>();
-  const status = user.twoFactorEnabled ?? learned;
   // Turning 2FA on needs a code from the app: no backup code exists yet.
   const checkCode = step.kind === 'setup' ? validateCode : validateCodeOrBackupCode;
   const codeError = submitted ? checkCode(code) : null;
@@ -54,7 +53,6 @@ export function TwoFactorPanel({ user }: { user: User }) {
       onSuccess: (data) => reset({ kind: 'setup', setup: data }),
       onError: (error) => {
         if (isApiError(error, 'TWO_FACTOR_ALREADY_ENABLED')) {
-          setLearned(true);
           setNotice(t('twoFactor.enabled'));
         }
       },
@@ -68,7 +66,6 @@ export function TwoFactorPanel({ user }: { user: User }) {
     if (step.kind === 'setup') {
       enable.mutate(normalizeCode(code), {
         onSuccess: ({ backupCodes }) => {
-          setLearned(true);
           setNotice(t('twoFactor.enabled'));
           reset({ kind: 'codes', codes: backupCodes });
         },
@@ -77,13 +74,11 @@ export function TwoFactorPanel({ user }: { user: User }) {
     }
     disable.mutate(normalizeCode(code), {
       onSuccess: () => {
-        setLearned(false);
         setNotice(t('twoFactor.disabled'));
         reset();
       },
       onError: (error) => {
         if (isApiError(error, 'TWO_FACTOR_NOT_ENABLED')) {
-          setLearned(false);
           setNotice(t('twoFactor.disabled'));
           reset();
         }
@@ -107,22 +102,40 @@ export function TwoFactorPanel({ user }: { user: User }) {
       {notice && <Alert tone="success">{notice}</Alert>}
       {setupError && <Alert tone="danger">{errorMessage(setupError)}</Alert>}
 
-      {step.kind === 'idle' && (
-        <div className="flex flex-wrap gap-2">
-          {status !== true && (
-            <Button loading={setup.isPending} onClick={startSetup}>
-              {t('twoFactor.turnOn')}
-            </Button>
-          )}
-          {status !== false && (
+      {/* The server has not answered yet: a placeholder, or a retry if it could not be asked. */}
+      {step.kind === 'idle' && status === undefined && statusQuery.isError && (
+        <Alert
+          tone="danger"
+          action={
             <Button
-              variant={status === undefined ? 'ghost' : 'secondary'}
+              size="sm"
+              variant="secondary"
+              loading={statusQuery.isFetching}
+              onClick={() => void statusQuery.refetch()}
+            >
+              {t('common.retry')}
+            </Button>
+          }
+        >
+          {errorMessage(statusQuery.error)}
+        </Alert>
+      )}
+      {step.kind === 'idle' && status === undefined && !statusQuery.isError && <Skeleton className="h-10 w-32" />}
+      {step.kind === 'idle' && status !== undefined && (
+        <div className="flex flex-wrap gap-2">
+          {status ? (
+            <Button
+              variant="secondary"
               onClick={() => {
                 setNotice(null);
                 reset({ kind: 'disable' });
               }}
             >
-              {status === undefined ? t('twoFactor.alreadyOn') : t('twoFactor.turnOff')}
+              {t('twoFactor.turnOff')}
+            </Button>
+          ) : (
+            <Button loading={setup.isPending} onClick={startSetup}>
+              {t('twoFactor.turnOn')}
             </Button>
           )}
         </div>
