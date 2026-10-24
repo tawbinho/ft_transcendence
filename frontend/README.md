@@ -43,7 +43,7 @@ docker compose logs backend | grep "Code for"
 The "forgot password" page uses the same kind of code. The computer opponents (`AI_Easy`, `AI_Medium`, `AI_Hard`) are
 accounts of the backend, which also chooses their moves: the computer page of Play (`/play/computer`) creates an
 online match against the chosen one, so it needs an account. The app hides them from the friends pages, the player
-search and the leaderboard (see `src/features/users/computerPlayers.ts`).
+search and the leaderboard (see `src/features/users/computerPlayers.ts`). It knows them by the backend's `isBot` flag, or by their exact three names where only a name is sent, so a real player called `AI_Fan` stays visible.
 
 ## Scripts
 
@@ -53,10 +53,11 @@ search and the leaderboard (see `src/features/users/computerPlayers.ts`).
 | `npm run build`        | Type-checks, then builds the production files into `dist/` |
 | `npm run preview`      | Serves `dist/` on http://localhost:4173                    |
 | `npm run typecheck`    | Type-checks only                                           |
+| `npm test`             | Runs the tests once                                        |
 | `npm run format`       | Formats every file with Prettier                           |
 | `npm run format:check` | Checks the formatting without changing anything            |
 
-Before a commit: `npm run format`, then `npm run typecheck && npm run format:check`.
+Before a commit: `npm run format`, then `npm run typecheck && npm run format:check && npm test`.
 
 ## Settings
 
@@ -120,9 +121,13 @@ so they mirror by themselves.
 
 ## Checks
 
-The frontend has no automated tests at the moment (the backend has its own: `npm test` in `backend/`).
 `npm run typecheck` (TypeScript, which also checks every key given to `t()` and that French and Arabic have every
-English text), `npm run format:check` (Prettier) and `npm run build` are the automatic checks.
+English text), `npm run format:check` (Prettier), `npm run build` and `npm test` are the automatic checks.
+
+`npm test` (needs Node 22) runs a few small tests with Vitest and Testing Library (`*.test.ts` and `*.test.tsx`, next to the code they
+check). They cover three things that once went wrong: the hiding of the computer opponents (a real player called
+`AI_Fan` must stay visible), the page of a match that is not open (it says "unavailable", not "Join this match?"),
+and the two-factor panel after a page reload.
 
 ## Browsers
 

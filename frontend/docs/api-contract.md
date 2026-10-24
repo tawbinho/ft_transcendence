@@ -141,8 +141,10 @@ turned on, and accepts one of them instead of the 6 digits at login and to turn 
 (`GET` and `POST /auth/2fa/backup-codes` count and renew them). The app shows them once after turning 2FA on and
 accepts one at login and to turn 2FA off; it does not count or renew them.
 
-**Optional:** add `twoFactorEnabled: boolean` to `User`. The account page then shows only the button that applies
-(turn on or turn off). Without it, it shows both and handles `TWO_FACTOR_ALREADY_ENABLED` and `TWO_FACTOR_NOT_ENABLED`.
+**Is it on?** `GET /auth/me` does not say. Settings asks `GET /auth/2fa/backup-codes` (`useTwoFactorStatus`): the
+answer `{ remaining }` means two-factor is on, `409 TWO_FACTOR_NOT_ENABLED` means it is off. The page shows only the
+button that applies, also after a reload. Adding `twoFactorEnabled: boolean` to `User` on the backend would save that one request,
+but the app does not need it.
 
 ## Matches
 
@@ -210,7 +212,8 @@ interface MatchSummary {
 
 While a match waits for its second player, `GET /matches/:id` answers anyone logged in, with `yourSeat: null`, so the
 person who got the link sees the join screen. Once it starts, only its players can read it: anyone else gets
-`404 MATCH_NOT_FOUND`, and the app shows the join screen, where joining is then refused.
+`404 MATCH_NOT_FOUND`, and the app shows "Match unavailable" (the same page as for a match that does not exist), not
+the join screen.
 
 ### Computer opponents
 
@@ -583,7 +586,7 @@ one shows the server's English `message`.
 | `DISPLAY_NAME_TAKEN`         | 409      | Signup, and `PATCH /users/me`                                  |
 | `INVALID_2FA_CODE`           | 400      | 2FA verify, enable and disable                                 |
 | `TWO_FACTOR_ALREADY_ENABLED` | 409      | 2FA setup                                                      |
-| `TWO_FACTOR_NOT_ENABLED`     | 409      | 2FA disable                                                    |
+| `TWO_FACTOR_NOT_ENABLED`     | 409      | 2FA disable, backup codes (read as "2FA is off")               |
 | `TWO_FACTOR_NOT_PENDING`     | 409      | 2FA enable without a setup first                               |
 | `USER_NOT_FOUND`             | 404      | `POST /matches`, and the players, friends and chat routes      |
 | `CANNOT_INVITE_SELF`         | 400      | `POST /matches`                                                |

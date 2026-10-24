@@ -148,8 +148,9 @@ The computer opponent is not written here: the server plays it (section 6).
 - The two drop-down menus of the bar, the account menu and the language menu, are built the same way: a button with
   `aria-expanded`, a panel in the same style (`header/menuStyles.ts`), Tab to move through it, and `useDismiss` for
   Escape, a click outside and the focus going back to the button. Where there is room (Settings, the phone menu)
-  language and appearance are rows of buttons (`LanguagePicker`, `ColorSchemePicker`). Native `<select>` is kept for
-  form fields (sort order, the history filter on phones).
+  language and appearance are rows of buttons (`LanguagePicker`, `ColorSchemePicker`). The sort and filter drop-downs
+  (sort order, the history filter) are `components/ui/SelectField.tsx`: a button that opens a list of buttons, like the
+  language menu.
 - On phones a visitor (or an unknown session) sees Log in and Sign up in the bar next to the menu button; the name beside
   the logo is hidden then, so both fit at 320px in English, French and Arabic. A member sees chat and the menu button.
 - The phone menu dims the page behind it; a tap on the dim layer, Escape or a click outside closes it.
@@ -315,8 +316,11 @@ was removed once chat, the last missing part, was built.
 
 ## 8. Checks
 
-The frontend has no automated tests at the moment (they were removed). The checks that remain are `npm run typecheck`
-(TypeScript, which also checks every translation key), `npm run format:check` (Prettier) and `npm run build`.
+The checks are `npm run typecheck` (TypeScript, which also checks every translation key), `npm run format:check`
+(Prettier), `npm run build` and `npm test`. The tests (Vitest, with Testing Library for the two that draw a page) sit
+next to the code they check, in `*.test.ts` and `*.test.tsx`. There are only a few, for the three bugs found while testing
+the whole site: `features/users/computerPlayers.test.ts`, `pages/play/MatchPage.test.tsx` and
+`features/account/TwoFactorPanel.test.tsx` (with `features/auth/api.test.ts`).
 
 Every page was also opened by hand in a real Chromium browser, in English at 1280 and 390 pixels wide, in Arabic at
 390, in light and dark mode, looking for console messages, sideways scrolling and accessibility problems (color
@@ -389,11 +393,12 @@ the browser, with no automatic test at the moment.
 | How often a match is reloaded | `pollInterval` in `features/matches/model.ts`                                      |
 | The level picked first        | `DEFAULT_COMPUTER_PLAYER` in `features/users/computerPlayers.ts`                   |
 
-After a change: `npm run typecheck && npm run format:check`.
+After a change: `npm run typecheck && npm run format:check && npm test`.
 
 ## 10. Known limits
 
-- The backend does not yet send `twoFactorEnabled` with the user, so Settings shows both two-factor buttons with a hint.
+- The backend does not send `twoFactorEnabled` with the user, so Settings asks `GET /auth/2fa/backup-codes` once
+  (`useTwoFactorStatus`): an answer means two-factor is on, `TWO_FACTOR_NOT_ENABLED` means it is off.
 - The app does not count or renew the backup codes (`GET` and `POST /auth/2fa/backup-codes`): turning two-factor off
   and on again gives 10 new ones.
 - The backend allows 100 requests a minute per route and per address. A minute of chat between two windows on one
