@@ -11,8 +11,9 @@ import {
 
 // The rules of Connect Four as pure functions over an immutable state, ported
 // from the backend engine. Every function that "changes" the game returns a
-// NEW state, so React can compare states by reference and the computer
-// opponent can try moves freely.
+// NEW state, so React can compare states by reference. The app only uses it
+// for the same-screen game; the computer opponent's moves are chosen by the
+// server.
 
 function isWholeNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isInteger(value);
