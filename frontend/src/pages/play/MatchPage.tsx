@@ -25,8 +25,10 @@ function MatchScreen({ id }: { id: string }) {
 
   if (query.isPending) return <PageSpinner />;
   if (!query.data) {
-    // Only players can read a match: anyone else may be an invited player.
-    if (isApiError(query.error, 'MATCH_NOT_FOUND')) return <JoinMatch id={id} />;
+    // The server lets anyone read a match while it waits for its second player.
+    // So "not found" means a match that does not exist, or one that already
+    // started or ended without this person: there is nothing to join.
+    if (isApiError(query.error, 'MATCH_NOT_FOUND')) return <Unavailable />;
     return (
       <Alert
         tone="danger"

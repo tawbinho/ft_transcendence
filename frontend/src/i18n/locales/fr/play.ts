@@ -111,7 +111,7 @@ export const playMessages: PlayMessages = {
     joinBody: 'Quelqu’un vous a partagé cette partie. Rejoignez-la pour prendre la place libre et commencer.',
     join: 'Rejoindre la partie',
     unavailableTitle: 'Partie indisponible',
-    unavailableBody: 'Cette partie n’existe pas, est déjà complète ou est réservée à quelqu’un d’autre.',
+    unavailableBody: 'Cette partie n’existe pas, a déjà commencé ou est terminée, ou est réservée à quelqu’un d’autre.',
     waitingTitle: 'En attente de votre adversaire',
     waitingBody: 'Envoyez-lui ce lien. La partie commence dès qu’il rejoint ; cette page se met à jour toute seule.',
     waitingStatus: 'En attente d’un joueur…',

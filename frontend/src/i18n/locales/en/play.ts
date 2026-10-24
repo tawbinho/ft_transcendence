@@ -109,7 +109,7 @@ export const playMessages = {
     joinBody: 'Someone shared this match with you. Join to take the free seat and start playing.',
     join: 'Join match',
     unavailableTitle: 'Match unavailable',
-    unavailableBody: 'This match does not exist, is already full, or is reserved for someone else.',
+    unavailableBody: 'This match does not exist, has already started or ended, or is reserved for someone else.',
     waitingTitle: 'Waiting for your opponent',
     waitingBody: 'Send them this link. The match starts as soon as they join; this page updates by itself.',
     waitingStatus: 'Waiting for someone to join…',
