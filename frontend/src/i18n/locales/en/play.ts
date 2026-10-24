@@ -7,21 +7,18 @@ export const playMessages = {
       title: 'Against the computer',
       body: 'Three levels, played by the server. You need an account.',
       action: 'Set up a game',
-      loginAction: 'Log in to play the computer',
       subtitle: 'The server plays the computer’s moves. Who plays first is decided at random.',
     },
     online: {
       title: 'Online',
-      body: 'Challenge a player with a link.',
+      body: 'Challenge a player with a link. You need an account.',
       action: 'Create a match',
       loginRequired: 'Log in to play online.',
-      loginAction: 'Log in to play online',
     },
     tournament: {
       title: 'Tournament',
-      body: 'A knockout bracket, played online.',
+      body: 'A knockout bracket, played online. You need an account.',
       action: 'See tournaments',
-      loginAction: 'Log in to play tournaments',
     },
     again: {
       title: 'Play again',

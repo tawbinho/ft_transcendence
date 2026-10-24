@@ -9,28 +9,27 @@ import { HowToPlay } from './components/HowToPlay';
 import { PlayAgain } from './components/PlayAgain';
 import { OpenMatchNotice } from './online/OpenMatchNotice';
 
-/** A card's button: for a visitor on a page that needs an account, it says so and leads to the login page. */
+/** A card's button: a visitor sees a plain "Log in" on the pages that need an account, then goes on to the page they chose. */
 function ActionLink({
   to,
-  needsLogin,
   label,
-  loginLabel,
+  needsLogin,
   primary,
 }: {
   to: string;
-  needsLogin: boolean;
   label: string;
-  loginLabel: string;
+  needsLogin: boolean;
   primary?: boolean;
 }) {
+  const { t } = useTranslation();
   const className = buttonClass({ variant: primary ? 'primary' : 'secondary', block: true });
-  // After logging in, the visitor is sent on to the page they chose.
-  if (needsLogin)
+  if (needsLogin) {
     return (
       <Link to="/login" state={{ from: { pathname: to } }} className={className}>
-        {loginLabel}
+        {t('nav.login')}
       </Link>
     );
+  }
   return (
     <Link to={to} className={className}>
       {label}
@@ -55,29 +54,13 @@ export function PlayPage() {
             </Link>
           </ModeCard>
           <ModeCard icon={<ChipIcon />} title={t('play.computer.title')} body={t('play.computer.body')}>
-            <ActionLink
-              to="/play/computer"
-              needsLogin={!user}
-              label={t('play.computer.action')}
-              loginLabel={t('play.computer.loginAction')}
-            />
+            <ActionLink to="/play/computer" needsLogin={!user} label={t('play.computer.action')} />
           </ModeCard>
           <ModeCard icon={<GlobeIcon />} title={t('play.online.title')} body={t('play.online.body')}>
-            <ActionLink
-              primary
-              to="/play/online"
-              needsLogin={!user}
-              label={t('play.online.action')}
-              loginLabel={t('play.online.loginAction')}
-            />
+            <ActionLink primary to="/play/online" needsLogin={!user} label={t('play.online.action')} />
           </ModeCard>
           <ModeCard icon={<TrophyIcon />} title={t('play.tournament.title')} body={t('play.tournament.body')}>
-            <ActionLink
-              to="/tournaments"
-              needsLogin={!user}
-              label={t('play.tournament.action')}
-              loginLabel={t('play.tournament.loginAction')}
-            />
+            <ActionLink to="/tournaments" needsLogin={!user} label={t('play.tournament.action')} />
           </ModeCard>
         </div>
         <PlayAgain />

@@ -9,21 +9,18 @@ export const playMessages: PlayMessages = {
       title: 'Contre l’ordinateur',
       body: 'Trois niveaux, joués par le serveur. Il faut un compte.',
       action: 'Préparer une partie',
-      loginAction: 'Connectez-vous pour jouer contre l’ordinateur',
       subtitle: 'Le serveur joue les coups de l’ordinateur. Le premier joueur est tiré au sort.',
     },
     online: {
       title: 'En ligne',
-      body: 'Défiez un joueur grâce à un lien.',
+      body: 'Défiez un joueur grâce à un lien. Il faut un compte.',
       action: 'Créer une partie',
       loginRequired: 'Connectez-vous pour jouer en ligne.',
-      loginAction: 'Connectez-vous pour jouer en ligne',
     },
     tournament: {
       title: 'Tournoi',
-      body: 'Un tableau à élimination directe, joué en ligne.',
+      body: 'Un tableau à élimination directe, joué en ligne. Il faut un compte.',
       action: 'Voir les tournois',
-      loginAction: 'Connectez-vous pour jouer un tournoi',
     },
     again: {
       title: 'Rejouer',
