@@ -2,9 +2,7 @@ import { createGame, drop, legalMoves, replay } from '../engine/game.engine.js';
 import type { GameSettings, GameState } from '../engine/game.types.js';
 import { chooseMove, DIFFICULTIES, type Difficulty } from './ai.js';
 
-// ---------------------------------------------------------------------------
 // Helpers
-// ---------------------------------------------------------------------------
 
 const CLASSIC: GameSettings = { cols: 7, rows: 6, winLength: 4 };
 
@@ -46,7 +44,6 @@ function playGame(
   return state.winner;
 }
 
-// ---------------------------------------------------------------------------
 
 describe('the AI takes a win and stops a loss', () => {
   // Seat 1 has three discs stacked in column 0 and is to move: column 0 wins.
@@ -84,8 +81,7 @@ describe('the AI takes a win and stops a loss', () => {
 describe('the AI slips on purpose, but not suicidally', () => {
   // Seat 2 is to move. Seat 1 owns (0,1), (1,1) and (2,1), three in a row on
   // the second row, with column 3 still empty: if seat 2 plays column 3, seat 1
-  // drops on top of it and wins. Column 3 is POISON for seat 2. (The bottom row
-  // is mixed, so seat 2 has no win of its own there.)
+  // drops on top of it and wins.
   const poisoned = () => played([1, 0, 0, 2, 1, 6, 2]);
 
   it('the position is what we think it is', () => {

@@ -25,10 +25,8 @@ import {
   type TournamentPage,
 } from './tournaments.service.js';
 
-// WHY THIS FILE EXISTS
 // The doorway to tournaments: it declares the routes, validates the input and
-// calls the service. No tournament logic here. Every route needs a logged-in
-// user (the guard on the whole class), and all routes are under /api/tournaments.
+// calls the service. No tournament logic here.
 @UseGuards(SessionGuard)
 @Controller('tournaments')
 export class TournamentsController {

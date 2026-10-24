@@ -2,12 +2,9 @@ import { Injectable } from '@nestjs/common';
 import type { Server } from 'socket.io';
 import { matchRoom, userRoom } from './realtime.constants.js';
 
-// WHY THIS FILE EXISTS
 // The ONE way the rest of the app sends live events. A service (matches,
-// friends...) says "tell these users this happened" and never touches
-// Socket.IO itself. Live events are HINTS: if nobody is connected, or sending
-// fails, the app still works (it also polls), so nothing here can throw into
-// a request.
+// friends...) says "tell these users this happened" and never touches Socket.IO
+// itself.
 @Injectable()
 export class RealtimeService {
   // Set by the gateway once the Socket.IO server exists. Before that (or in a

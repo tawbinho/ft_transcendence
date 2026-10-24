@@ -15,11 +15,8 @@ type Step =
   | { kind: 'disable' };
 
 /**
- * Turns two-factor authentication on (QR code, then a first code, then the
- * backup codes are shown once) or off (a code from the app or a backup
- * code). Whether it is on is asked from the server each time the page opens
- * (`useTwoFactorStatus`), so after a reload only the fitting action is shown:
- * "Turn on" when it is off, "Turn off" when it is on.
+ * Turns two-factor authentication on (QR code, then a first code, then the backup codes are shown
+ * once) or off (a code from the app or a backup code).
  */
 export function TwoFactorPanel() {
   const { t } = useTranslation();

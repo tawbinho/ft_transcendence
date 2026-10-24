@@ -2,10 +2,7 @@ import type { Message } from '@/features/chat/types';
 import type { Match } from '@/features/matches/types';
 
 /**
- * Every live event the server can push, with its payload
- * (docs/api-contract.md, "Live updates"). They are hints that something
- * changed: the pages also refresh by polling, so a missed event only makes
- * an update slower, never wrong.
+ * Every live event the server can push, with its payload (docs/api-contract.md, "Live updates").
  */
 export interface RealtimeEvents {
   /** A match the viewer plays changed: the whole new state. */

@@ -10,12 +10,7 @@ function fillOf(seat: number | undefined): string {
   return 'var(--hole)';
 }
 
-/**
- * A small picture of a board: its colour and its holes. The lists only know a
- * match's size and theme, so without `board` the holes stay empty; give it the
- * position (when the page has it) and the discs are drawn too.
- * Decorative: the text next to it names the size.
- */
+/** A small picture of a board: its colour and its holes. */
 export function BoardShape({
   cols,
   rows,

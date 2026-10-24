@@ -1,7 +1,5 @@
-// WHY THIS FILE EXISTS
-// The allowed values of the matches module in ONE place, shared by the
-// database entities, the request validation (DTOs) and the service. Adding a
-// theme or changing a limit is a one-line change here.
+// The allowed values of the matches module in ONE place, shared by the database
+// entities, the request validation (DTOs) and the service.
 
 // Where a match is in its life:
 //  waiting     created, waiting for a second player
@@ -31,15 +29,13 @@ export const PLAYER_RESULTS = ['win', 'loss', 'draw'] as const;
 export type PlayerResult = (typeof PLAYER_RESULTS)[number];
 
 // Board themes a player can choose. The server only stores the name; the
-// frontend decides how each theme looks. Stored as text and checked against
-// this list, which is easier to extend than a database enum.
+// frontend decides how each theme looks.
 export const MATCH_THEMES = ['classic', 'ocean', 'sunset', 'midnight'] as const;
 export type MatchTheme = (typeof MATCH_THEMES)[number];
 export const DEFAULT_THEME: MatchTheme = 'classic';
 
-// What the API lets a player choose. Tighter than what the engine accepts,
-// to keep boards playable. The engine also checks that the win length fits
-// the board (it must not be longer than the smaller side).
+// What the API lets a player choose. Tighter than what the engine accepts, to
+// keep boards playable.
 export const SETTINGS_API_LIMITS = {
   cols: { min: 5, max: 10 },
   rows: { min: 5, max: 9 },

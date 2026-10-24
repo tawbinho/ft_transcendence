@@ -15,11 +15,8 @@ import {
   type FriendshipStatus,
 } from '../friends.constants.js';
 
-// WHY THIS FILE EXISTS
 // The `friendships` table: a friend request, or an accepted friendship, between
-// two players. There is ONE row per pair: the two ids are stored in order
-// (user_low_id < user_high_id), so "A asks B" and "B asks A" can never become
-// two rows. `requester_id` remembers who asked.
+// two players.
 @Entity('friendships')
 @Check('"user_low_id" < "user_high_id"')
 @Check('"requester_id" IN ("user_low_id", "user_high_id")')

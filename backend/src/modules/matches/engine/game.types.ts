@@ -1,8 +1,5 @@
-// WHY THIS FILE EXISTS
 // The vocabulary of the Connect Four engine: what a board, a move and a game
-// state look like. The engine is PURE TypeScript (no Nest, no database, no
-// HTTP) so the rules can be tested alone and reused by the match service, the
-// WebSocket gateway and the AI opponent.
+// state look like.
 
 // The two players. Seat 1 always plays first.
 export type Seat = 1 | 2;

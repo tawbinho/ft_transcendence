@@ -6,8 +6,8 @@ import { RealtimeGateway } from './realtime.gateway.js';
 import { RealtimeService } from './realtime.service.js';
 
 // The live connection. @Global() makes RealtimeService injectable everywhere
-// without importing this module again in every feature module: matches,
-// friends and tournaments only ask for it in their constructor.
+// without importing this module again in every feature module: matches, friends
+// and tournaments only ask for it in their constructor.
 @Global()
 @Module({
   imports: [

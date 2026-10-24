@@ -15,7 +15,6 @@ import { SessionGuard } from '../auth/session.guard.js';
 import { BlocksService } from './blocks.service.js';
 import type { UserSummaryView } from './friend-view.js';
 
-// WHY THIS FILE EXISTS
 // The doorway to blocking: routes, input checks, then the service.
 @UseGuards(SessionGuard)
 @Controller('blocks')

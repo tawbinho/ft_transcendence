@@ -1,7 +1,6 @@
 import { Transform } from 'class-transformer';
 import { Matches } from 'class-validator';
 
-// WHY THIS FILE EXISTS
 // The body of every route that receives a 2FA code: enable, disable and the
 // login verification. A TOTP code is exactly 6 digits.
 export class TwoFactorCodeDto {
@@ -15,8 +14,7 @@ export class TwoFactorCodeDto {
 
 // The body of the routes that accept EITHER the 6-digit code of the app OR a
 // one-time backup code (like "ABCDE-FGHJK"): the login verification, turning
-// 2FA off, and making new backup codes. Same field name as before (`code`), so
-// an app that only sends 6 digits keeps working.
+// 2FA off, and making new backup codes.
 export class TwoFactorOrBackupCodeDto {
   // Spaces removed, capitals: "abcde fghjk" is accepted like "ABCDE-FGHJK".
   @Transform(({ value }) =>

@@ -24,14 +24,8 @@ export function refreshLists(queryClient: QueryClient) {
 }
 
 /**
- * One match, for its players. It is polled while it can
- * still change (slowly when live events arrive, see src/app/realtime.ts).
- * Polling pauses while the viewer's own move is being sent, so an older
- * answer cannot hide the disc they just dropped.
- *
- * A computer opponent joins a new match at once, often before this page starts
- * listening for its events. So the match is asked again whenever the page
- * opens, and a match still waiting keeps its fast polling even with live events.
+ * One match, for its players. It is polled while it can still change (slowly when live events
+ * arrive, see src/app/realtime.ts).
  */
 export function useMatch(id: string, { paused = false }: { paused?: boolean } = {}) {
   const live = useRealtimeStatus() === 'live';

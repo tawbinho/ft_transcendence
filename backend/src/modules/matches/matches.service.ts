@@ -44,15 +44,8 @@ export interface MatchPage {
   offset: number;
 }
 
-// WHY THIS FILE EXISTS
 // The rules of a match: creating one, joining it, playing moves, resigning,
-// reading it back. The Connect Four rules themselves are in the engine; this
-// service decides WHO may do WHAT and keeps the database consistent.
-//
-// Every change to a match happens inside a database transaction that first
-// LOCKS the match row (SELECT ... FOR UPDATE). Two requests for the same match
-// are therefore handled one after the other, never at the same time, so two
-// players can never take the same seat and a move can never be stored twice.
+// reading it back.
 @Injectable()
 export class MatchesService {
   private readonly logger = new Logger(MatchesService.name);
@@ -68,9 +61,7 @@ export class MatchesService {
     private readonly dataSource: DataSource,
   ) {}
 
-  // ---------------------------------------------------------------------------
   // Create
-  // ---------------------------------------------------------------------------
 
   // Creates a match in the "waiting" state with the creator in a random seat.
   async create(userId: string, dto: CreateMatchDto): Promise<MatchView> {
@@ -149,9 +140,7 @@ export class MatchesService {
     return this.get(userId, matchId);
   }
 
-  // ---------------------------------------------------------------------------
   // Join
-  // ---------------------------------------------------------------------------
 
   // The second player takes the free seat and the match starts.
   async join(userId: string, matchId: string): Promise<MatchView> {
@@ -211,9 +200,7 @@ export class MatchesService {
     return this.get(userId, matchId);
   }
 
-  // ---------------------------------------------------------------------------
   // Read
-  // ---------------------------------------------------------------------------
 
   // The full state of one match: anyone with the link while it waits for its
   // second player, then only its players (anyone else gets "not found").
@@ -263,17 +250,17 @@ export class MatchesService {
     );
   }
 
-  // Tells everybody watching this match that it changed. Live events are
-  // hints (the app also polls), so a failure here must never fail the request
-  // that already succeeded.
+  // Tells everybody watching this match that it changed. Live events are hints
+  // (the app also polls), so a failure here must never fail the request that
+  // already succeeded.
   private async broadcast(matchId: string): Promise<void> {
     try {
       const view = await this.load(null, matchId);
       this.realtime.emitToMatch(matchId, EVENTS.matchUpdate, view);
       // Once the match has started (or was cancelled), only its players may
-      // follow it, like get(): whoever watched it while it waited for a
-      // player gets this last update (their page then says it is
-      // unavailable) and nothing after it.
+      // follow it, like get(): whoever watched it while it waited for a player
+      // gets this last update (their page then says it is unavailable) and
+      // nothing after it.
       if (view.status !== 'waiting') {
         await this.realtime.keepInMatchRoom(
           matchId,
@@ -319,8 +306,8 @@ export class MatchesService {
   }
 
   // Turns a page of match rows into the list the API sends. Two more queries
-  // for the whole page (not one per match): the players and the number of
-  // moves of each match.
+  // for the whole page (not one per match): the players and the number of moves
+  // of each match.
   private async toPage(
     matches: Match[],
     total: number,
@@ -370,13 +357,9 @@ export class MatchesService {
     };
   }
 
-  // ---------------------------------------------------------------------------
   // Play
-  // ---------------------------------------------------------------------------
 
-  // The player drops a disc in `col`. The engine judges the move; this method
-  // checks the match is running, that the user is a player, and that it is
-  // their turn, then saves the move and, if the game ended, the result.
+  // The player drops a disc in `col`.
   async makeMove(
     userId: string,
     matchId: string,
@@ -494,14 +477,11 @@ export class MatchesService {
     return this.get(userId, matchId);
   }
 
-  // ---------------------------------------------------------------------------
   // Matches made by the server (tournaments)
-  // ---------------------------------------------------------------------------
 
   // Creates a match between two players that STARTS AT ONCE: both seated (seats
-  // at random: moving first is an advantage), `in_progress`, nobody has to join.
-  // Runs inside the caller's transaction, so a tournament can create its
-  // matches and update its bracket atomically. Returns the match id.
+  // at random: moving first is an advantage), `in_progress`, nobody has to
+  // join.
   async createStartedMatch(
     manager: EntityManager,
     settings: GameSettings & { theme: string },
@@ -527,16 +507,15 @@ export class MatchesService {
     return match.id;
   }
 
-  // Other modules can ask to be told when a match is OVER (won, drawn,
-  // resigned or forfeited): the tournaments module moves its bracket on.
-  // A listener that fails must not break the request that ended the match.
+  // Other modules can ask to be told when a match is OVER (won, drawn, resigned
+  // or forfeited): the tournaments module moves its bracket on.
   private readonly finishedListeners: Array<
     (matchId: string) => Promise<void> | void
   > = [];
 
   // The same for ANY change of a match (created, joined, a move, the end): the
-  // computer opponent uses it to join a match it was invited to and to answer
-  // a move.
+  // computer opponent uses it to join a match it was invited to and to answer a
+  // move.
   private readonly changedListeners: Array<
     (matchId: string) => Promise<void> | void
   > = [];
@@ -559,9 +538,7 @@ export class MatchesService {
     }
   }
 
-  // ---------------------------------------------------------------------------
   // Disconnection
-  // ---------------------------------------------------------------------------
 
   // The ids of the matches the user is playing right now.
   async inProgressMatchIdsOf(userId: string): Promise<string[]> {
@@ -575,9 +552,9 @@ export class MatchesService {
     return rows.map((row) => row.id);
   }
 
-  // The player stayed away too long: they lose and the opponent wins. Called
-  // by a timer, so by now the match may already be over (resigned, or the
-  // other player left first): then nothing happens. Returns true if it ended.
+  // The player stayed away too long: they lose and the opponent wins. Called by
+  // a timer, so by now the match may already be over (resigned, or the other
+  // player left first): then nothing happens.
   async forfeitByDisconnect(userId: string, matchId: string): Promise<boolean> {
     const ended = await this.dataSource.transaction(async (manager) => {
       const match = await manager.findOne(Match, {
@@ -598,13 +575,11 @@ export class MatchesService {
     return ended;
   }
 
-  // ---------------------------------------------------------------------------
   // Internals
-  // ---------------------------------------------------------------------------
 
   // Ends a running match because `loserId` gave up (resign) or left
-  // (disconnect): the match is finished, the loser loses, the other wins.
-  // Must run inside a transaction that holds the match lock.
+  // (disconnect): the match is finished, the loser loses, the other wins. Must
+  // run inside a transaction that holds the match lock.
   private async endByForfeit(
     manager: EntityManager,
     matchId: string,
@@ -627,8 +602,7 @@ export class MatchesService {
   }
 
   // Loads the match row and LOCKS it until the transaction ends. Any other
-  // transaction that wants the same match waits here. No relations are loaded
-  // with it on purpose: Postgres cannot lock rows through an outer join.
+  // transaction that wants the same match waits here.
   private async lockMatch(
     manager: EntityManager,
     matchId: string,

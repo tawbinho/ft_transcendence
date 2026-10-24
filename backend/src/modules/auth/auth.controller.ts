@@ -38,13 +38,9 @@ import { SessionGuard } from './session.guard.js';
 // only a few attempts per minute.
 const strict = (limit: number) => ({ default: { limit, ttl: 60_000 } });
 
-// WHY THIS FILE EXISTS
 // The controller is only the doorway: it declares the routes, receives the
 // already-validated body, calls the service, and puts the session in the
-// cookie. No business logic here. All routes are served under /api/auth.
-//
-// `@Res({ passthrough: true })` gives access to the response (to set
-// cookies) while still letting Nest send the returned value as usual.
+// cookie. No business logic here.
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
@@ -80,7 +76,7 @@ export class AuthController {
 
   // POST /api/auth/2fa/verify: second stage of a 2FA login. The user is not
   // fully logged in yet: the pending session in the cookie authenticates this
-  // one route. On success the cookie is replaced by a brand-new real session.
+  // one route.
   @Post('2fa/verify')
   @Throttle(strict(5))
   @HttpCode(200)
@@ -137,7 +133,8 @@ export class AuthController {
   }
 
   // POST /api/auth/2fa/backup-codes: a NEW list of 10 backup codes; the old
-  // ones stop working. Needs a valid code, so a stolen session cannot reset them.
+  // ones stop working. Needs a valid code, so a stolen session cannot reset
+  // them.
   @Post('2fa/backup-codes')
   @Throttle(strict(5))
   @HttpCode(200)
@@ -205,8 +202,6 @@ export class AuthController {
   }
 
   // GET /api/auth/me: the logged-in user, or null when nobody is logged in.
-  // Deliberately NOT behind the guard: "am I logged in?" is a question whose
-  // answer can be "no" without being an error (see AuthService.currentUser).
   @Get('me')
   me(@Req() req: Request): Promise<PublicUser | null> {
     return this.auth.currentUser(req.cookies?.[SESSION_COOKIE] as string | undefined);

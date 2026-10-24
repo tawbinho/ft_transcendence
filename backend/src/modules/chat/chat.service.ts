@@ -24,11 +24,8 @@ import {
   type MessageView,
 } from './message-view.js';
 
-// WHY THIS FILE EXISTS
-// The rules of private chat: who may write to whom, reading a conversation
-// page by page, invitations, read receipts and the "is typing" signal.
-// A message is stored once per conversation (the two players, smaller id
-// first), so both players read the same row.
+// The rules of private chat: who may write to whom, reading a conversation page
+// by page, invitations, read receipts and the "is typing" signal.
 @Injectable()
 export class ChatService {
   constructor(
@@ -43,16 +40,13 @@ export class ChatService {
     private readonly realtime: RealtimeService,
   ) {}
 
-  // ---------------------------------------------------------------------------
   // Conversations
-  // ---------------------------------------------------------------------------
 
   // One entry per player the viewer has at least one message with (system
   // messages included), the most recent first. Not paginated.
   async conversations(viewerId: string): Promise<ConversationView[]> {
-    // Four queries for the whole list (never one per conversation).
-    // 1. The latest message of each conversation. `peer_id` is "the other
-    //    player", whichever side of the stored pair the viewer is.
+    // Four queries for the whole list (never one per conversation). 1. The
+    // latest message of each conversation.
     const last = await this.messages.query<
       Array<{
         peer_id: string;
@@ -139,13 +133,10 @@ export class ChatService {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // Reading
-  // ---------------------------------------------------------------------------
 
   // The latest messages with a player, or the ones just before `before` (the id
-  // of a message of THIS conversation). We ask for one more than the page size:
-  // getting it tells us older messages exist.
+  // of a message of THIS conversation).
   async history(
     viewerId: string,
     peerId: string,
@@ -191,9 +182,7 @@ export class ChatService {
     return toMessagePage(rows, limit, peerRead?.readAt ?? null);
   }
 
-  // ---------------------------------------------------------------------------
   // Sending
-  // ---------------------------------------------------------------------------
 
   // A text OR an invitation (exactly one), refused while either player blocked
   // the other. Both players get `chat:message` live, so the sender's other tabs
@@ -242,9 +231,7 @@ export class ChatService {
     return view;
   }
 
-  // ---------------------------------------------------------------------------
   // Read receipts and typing
-  // ---------------------------------------------------------------------------
 
   // "I have read everything this player sent so far." Answers the time, and the
   // other player's app shows "Seen" (chat:read).
@@ -276,9 +263,7 @@ export class ChatService {
     this.realtime.emitToUser(peerId, EVENTS.chatTyping, { userId: viewerId });
   }
 
-  // ---------------------------------------------------------------------------
   // Messages written by the server
-  // ---------------------------------------------------------------------------
 
   // "Your tournament match against this player is ready." Written inside the
   // CALLER's transaction (so the message exists only if the match does) and
@@ -324,9 +309,7 @@ export class ChatService {
     });
   }
 
-  // ---------------------------------------------------------------------------
   // Internals
-  // ---------------------------------------------------------------------------
 
   // The other player must exist, and must not be the viewer.
   private async requireOther(viewerId: string, peerId: string): Promise<void> {
@@ -343,8 +326,8 @@ export class ChatService {
   }
 
   // An invitation points at a match that is still waiting, that the sender
-  // created, and that is reserved for the player being invited (made with
-  // POST /matches and their `opponentDisplayName`).
+  // created, and that is reserved for the player being invited (made with POST
+  // /matches and their `opponentDisplayName`).
   private async requireValidInvite(
     viewerId: string,
     peerId: string,

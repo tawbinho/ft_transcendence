@@ -5,11 +5,8 @@ import { Skeleton, buttonClass } from '@/components/ui';
 import { AccountMenu } from './AccountMenu';
 
 /**
- * The right end of the bar: the avatar menu for a member, Log in and Sign up
- * for a visitor. While the answer is on its way a grey circle stands in (no
- * flash of "Log in"). If it never came (server down) the person gets Log in and
- * Sign up too, so they are never left without a way in; the app asks again when
- * the tab is shown again and the bar switches to the avatar if they are a member.
+ * The right end of the bar: the avatar menu for a member, Log in and Sign up for a visitor. While
+ * the answer is on its way a grey circle stands in (no flash of "Log in").
  */
 export function SessionActions({ session }: { session: Session }) {
   const { t } = useTranslation();

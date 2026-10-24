@@ -32,9 +32,8 @@ export interface ProfileMatchPage {
   offset: number;
 }
 
-// Wins, losses and draws of every player who has finished matches, counted
-// from `match_players` (never stored, so they cannot go out of date). Joined
-// to `users u` by the search and the profile; abandoned matches do not count.
+// Wins, losses and draws of every player who has finished matches, counted from
+// `match_players` (never stored, so they cannot go out of date).
 const STATS_JOIN = `
   LEFT JOIN (
         SELECT mp.user_id,
@@ -49,8 +48,7 @@ const STATS_JOIN = `
 
 // How the viewer relates to each player: the friendship row of the pair (the
 // two ids are stored smaller first, so LEAST and GREATEST find it whichever
-// side sent the request). `viewer` is the SQL placeholder of the viewer's id,
-// for example "$1::uuid".
+// side sent the request).
 const friendJoin = (viewer: string): string => `
   LEFT JOIN friendships f
          ON f.user_low_id = LEAST(u.id, ${viewer})
@@ -109,14 +107,7 @@ const ORDER_BY = {
   newest: 'u.created_at DESC, u.id DESC',
 } as const;
 
-// WHY THIS FILE EXISTS
-// The users module owns the `users` table. Other modules (auth now, ranking
-// and matches later) go through this service instead of touching the table
-// directly, so every user query lives in one place.
-//
-// `Repository<User>` is TypeORM's ready-made toolbox for one table (find,
-// save, delete...). `@InjectRepository` asks Nest for it; it is available
-// because UsersModule registers the User entity with `forFeature`.
+// The users module owns the `users` table.
 @Injectable()
 export class UsersService {
   constructor(
@@ -179,8 +170,7 @@ export class UsersService {
   }
 
   // The Players page: search, filter, sort, paginate. The viewer is in the
-  // results too. Wins, losses and draws are COUNTED here from the finished
-  // matches, never stored, so they cannot go out of date.
+  // results too.
   async search(viewerId: string, query: ListUsersQuery): Promise<PlayerPage> {
     const limit = query.limit ?? 20;
     const offset = query.offset ?? 0;
@@ -205,8 +195,6 @@ export class UsersService {
     }
     if (query.online !== undefined) {
       // The viewer counts as online to themselves (see toPlayerListItem).
-      // COALESCE: a player never seen has last_seen_at NULL, and in SQL a
-      // comparison with NULL is "unknown", which NOT would keep unknown.
       const recent = `(u.id = ${viewer} OR COALESCE(u.last_seen_at > now() - ${param(ONLINE_WINDOW_MS)} * interval '1 millisecond', FALSE))`;
       where.push(query.online ? recent : `NOT ${recent}`);
     }

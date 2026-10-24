@@ -1,4 +1,3 @@
-// WHY THIS FILE EXISTS
 // The allowed values of the chat module in ONE place, shared by the database
 // entities, the validation (DTOs) and the service.
 

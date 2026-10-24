@@ -6,7 +6,6 @@ import {
   DISPLAY_NAME_PATTERN,
 } from '../user.constants.js';
 
-// WHY THIS FILE EXISTS
 // The body of PATCH /users/me: the new display name, under the same rules as
 // signup (they come from the same constants).
 export class UpdateProfileDto {

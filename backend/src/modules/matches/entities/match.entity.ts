@@ -21,14 +21,8 @@ import {
 import { MatchMove } from './match-move.entity.js';
 import { MatchPlayer } from './match-player.entity.js';
 
-// WHY THIS FILE EXISTS
 // The `matches` table: one row per game. It stores the settings and the
-// lifecycle (waiting, in progress, finished). It does NOT store the board:
-// the board is rebuilt from the moves (see MatchMove) with the engine, so the
-// database can never disagree with the rules.
-//
-// The CHECK constraints are a last line of defence: even a bug in the code
-// cannot store a board size or win length the engine would refuse.
+// lifecycle (waiting, in progress, finished).
 @Entity('matches')
 @Check('"cols" BETWEEN 3 AND 12')
 @Check('"rows" BETWEEN 3 AND 12')

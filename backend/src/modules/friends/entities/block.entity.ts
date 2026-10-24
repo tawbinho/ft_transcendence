@@ -10,11 +10,8 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity.js';
 
-// WHY THIS FILE EXISTS
 // The `blocks` table: "blocker does not want to hear from blocked". The pair is
-// the primary key, so blocking twice is not possible. The direction matters
-// (A blocks B is not B blocks A), but while EITHER blocks the other, friend
-// requests, messages and match invitations between them are refused.
+// the primary key, so blocking twice is not possible.
 @Entity('blocks')
 @Check('"blocker_id" <> "blocked_id"')
 export class Block {

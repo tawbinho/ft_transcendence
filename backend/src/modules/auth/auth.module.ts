@@ -13,9 +13,9 @@ import { BackupCodesService } from './two-factor/backup-codes.service.js';
 import { SecretCipher } from './two-factor/secret-cipher.js';
 import { TwoFactorService } from './two-factor/two-factor.service.js';
 
-// The auth module: signup, login (with the optional 2FA step), logout and
-// "me", plus the guard and the sessions service other modules use to know who
-// is logged in (HTTP routes now, WebSockets later).
+// The auth module: signup, login (with the optional 2FA step), logout and "me",
+// plus the guard and the sessions service other modules use to know who is
+// logged in (HTTP routes now, WebSockets later).
 @Module({
   imports: [
     UsersModule, // for UsersService
@@ -35,8 +35,6 @@ import { TwoFactorService } from './two-factor/two-factor.service.js';
   ],
   // Other modules import AuthModule to use @UseGuards(SessionGuard), and the
   // WebSocket gateway will use SessionsService to authenticate a connection.
-  // UsersModule is re-exported because SessionGuard needs PresenceService, and a
-  // guard is built inside the module that uses it.
   exports: [SessionGuard, SessionsService, UsersModule],
 })
 export class AuthModule {}

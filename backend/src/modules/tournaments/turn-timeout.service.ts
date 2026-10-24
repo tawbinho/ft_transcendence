@@ -14,17 +14,8 @@ import { TournamentPairing } from './entities/tournament-pairing.entity.js';
 // How often we look for stalled matches.
 export const SWEEP_EVERY_MS = 15_000;
 
-// WHY THIS FILE EXISTS
 // A tournament cannot wait for ever for a player who never plays: the other
-// players are waiting for the winner. So in a TOURNAMENT match, the player
-// whose turn it is loses if no move has been made for
-// TOURNAMENT_TURN_TIMEOUT_SECONDS (180 by default). The clock starts when the
-// match starts, and restarts after every move. Ordinary matches have no clock.
-//
-// The check is a query on the database, repeated every few seconds, instead of
-// a timer per match in memory: a server restart cannot lose a clock. The loser
-// is recorded as a `disconnect` (the player left the game), which also moves
-// the bracket on, like any other end of a match.
+// players are waiting for the winner.
 @Injectable()
 export class TurnTimeoutService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(TurnTimeoutService.name);
@@ -74,8 +65,7 @@ export class TurnTimeoutService implements OnModuleInit, OnModuleDestroy {
   }
 
   // The running tournament matches nobody has moved in for `timeoutSeconds`,
-  // with the player whose turn it is. Seat 1 plays first and the seats
-  // alternate, so an even number of moves means seat 1 is to move.
+  // with the player whose turn it is.
   async findStalled(
     timeoutSeconds: number,
   ): Promise<Array<{ matchId: string; userId: string }>> {

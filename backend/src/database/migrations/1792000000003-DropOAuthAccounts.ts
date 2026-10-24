@@ -1,8 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
 // Removes oauth_accounts: it was created for an external login (Google, 42...)
-// that the project does not build, and nothing ever wrote to it.
-// down() recreates it exactly as CreateIdentityTables did.
+// that the project does not build, and nothing ever wrote to it. down()
+// recreates it exactly as CreateIdentityTables did.
 export class DropOAuthAccounts1792000000003 implements MigrationInterface {
     name = 'DropOAuthAccounts1792000000003'
 

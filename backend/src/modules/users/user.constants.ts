@@ -1,4 +1,3 @@
-// WHY THIS FILE EXISTS
 // Allowed values of the users routes in one place, shared by the validation
 // (DTO) and the service.
 
@@ -21,7 +20,8 @@ export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 // Pictures are served under /api (the proxy only forwards /api and /socket.io).
 export const AVATAR_URL_PREFIX = '/api/avatars/';
 // What a stored file name looks like: a random uuid and the extension. Checked
-// before reading a file from disk, so a name can never point outside the folder.
+// before reading a file from disk, so a name can never point outside the
+// folder.
 export const AVATAR_FILE_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(webp|png|jpg)$/;
 // Upload and rename are limited per minute per address.

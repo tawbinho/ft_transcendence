@@ -12,10 +12,8 @@ import {
   normalizeCode,
 } from './backup-code.js';
 
-// WHY THIS FILE EXISTS
 // The database side of 2FA backup codes: making a fresh list, using a code
-// once, counting what is left. The rules about WHEN a backup code may be used
-// (login, turning 2FA off...) are in TwoFactorService.
+// once, counting what is left.
 @Injectable()
 export class BackupCodesService {
   // The same secret key that encrypts the TOTP secrets: it lives only in the
@@ -32,8 +30,7 @@ export class BackupCodesService {
 
   // Throws away every code the user had (used or not) and makes 10 new ones.
   // Returns them in the form to show: this is the ONLY time they exist in
-  // clear; only their keyed hashes are stored. One transaction: the user is
-  // never left with half a list.
+  // clear; only their keyed hashes are stored.
   async replaceAll(userId: string): Promise<string[]> {
     const plain = Array.from({ length: BACKUP_CODE_COUNT }, generateCode);
     await this.codes.manager.transaction(async (manager) => {
@@ -47,9 +44,7 @@ export class BackupCodesService {
   }
 
   // Uses a typed code. True if it was a real, unused code of this user, which
-  // is now spent. The UPDATE only matches while `used_at` is still empty, so if
-  // two requests send the same code at the same moment, exactly one of them
-  // changes a row and wins.
+  // is now spent.
   async consume(userId: string, typed: string): Promise<boolean> {
     const code = normalizeCode(typed);
     if (!code) return false;

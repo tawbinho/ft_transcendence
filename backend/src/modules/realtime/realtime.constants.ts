@@ -1,7 +1,4 @@
-// WHY THIS FILE EXISTS
-// The names of the live events and of the rooms, in ONE place. The frontend
-// (src/lib/realtime/events.ts) and backend/docs/openapi.yaml (x-realtime) use
-// the same names, so a typo here breaks the app silently: keep them in sync.
+// The names of the live events and of the rooms, in ONE place.
 
 // Server -> client events.
 export const EVENTS = {

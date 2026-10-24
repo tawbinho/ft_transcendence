@@ -1,27 +1,7 @@
 import { legalMoves } from '../engine/game.engine.js';
 import type { GameState, Seat } from '../engine/game.types.js';
 
-// WHY THIS FILE EXISTS
-// The computer opponent: given a game, it picks a column. PURE (no Nest, no
-// database), built on the engine's own state, and it works on any board size
-// and any winLength because it never assumes 7 x 6 or four in a row.
-//
-// HOW IT THINKS, in order (stopping at the first step that decides):
-//  1. If it can win right now, it wins.
-//  2. If the opponent threatens to win next move, it blocks (the lower levels
-//     sometimes MISS the threat, like a distracted human).
-//  3. Sometimes it "slips": it plays a random move that at least does not hand
-//     the opponent a win above it. The lower the level, the more often.
-//  4. Otherwise it LOOKS AHEAD with minimax: it imagines its move, the best
-//     answer, its best reply... as far as the level and the clock allow
-//     (iterative deepening: depth 1, then 2, then 3..., keeping the result of
-//     the deepest depth it finished). A position is scored by counting, in every
-//     possible line of `winLength` squares, how close each side is to filling
-//     it. Alpha-beta pruning skips branches that cannot change the result.
-//     Among equally good moves it picks one at random, so it does not play the
-//     same game every time.
-// It is NOT perfect on purpose: easy and medium make mistakes, and even hard
-// slips now and then and has a time limit, so a human can beat it.
+// The computer opponent: given a game, it picks a column.
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
@@ -90,13 +70,11 @@ function pick(moves: readonly number[], random: () => number): number {
   return moves[Math.min(moves.length - 1, Math.floor(random() * moves.length))]!;
 }
 
-// ---------------------------------------------------------------------------
 // The board used while thinking
-// ---------------------------------------------------------------------------
 
 // A light, MUTABLE copy of the game, because the search tries and takes back
 // millions of moves and the engine builds a new state for each one (too slow
-// for this). `cells[col * rows + row]`: 0 empty, 1 or 2 a seat.
+// for this).
 class SearchBoard {
   readonly cols: number;
   readonly rows: number;
@@ -225,9 +203,7 @@ const DIRECTIONS: ReadonlyArray<readonly [number, number]> = [
   [1, -1],
 ];
 
-// ---------------------------------------------------------------------------
 // Looking ahead
-// ---------------------------------------------------------------------------
 
 class TimeUp extends Error {}
 
@@ -270,8 +246,6 @@ class Search {
   ) {}
 
   // Scores every candidate first move for `me` by looking `depth` moves ahead.
-  // Moves that are clearly worse than the best so far get a bound instead of
-  // an exact score: enough, since only the best ones are used.
   root(candidates: number[], me: Seat, depth: number): Map<number, number> {
     const scores = new Map<number, number>();
     const them: Seat = me === 1 ? 2 : 1;
@@ -290,9 +264,8 @@ class Search {
 
   // The value of the position for `player`, who is to move: the best of their
   // moves, where each move is worth the NEGATIVE of the opponent's best reply
-  // (what is good for one side is bad for the other: "negamax").
-  // alpha and beta are the pruning window: a branch that cannot land inside it
-  // is abandoned.
+  // (what is good for one side is bad for the other: "negamax"). alpha and beta
+  // are the pruning window: a branch that cannot land inside it is abandoned.
   private negamax(depth: number, alpha: number, beta: number, player: Seat, ply: number): number {
     if ((++this.nodes & 255) === 0 && Date.now() > this.deadline) throw new TimeUp();
 
@@ -316,10 +289,7 @@ class Search {
     return best;
   }
 
-  // How good is the board for `player`? In every line of winLength squares
-  // that the other side has not blocked, the more discs a side has, the better
-  // (and it grows fast: three out of four is worth much more than two). The
-  // opponent's lines count against us. A small bonus favours central discs.
+  // How good is the board for `player`?
   private evaluate(player: Seat): number {
     const { board } = this;
     const cells = board.cells;

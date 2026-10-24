@@ -14,9 +14,7 @@ async function bootstrap() {
 
   // The backend sits behind the HTTPS proxy (see proxy/nginx.conf). Trust ONE
   // proxy hop, so `request.ip` is the real client address taken from the
-  // X-Forwarded-For header the proxy sets. Without this, every request would
-  // look like it comes from the proxy and all users would share one rate
-  // limit. The proxy overwrites that header, so clients cannot spoof it.
+  // X-Forwarded-For header the proxy sets.
   app.set('trust proxy', 1);
 
   // Every route lives under /api (the frontend and its dev proxy expect it).
@@ -31,9 +29,7 @@ async function bootstrap() {
   // Every success leaves as { data }.
   app.useGlobalInterceptors(new ResponseInterceptor());
   // Checks every request body against its DTO rules before it reaches a
-  // controller. `whitelist` drops fields the DTO does not declare,
-  // `forbidNonWhitelisted` rejects the request if such fields are sent, and
-  // `transform` turns the raw JSON into a real DTO instance.
+  // controller.
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -42,9 +38,9 @@ async function bootstrap() {
     }),
   );
 
-  // Interactive API page at /api/docs, to try routes by hand from the
-  // browser. It shows the hand-written contract in docs/openapi.yaml (Swagger
-  // UI is loaded from a CDN, so no extra package). Off in production.
+  // Interactive API page at /api/docs, to try routes by hand from the browser.
+  // It shows the hand- written contract in docs/openapi.yaml (Swagger UI is
+  // loaded from a CDN, so no extra package).
   if (process.env.NODE_ENV !== 'production') {
     const http = app.getHttpAdapter().getInstance() as Express;
     http.get('/api/docs/openapi.yaml', async (_req, res) => {

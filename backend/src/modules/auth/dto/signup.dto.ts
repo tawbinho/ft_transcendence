@@ -6,11 +6,9 @@ import {
   DISPLAY_NAME_PATTERN,
 } from '../../users/user.constants.js';
 
-// WHY THIS FILE EXISTS
 // A DTO (data transfer object) describes what a request body must look like.
-// The global ValidationPipe (main.ts) checks every signup request against
-// these rules BEFORE the controller runs. A request that breaks a rule, or
-// that sends a field not listed here, is rejected with VALIDATION_ERROR.
+// The global ValidationPipe (main.ts) checks every signup request against these
+// rules BEFORE the controller runs.
 export class SignupDto {
   // Runs before validation: " A@X.com " becomes "a@x.com", so the same
   // address can never be registered twice with different capitalisation.

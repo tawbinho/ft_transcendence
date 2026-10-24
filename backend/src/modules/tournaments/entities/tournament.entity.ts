@@ -18,14 +18,9 @@ import {
 } from '../tournament.constants.js';
 import { TournamentPlayer } from './tournament-player.entity.js';
 
-// WHY THIS FILE EXISTS
 // The `tournaments` table: one row per tournament. It stores what the creator
 // chose (name, number of places, the board every match will use) and where the
-// tournament is in its life. Who registered is in TournamentPlayer.
-//
-// The CHECK constraints are a last line of defence: even a bug in the code
-// cannot store a size other than 4 or 8, or a board the engine would refuse
-// (they are the same limits as the `matches` table).
+// tournament is in its life.
 @Entity('tournaments')
 @Check('"size" IN (4, 8)')
 @Check('"cols" BETWEEN 3 AND 12')

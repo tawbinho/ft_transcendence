@@ -1,9 +1,4 @@
-/* ---------------------------------------------------------------------------
-   The stage: the box every game board stands in.
-   Every board is drawn inside this box, and the box is as wide as the cards above it.
-
-   --cols and --rows come from GameBoard (inline style).
-   --------------------------------------------------------------------------- */
+/* The stage: the box every game board stands in. */
 .board-stage {
   display: grid;
   width: 100%;

@@ -1,8 +1,5 @@
-// WHY THIS FILE EXISTS
 // The engine reports a broken rule with its own error type, not a Nest or an
-// HTTP error, so the engine stays free of any framework. The match service
-// will catch these and turn them into AppError (with an HTTP status) for the
-// API.
+// HTTP error, so the engine stays free of any framework.
 export type GameRuleErrorCode =
   | 'INVALID_SETTINGS' // the board size or the win length is not allowed
   | 'INVALID_COLUMN' // the column does not exist (negative, too large, not a whole number)

@@ -1,9 +1,6 @@
 import { DEFAULT_SETTINGS, type GameSettings } from './engine';
 
-// Board options offered in the UI. They match what the backend accepts for an
-// online match (SETTINGS_API_LIMITS and MATCH_THEMES in
-// backend/src/modules/matches/match.constants.ts), so a board chosen for a
-// local game can always be used online too.
+// Board options offered in the UI.
 
 export const BOARD_LIMITS = {
   cols: { min: 5, max: 10 },

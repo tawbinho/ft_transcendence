@@ -1,9 +1,8 @@
 import { isOnline } from './presence.service.js';
 
-// WHY THIS FILE EXISTS
 // Turns one database row of the player search into the JSON the API sends
-// (PlayerListItem in backend/docs/openapi.yaml). PURE: no database, no Nest,
-// so it is easy to test.
+// (PlayerListItem in backend/docs/openapi.yaml). PURE: no database, no Nest, so
+// it is easy to test.
 
 // How the viewer relates to another player.
 export type Friendship =

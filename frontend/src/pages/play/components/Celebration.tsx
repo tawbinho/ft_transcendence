@@ -11,10 +11,8 @@ function prefersReducedMotion(): boolean {
 }
 
 /**
- * A short burst of confetti in the colors of the board, shown over the page
- * for a few seconds. It is decoration: hidden from screen readers and it
- * never catches clicks. The pieces are spread by simple arithmetic on their
- * number, so every burst looks the same and nothing is random.
+ * A short burst of confetti in the colors of the board, shown over the page for a few seconds. It
+ * is decoration: hidden from screen readers and it never catches clicks.
  */
 export function Celebration({ theme }: { theme: BoardTheme }) {
   const [visible, setVisible] = useState(true);

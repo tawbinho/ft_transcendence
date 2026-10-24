@@ -8,9 +8,7 @@ import {
 import { GameRuleError } from './game.errors.js';
 import type { GameSettings, GameState, Position, Seat } from './game.types.js';
 
-// ---------------------------------------------------------------------------
 // Helpers
-// ---------------------------------------------------------------------------
 
 // Runs `fn` and returns the code of the GameRuleError it throws (null if it
 // does not throw, 'OTHER' if it throws something else).
@@ -33,8 +31,7 @@ const play = (moves: number[], settings: Partial<GameSettings> = {}) =>
   replay(settings, moves);
 
 // Depth-first search over every possible game of a SMALL board, returning the
-// first sequence of moves whose finished state satisfies `wanted`. Used to
-// find draws, which are hard to write by hand.
+// first sequence of moves whose finished state satisfies `wanted`.
 function findGame(
   settings: GameSettings,
   wanted: (state: GameState) => boolean,
@@ -50,9 +47,7 @@ function findGame(
   return search(createGame(settings), []);
 }
 
-// ---------------------------------------------------------------------------
 // Creating a game
-// ---------------------------------------------------------------------------
 
 describe('createGame', () => {
   it('starts with an empty classic 7x6 board and seat 1 to play', () => {
@@ -94,9 +89,7 @@ describe('createGame', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Dropping discs
-// ---------------------------------------------------------------------------
 
 describe('drop', () => {
   it('makes the disc fall to the bottom of an empty column', () => {
@@ -152,9 +145,7 @@ describe('drop', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Winning
-// ---------------------------------------------------------------------------
 
 describe('winning', () => {
   it('detects four in a row horizontally', () => {
@@ -265,9 +256,7 @@ describe('winning', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // After the game is over
-// ---------------------------------------------------------------------------
 
 describe('a finished game', () => {
   it('accepts no more moves', () => {
@@ -278,9 +267,7 @@ describe('a finished game', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Draws
-// ---------------------------------------------------------------------------
 
 describe('draws', () => {
   // 3x3 with three in a row is small enough to search exhaustively.
@@ -313,9 +300,7 @@ describe('draws', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Legal moves
-// ---------------------------------------------------------------------------
 
 describe('legalMoves', () => {
   it('lists every column on an empty board', () => {
@@ -328,9 +313,7 @@ describe('legalMoves', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Replaying a saved game
-// ---------------------------------------------------------------------------
 
 describe('replay', () => {
   it('gives the same state as playing the moves one by one', () => {
@@ -359,13 +342,8 @@ describe('replay', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Cross-check against a slow, independent implementation
-// ---------------------------------------------------------------------------
-// The engine only looks around the last disc, which is fast but easy to get
-// subtly wrong. This test plays hundreds of random games and, after EVERY
-// move, compares the engine's verdict with a deliberately simple scan of the
-// whole board.
+// Cross-check against a slow, independent implementation The engine only looks
+// around the last disc, which is fast but easy to get subtly wrong.
 
 // Small seeded random generator, so a failure can be reproduced.
 function seededRandom(seed: number): () => number {

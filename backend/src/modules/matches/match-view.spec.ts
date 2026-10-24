@@ -6,9 +6,7 @@ import {
   type PlayerData,
 } from './match-view.js';
 
-// ---------------------------------------------------------------------------
 // Helpers: build the raw rows by hand
-// ---------------------------------------------------------------------------
 
 const ALICE = 'user-alice';
 const BOB = 'user-bob';
@@ -41,7 +39,6 @@ const players = (
 const moves = (columns: number[]): MoveData[] =>
   columns.map((col, index) => ({ ply: index + 1, col }));
 
-// ---------------------------------------------------------------------------
 
 describe('toMatchView', () => {
   it('shows an empty board for a match nobody has played in yet', () => {

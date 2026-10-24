@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { cn } from '@/lib/cn';
 
-// Players without a picture get their first letter on a color picked from
-// their name, so the same player always looks the same. Every color is dark
-// enough for white text (contrast above 4.5:1) in light and dark mode.
+// Players without a picture get their first letter on a color picked from their
+// name, so the same player always looks the same.
 const COLORS = ['#2d55d6', '#157a4c', '#b4235a', '#7a3486', '#0f6f69', '#9a4d00', '#4a5578', '#c22b3c'];
 
 const SIZES = {

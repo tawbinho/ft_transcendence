@@ -21,10 +21,8 @@ import { MakeMoveDto } from './dto/make-move.dto.js';
 import type { MatchView } from './match-view.js';
 import { MatchesService, type MatchPage } from './matches.service.js';
 
-// WHY THIS FILE EXISTS
-// The doorway to matches: it declares the routes, validates the input and
-// calls the service. No game logic here. Every route needs a logged-in user
-// (the guard on the whole class), and all routes are under /api/matches.
+// The doorway to matches: it declares the routes, validates the input and calls
+// the service. No game logic here.
 @UseGuards(SessionGuard)
 @Controller('matches')
 export class MatchesController {

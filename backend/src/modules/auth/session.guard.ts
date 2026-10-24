@@ -6,15 +6,7 @@ import { PresenceService } from '../users/presence.service.js';
 import { SESSION_COOKIE } from './auth-cookies.js';
 import { SessionsService } from './sessions.service.js';
 
-// WHY THIS FILE EXISTS
-// A guard is the bouncer in front of a route. Put `@UseGuards(SessionGuard)`
-// on a controller or route and it only runs for logged-in users:
-//  1. read the session token from the httpOnly cookie,
-//  2. look the session up (it must exist, not be expired, and not be a
-//     pending-2FA session),
-//  3. put the user id on the request, where @CurrentUser() finds it.
-//  4. note that the user is online (presence).
-// Any failure answers 401 UNAUTHORIZED before the route code runs.
+// A guard is the bouncer in front of a route.
 @Injectable()
 export class SessionGuard implements CanActivate {
   constructor(

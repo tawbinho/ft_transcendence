@@ -2,11 +2,7 @@ import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
 import { MAX_PAGE_SIZE } from '../chat.constants.js';
 
-// WHY THIS FILE EXISTS
-// The query string of GET /chat/:userId/messages. Without `before` it gives the
-// latest messages; with `before` (the id of the oldest message the reader
-// already has) it gives the ones just before it: that is how older messages
-// load when the reader scrolls up.
+// The query string of GET /chat/:userId/messages.
 export class ListMessagesQuery {
   @IsOptional()
   @IsUUID()

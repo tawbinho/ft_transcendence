@@ -9,11 +9,9 @@ import {
 import type { Response } from 'express';
 import { AppError } from '../errors/app-error.js';
 
-// WHY THIS FILE EXISTS
-// Every error, whatever its origin, leaves the API in one shape:
-//   { "error": { "code": "EMAIL_TAKEN", "message": "..." } }
-// which is what the frontend (lib/api.ts) reads. `@Catch()` with no argument
-// means "catch everything".
+// Every error, whatever its origin, leaves the API in one shape:   { "error": {
+// "code": "EMAIL_TAKEN", "message": "..." } } which is what the frontend
+// (lib/api.ts) reads.
 
 // Fallback codes for errors that did not come from our own AppError.
 const CODE_BY_STATUS: Record<number, string> = {

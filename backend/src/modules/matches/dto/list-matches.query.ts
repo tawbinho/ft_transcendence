@@ -2,11 +2,8 @@ import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 import { MATCH_STATUSES, type MatchStatus } from '../match.constants.js';
 
-// WHY THIS FILE EXISTS
-// The query string of GET /matches/mine: an optional status filter and
-// simple pagination, so a long history never comes back all at once.
-// Query values arrive as text, so @Type(() => Number) turns them into numbers
-// before they are checked.
+// The query string of GET /matches/mine: an optional status filter and simple
+// pagination, so a long history never comes back all at once.
 export class ListMatchesQuery {
   @IsOptional()
   @IsIn([...MATCH_STATUSES])

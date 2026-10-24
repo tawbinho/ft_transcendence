@@ -11,12 +11,8 @@ import {
 } from 'class-validator';
 import { MATCH_THEMES, SETTINGS_API_LIMITS } from '../match.constants.js';
 
-// WHY THIS FILE EXISTS
 // The rules for the body of POST /matches, enforced by the global
-// ValidationPipe before the controller runs. Anything missing falls back to
-// the classic game (7 x 6, four in a row, classic theme) in the service.
-// Whether the win length fits the board (it must not be longer than the
-// smaller side) is checked by the engine, not here.
+// ValidationPipe before the controller runs.
 export class MatchSettingsDto {
   @IsOptional()
   @IsInt()

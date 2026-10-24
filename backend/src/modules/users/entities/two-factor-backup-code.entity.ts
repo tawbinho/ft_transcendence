@@ -11,13 +11,8 @@ import {
 } from 'typeorm';
 import { User } from './user.entity.js';
 
-// WHY THIS FILE EXISTS
 // The `two_factor_backup_codes` table: the one-time codes a user can type
-// instead of an authenticator code, if they lose their phone. One row per
-// code. We never store a code itself, only its keyed hash (see
-// auth/two-factor/backup-code.ts), so a stolen database does not give the
-// codes away. `used_at` is set the first time a code works: it can never work
-// again.
+// instead of an authenticator code, if they lose their phone. One row per code.
 @Entity('two_factor_backup_codes')
 @Unique(['userId', 'codeHash'])
 export class TwoFactorBackupCode {

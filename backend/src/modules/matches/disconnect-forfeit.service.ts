@@ -9,17 +9,8 @@ import type { Env } from '../../config/env.validation.js';
 import { PresenceService } from '../users/presence.service.js';
 import { MatchesService } from './matches.service.js';
 
-// WHY THIS FILE EXISTS
-// A remote game needs a rule for a player who leaves: closing the tab or
-// losing the connection must not freeze the opponent forever. The rule:
-//  - when a player's LAST socket closes, each running match of theirs gets a
-//    countdown (DISCONNECT_GRACE_SECONDS, 30 by default);
-//  - if they open a socket again before it ends (a page refresh, a network
-//    cut), the countdowns are cancelled and the game goes on;
-//  - otherwise they lose (end reason `disconnect`) and the opponent wins.
-// Only players who WERE connected can be forfeited: an app that does not use
-// sockets never triggers this. The countdowns live in memory, so a server
-// restart drops them (the players reconnect and keep playing).
+// A remote game needs a rule for a player who leaves: closing the tab or losing
+// the connection must not freeze the opponent forever.
 @Injectable()
 export class DisconnectForfeitService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DisconnectForfeitService.name);

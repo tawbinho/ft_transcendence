@@ -1,9 +1,8 @@
 import { isOnline } from '../users/presence.service.js';
 
-// WHY THIS FILE EXISTS
 // Turns database rows into the JSON of the friends and blocks routes
-// (UserSummary, Friend, FriendsOverview in backend/docs/openapi.yaml). PURE:
-// no database, no Nest, easy to test.
+// (UserSummary, Friend, FriendsOverview in backend/docs/openapi.yaml). PURE: no
+// database, no Nest, easy to test.
 
 // A user row, as the service loads it.
 export interface UserRow {

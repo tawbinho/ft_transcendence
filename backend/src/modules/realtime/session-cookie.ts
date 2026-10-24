@@ -1,9 +1,8 @@
 import { SESSION_COOKIE } from '../auth/auth-cookies.js';
 
-// WHY THIS FILE EXISTS
 // A WebSocket handshake is an HTTP request, so the browser sends the `session`
 // cookie with it, but no cookie parser has run. This reads the session token
-// out of the raw `Cookie:` header. Pure: easy to test.
+// out of the raw `Cookie:` header.
 export function readSessionToken(cookieHeader: string | undefined): string | null {
   if (!cookieHeader) return null;
   for (const part of cookieHeader.split(';')) {

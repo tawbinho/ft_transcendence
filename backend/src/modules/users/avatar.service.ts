@@ -20,11 +20,9 @@ export interface UploadedImage {
   size: number;
 }
 
-// WHY THIS FILE EXISTS
-// Profile pictures: checks an uploaded file, stores it in the avatar folder
-// (a Docker volume) under a NEW random name every time, and keeps
-// `users.avatar_url` pointing at it. A new name per picture means a browser
-// never shows an old cached copy.
+// Profile pictures: checks an uploaded file, stores it in the avatar folder (a
+// Docker volume) under a NEW random name every time, and keeps
+// `users.avatar_url` pointing at it.
 @Injectable()
 export class AvatarService {
   private readonly logger = new Logger(AvatarService.name);

@@ -1,6 +1,5 @@
-// English is the reference language: the fr and ar folders must have exactly the
-// same keys (TypeScript checks it through the Messages type).
-// Each area file holds whole sections; a section lives in exactly one file.
+// English is the reference language: the fr and ar folders must have exactly
+// the same keys (TypeScript checks it through the Messages type).
 
 import { commonMessages } from './common';
 import { shellMessages } from './shell';

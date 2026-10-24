@@ -1,12 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Kbd } from '@/components/ui';
 
-/**
- * A reminder under the game summary that the board can be played with the keyboard.
- * The keys are drawn as keys, in a left-to-right group: a sentence that mixes arrows
- * and key names with Arabic text would otherwise put them in the wrong order. Each key
- * group stays with its words, so a narrow column breaks between the two hints.
- */
+/** A reminder under the game summary that the board can be played with the keyboard. */
 export function KeysHint() {
   const { t } = useTranslation();
   return (

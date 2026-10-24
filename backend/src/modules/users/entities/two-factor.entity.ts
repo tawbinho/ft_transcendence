@@ -8,10 +8,9 @@ import {
 } from 'typeorm';
 import { User } from './user.entity.js';
 
-// WHY THIS FILE EXISTS
-// The `two_factor` table: the authenticator-app (TOTP) setup of a user.
-// At most one row per user, so the user id is the primary key as well as the
-// foreign key. No row means the user never started 2FA.
+// The `two_factor` table: the authenticator-app (TOTP) setup of a user. At most
+// one row per user, so the user id is the primary key as well as the foreign
+// key.
 @Entity('two_factor')
 export class TwoFactor {
   @PrimaryColumn({ name: 'user_id', type: 'uuid' })
@@ -33,9 +32,7 @@ export class TwoFactor {
   enabled: boolean;
 
   // Replay protection. A TOTP code is valid for a 30-second slot; this stores
-  // the number of the last slot whose code was accepted. A code from that
-  // slot or an earlier one is rejected, so a code someone saw cannot be
-  // reused. null until the first successful verification.
+  // the number of the last slot whose code was accepted.
   @Column({ name: 'last_used_step', type: 'integer', nullable: true })
   lastUsedStep: number | null;
 }

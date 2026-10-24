@@ -10,9 +10,7 @@ import { ChatService } from './chat.service.js';
 import { ConversationRead } from './entities/conversation-read.entity.js';
 import { Message } from './entities/message.entity.js';
 
-// The chat module: private conversations between two players. It reads the
-// match tables itself (to check an invitation) instead of importing the
-// matches module, so the tournaments module can use the chat without a cycle.
+// The chat module: private conversations between two players.
 @Module({
   imports: [
     TypeOrmModule.forFeature([Message, ConversationRead, Match, MatchPlayer, User]),

@@ -2,12 +2,6 @@ import type { MatchSettings } from '@/features/matches/types';
 import type { UserSummary } from '@/features/users/types';
 
 // The shapes of the tournament routes (docs/api-contract.md, "Tournaments").
-//
-// A tournament is a single-elimination bracket. Players register while it is
-// "registering"; it starts when it is full (or earlier, by its creator, with
-// at least 3 players). Every pairing is played as a normal online match that
-// the server creates for the two players. The winner moves on to the next
-// round; a draw is replayed.
 
 export const TOURNAMENT_STATUSES = ['registering', 'running', 'finished'] as const;
 export type TournamentStatus = (typeof TOURNAMENT_STATUSES)[number];

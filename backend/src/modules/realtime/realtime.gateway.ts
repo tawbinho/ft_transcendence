@@ -29,18 +29,8 @@ interface SocketData {
   token?: string;
 }
 
-// WHY THIS FILE EXISTS
 // The door of the live connection (Socket.IO, path /socket.io, same origin as
-// the app: the proxy forwards it to the backend).
-//  1. Refuses anyone without a valid login (the browser sends the `session`
-//     cookie with the handshake).
-//  2. Puts every socket in the room of its user, so an event reaches every tab.
-//  3. Keeps track of who is online.
-//  4. Lets a client start and stop watching a match it may read.
-// Sending events is RealtimeService's job, not this class's.
-//
-// Only the WebSocket transport is allowed: it is what the frontend asks for,
-// and it avoids the long-polling fallback, which would need sticky sessions.
+// the app: the proxy forwards it to the backend).  1.
 @WebSocketGateway({ transports: ['websocket'] })
 export class RealtimeGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy
@@ -103,8 +93,7 @@ export class RealtimeGateway
 
   // match:watch { matchId }: from now on this socket receives match:update for
   // that match, if its user may read it: the rule of GET /matches/:id (anyone
-  // while it waits for its second player, then only its players). Anything
-  // else is ignored, so knowing a match id is not enough to follow the game.
+  // while it waits for its second player, then only its players).
   @SubscribeMessage(MESSAGES.matchWatch)
   async watch(
     @ConnectedSocket() socket: Socket,

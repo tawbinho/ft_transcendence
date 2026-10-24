@@ -1,9 +1,7 @@
-// WHY THIS FILE EXISTS
-// Services throw this when a business rule is broken, for example
-//   throw new AppError('EMAIL_TAKEN', 'This email is already registered', 409);
-// The frontend gets the stable `code` and can translate it (en/fr/ar), while
-// the HTTP status tells it the kind of failure. The global exception filter
-// (common/filters) turns this into the JSON the frontend expects.
+// Services throw this when a business rule is broken, for example   throw new
+// AppError('EMAIL_TAKEN', 'This email is already registered', 409); The
+// frontend gets the stable `code` and can translate it (en/fr/ar), while the
+// HTTP status tells it the kind of failure.
 
 export class AppError extends Error {
   constructor(

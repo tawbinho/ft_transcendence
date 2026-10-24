@@ -13,11 +13,8 @@ import { User } from '../../users/entities/user.entity.js';
 import { PLAYER_RESULTS, type PlayerResult } from '../match.constants.js';
 import { Match } from './match.entity.js';
 
-// WHY THIS FILE EXISTS
 // The `match_players` table: who sits in which seat of a match, and how the
 // match ended for them. A match has one row per player (two once it started).
-// The primary key is (match, seat): a seat can only be taken once. The
-// winner of a match is read from `result` and nowhere else.
 @Entity('match_players')
 // A user cannot play against themselves in the same match.
 @Unique(['matchId', 'userId'])

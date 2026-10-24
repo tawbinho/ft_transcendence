@@ -10,10 +10,7 @@ import {
 } from './types';
 
 // The rules of Connect Four as pure functions over an immutable state, ported
-// from the backend engine. Every function that "changes" the game returns a
-// NEW state, so React can compare states by reference. The app only uses it
-// for the same-screen game; the computer opponent's moves are chosen by the
-// server.
+// from the backend engine.
 
 function isWholeNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isInteger(value);
@@ -135,8 +132,7 @@ const DIRECTIONS: readonly (readonly [number, number])[] = [
 ];
 
 // Only a line through the disc just played can be new, so only the four lines
-// through that square are checked. The whole run is returned (it can be
-// longer than winLength when the disc joins two runs).
+// through that square are checked.
 function findWinningLine(
   board: readonly (readonly Cell[])[],
   winLength: number,

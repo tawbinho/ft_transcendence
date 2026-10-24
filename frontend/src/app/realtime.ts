@@ -12,11 +12,7 @@ import { userKeys } from '@/features/users/hooks';
 import type { UserSummary } from '@/features/users/types';
 import { connectRealtime, disconnectRealtime, useRealtimeEvent } from '@/lib/realtime';
 
-// Live events -> cached data. Every page reads its data from the TanStack
-// Query cache, so writing an event into the cache (or marking the right
-// queries as stale) updates every page that shows it, without the pages
-// knowing about events. Pages still poll: a missed event only makes an
-// update slower.
+// Live events -> cached data.
 
 /** Mounted once, in the app layout. */
 export function useRealtimeSync(): void {
@@ -40,10 +36,7 @@ export function useRealtimeSync(): void {
   useRealtimeEvent('chat:read', ({ userId: peerId, readAt }) => setPeerReadAt(queryClient, peerId, readAt));
 
   // Online dots appear in friend lists, conversations, profiles and the player
-  // search. Every login and logout reaches every player, and the friend list
-  // and conversations are loaded on every page (menu badges): their dot is
-  // changed in place, without a request. Profiles and the search (one page
-  // each; "last seen" and "online now" come from the server) are fetched again.
+  // search.
   useRealtimeEvent('presence', ({ userId: playerId, online }) => {
     setOnlineInLists(queryClient, playerId, online);
     void queryClient.invalidateQueries({ queryKey: userKeys.all });
@@ -101,7 +94,8 @@ function applyMatch(queryClient: QueryClient, match: Match): void {
   const next = cached && !moving ? matchAfterEvent(match, cached) : null;
   if (next) queryClient.setQueryData(key, next);
 
-  // A match that starts or ends changes the lists it appears in and the players' numbers.
+  // A match that starts or ends changes the lists it appears in and the
+  // players' numbers.
   const statusChanged = cached ? cached.status !== match.status : match.status !== 'in_progress';
   if (statusChanged && (cached ?? match).yourSeat !== null) refreshLists(queryClient);
 }

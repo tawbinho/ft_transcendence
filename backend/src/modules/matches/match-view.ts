@@ -6,13 +6,8 @@ import type {
   PlayerResult,
 } from './match.constants.js';
 
-// WHY THIS FILE EXISTS
 // Turns database rows into the JSON the API sends. It is a PURE function (no
-// database, no Nest), so it is easy to test. It also rebuilds the board with
-// the engine from the saved moves: the board is never stored.
-//
-// The inputs are plain shapes rather than the entity classes, so a test can
-// build them by hand.
+// database, no Nest), so it is easy to test.
 
 export interface MatchData {
   id: string;

@@ -6,9 +6,7 @@ import {
   type TournamentData,
 } from './tournament-view.js';
 
-// ---------------------------------------------------------------------------
 // Helpers: build the raw rows by hand
-// ---------------------------------------------------------------------------
 
 const ALICE = 'user-alice';
 const BOB = 'user-bob';
@@ -43,7 +41,6 @@ const players: RegisteredPlayer[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
 
 describe('toTournamentSummary', () => {
   it('carries the headline facts', () => {

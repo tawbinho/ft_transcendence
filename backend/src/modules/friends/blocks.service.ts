@@ -10,7 +10,6 @@ import { Friendship } from './entities/friendship.entity.js';
 import { orderPair } from './friends.constants.js';
 import { toUserSummary, type UserSummaryView } from './friend-view.js';
 
-// WHY THIS FILE EXISTS
 // Blocking: who blocked whom. While EITHER player blocks the other, friend
 // requests, messages and match invitations between them are refused with
 // BLOCKED (other modules ask isBlockedBetween()).

@@ -45,15 +45,9 @@ export interface TournamentPage {
   offset: number;
 }
 
-// WHY THIS FILE EXISTS
-// The rules of a tournament: who may create, list, read, cancel it, who may join
-// or leave it, starting it (the bracket and its matches) and moving the bracket
-// on when a match ends.
-//
-// Every change to a tournament happens inside a database transaction that first
-// LOCKS the tournament row (SELECT ... FOR UPDATE). Two requests for the same
-// tournament are therefore handled one after the other, never at the same
-// time, so two players can never take the last place together.
+// The rules of a tournament: who may create, list, read, cancel it, who may
+// join or leave it, starting it (the bracket and its matches) and moving the
+// bracket on when a match ends.
 @Injectable()
 export class TournamentsService implements OnModuleInit {
   private readonly logger = new Logger(TournamentsService.name);
@@ -77,9 +71,7 @@ export class TournamentsService implements OnModuleInit {
     this.matches.onMatchFinished((matchId) => this.advance(matchId));
   }
 
-  // ---------------------------------------------------------------------------
   // Create
-  // ---------------------------------------------------------------------------
 
   // Creates a tournament in the "registering" state and registers its creator.
   async create(
@@ -112,9 +104,7 @@ export class TournamentsService implements OnModuleInit {
     return this.get(userId, id);
   }
 
-  // ---------------------------------------------------------------------------
   // Read
-  // ---------------------------------------------------------------------------
 
   // Every tournament, newest first, with an optional status filter and
   // pagination. Any logged-in user can see them all.
@@ -202,9 +192,7 @@ export class TournamentsService implements OnModuleInit {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // Registration
-  // ---------------------------------------------------------------------------
 
   // The viewer takes a place, while registration is open.
   async join(userId: string, tournamentId: string): Promise<TournamentView> {
@@ -269,9 +257,7 @@ export class TournamentsService implements OnModuleInit {
     return this.get(userId, tournamentId);
   }
 
-  // ---------------------------------------------------------------------------
   // Start
-  // ---------------------------------------------------------------------------
 
   // The creator starts the tournament before it is full. Needs at least 3
   // players: the empty places of the bracket become byes.
@@ -307,8 +293,7 @@ export class TournamentsService implements OnModuleInit {
   }
 
   // Builds the bracket from the registered players, creates the match of every
-  // pairing that is ready, and marks the tournament as running. Runs inside a
-  // transaction that holds the tournament lock (the caller's).
+  // pairing that is ready, and marks the tournament as running.
   private async startBracket(
     manager: EntityManager,
     tournament: Tournament,
@@ -380,9 +365,7 @@ export class TournamentsService implements OnModuleInit {
     }
   }
 
-  // ---------------------------------------------------------------------------
   // Advancing
-  // ---------------------------------------------------------------------------
 
   // A match is over. If it was a tournament match, move the bracket on:
   //  - a winner: they take their place in the next round (and that match starts
@@ -488,9 +471,7 @@ export class TournamentsService implements OnModuleInit {
     this.announce(tournamentId);
   }
 
-  // ---------------------------------------------------------------------------
   // Cancel
-  // ---------------------------------------------------------------------------
 
   // Only the creator, and only while registration is open. Cancelling DELETES
   // the tournament (its registrations go with it).
@@ -511,13 +492,10 @@ export class TournamentsService implements OnModuleInit {
     this.announce(tournamentId);
   }
 
-  // ---------------------------------------------------------------------------
   // Internals
-  // ---------------------------------------------------------------------------
 
   // Loads the tournament row and LOCKS it until the transaction ends. Any other
-  // transaction that wants the same tournament waits here. No relations are
-  // loaded with it on purpose: Postgres cannot lock rows through an outer join.
+  // transaction that wants the same tournament waits here.
   private async lockTournament(
     manager: EntityManager,
     tournamentId: string,

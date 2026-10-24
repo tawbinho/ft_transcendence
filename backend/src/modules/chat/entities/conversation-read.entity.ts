@@ -9,11 +9,8 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity.js';
 
-// WHY THIS FILE EXISTS
-// The `conversation_reads` table: "user has read everything their peer sent
-// up to read_at". One row per (user, peer). It gives two things:
-//  - `unread`: the peer's messages newer than MY read_at;
-//  - read receipts ("Seen"): the peer's row about ME tells me how far they read.
+// The `conversation_reads` table: "user has read everything their peer sent up
+// to read_at". One row per (user, peer).
 @Entity('conversation_reads')
 @Check('"user_id" <> "peer_id"')
 export class ConversationRead {

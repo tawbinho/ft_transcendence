@@ -27,10 +27,8 @@ export interface BracketPairingView {
 }
 
 /**
- * The bracket as columns of rounds, the final last, then the champion once
- * there is one. Lines join each pairing to the one its winner plays next. The
- * columns share the width of the box; when they would get too narrow the box
- * scrolls instead of the page.
+ * The bracket as columns of rounds, the final last, then the champion once there is one. Lines join
+ * each pairing to the one its winner plays next.
  */
 export function BracketView({
   rounds,
@@ -94,15 +92,12 @@ export function BracketView({
 }
 
 // The gap between two columns is me-10 (2.5rem). Each pairing draws half of it,
-// so the lines of two neighbouring columns meet in the middle. Logical sides
-// (start, end) make the lines mirror in right-to-left languages, like the columns.
+// so the lines of two neighbouring columns meet in the middle.
 const LINE = 'absolute bg-muted/40';
 
 /**
- * A line in the gap beside a pairing: `in` comes from the earlier round, `out`
- * goes on to the next one. An `out` line can also `bend` down or up, towards
- * the other pairing that feeds the same next pairing, so the two together
- * draw a "]" that points at it.
+ * A line in the gap beside a pairing: `in` comes from the earlier round, `out` goes on to the next
+ * one.
  */
 function Connector({ side, bend }: { side: 'in' | 'out'; bend?: 'down' | 'up' }) {
   return (

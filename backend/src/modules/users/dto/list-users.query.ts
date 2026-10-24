@@ -12,12 +12,9 @@ import {
 import { USER_SORTS, type UserSort } from '../user.constants.js';
 
 // Query strings arrive as text: "true" is the string "true", not a boolean.
-// This turns "true"/"false" into booleans before they are checked, and leaves
-// anything else alone so the validator can reject it.
 const toBoolean = ({ value }: { value: unknown }): unknown =>
   value === 'true' ? true : value === 'false' ? false : value;
 
-// WHY THIS FILE EXISTS
 // The query string of GET /users (the Players page): a text search, two
 // filters, a sort and pagination.
 export class ListUsersQuery {

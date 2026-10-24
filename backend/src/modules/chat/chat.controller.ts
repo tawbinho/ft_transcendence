@@ -25,7 +25,6 @@ import type {
   MessageView,
 } from './message-view.js';
 
-// WHY THIS FILE EXISTS
 // The doorway to the chat: routes, input checks, then the service. Every route
 // needs a logged-in user, and `:userId` is always the OTHER player.
 @UseGuards(SessionGuard)

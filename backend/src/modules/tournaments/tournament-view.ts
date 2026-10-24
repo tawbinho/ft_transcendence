@@ -1,13 +1,8 @@
 import { isOnline } from '../users/presence.service.js';
 import type { TournamentStatus } from './tournament.constants.js';
 
-// WHY THIS FILE EXISTS
 // Turns database rows into the JSON the API sends. It is a PURE function (no
-// database, no Nest), so it is easy to test. The shapes below are the ones in
-// the API design (backend/docs/openapi.yaml: Tournament, TournamentSummary).
-//
-// The inputs are plain shapes rather than the entity classes, so a test can
-// build them by hand.
+// database, no Nest), so it is easy to test.
 
 export interface TournamentData {
   id: string;
@@ -62,7 +57,8 @@ export interface PlayerView {
 
 export interface PairingView {
   id: string;
-  // Two places. null: waiting for the winner of an earlier pairing, or empty (bye).
+  // Two places. null: waiting for the winner of an earlier pairing, or empty
+  // (bye).
   players: [PlayerView | null, PlayerView | null];
   matchId: string | null;
   winnerId: string | null;

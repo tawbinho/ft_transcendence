@@ -19,16 +19,8 @@ import {
   type SystemEvent,
 } from '../chat.constants.js';
 
-// WHY THIS FILE EXISTS
 // The `messages` table: every message of every private conversation, kept as
-// history. A message is stored ONCE, with the two players of its conversation
-// in order (user_low_id < user_high_id, like `friendships`), so both players
-// read the same row and "the conversation between A and B" is one lookup.
-// `sender_id` says who wrote it (empty for a message written by the server).
-//
-// The CHECK constraints say what each kind of message must contain, so even a
-// bug in the code cannot store an empty text message, an invitation without a
-// match, or a "system" message that claims a player wrote it.
+// history.
 @Entity('messages')
 // Reading a conversation, newest first, page by page.
 @Index(['userLowId', 'userHighId', 'createdAt', 'id'])

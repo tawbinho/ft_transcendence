@@ -1,12 +1,9 @@
-// WHY THIS FILE EXISTS
 // The app needs settings (database host, user, password...) that come from
-// environment variables. If one is missing or wrong, we want the app to stop
-// immediately with a clear message, instead of crashing later with a vague
-// database error. This file is that safety check.
+// environment variables.
 
-// The shape of the settings once they have been checked.
-// Note: environment variables are always text; here PORT and DB_PORT are
-// already converted to numbers.
+// The shape of the settings once they have been checked. Note: environment
+// variables are always text; here PORT and DB_PORT are already converted to
+// numbers.
 export interface Env {
   PORT: number; // port the backend listens on
   DB_HOST: string; // where Postgres runs ("db" inside Docker)

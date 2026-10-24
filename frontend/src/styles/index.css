@@ -3,14 +3,7 @@
 /* Dark mode follows data-theme on <html> (set from the user's choice or the system). */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
-/* ---------------------------------------------------------------------------
-   Design tokens: every color the UI uses, for light and dark mode.
-   Components use them through Tailwind classes such as bg-surface or text-muted.
-   Every text and background pair below keeps a contrast of at least 4.5:1.
-
-   [data-theme='light'] is listed next to :root so that a part of a page can
-   switch to the light theme on its own.
-   --------------------------------------------------------------------------- */
+/* Design tokens: every color the UI uses, for light and dark mode. */
 :root,
 [data-theme='light'] {
   --c-bg: #eef1fb;
@@ -168,10 +161,7 @@ html[dir='rtl'] * {
   letter-spacing: normal;
 }
 
-/* ---------------------------------------------------------------------------
-   Board themes. These match the backend's MATCH_THEMES. The holes are a dark
-   shade of the board, so discs of any color stand out in light and dark mode.
-   --------------------------------------------------------------------------- */
+/* Board themes. These match the backend's MATCH_THEMES. */
 [data-board-theme='classic'] {
   --board: #2350d2;
   --board-edge: #183c9f;
@@ -212,9 +202,7 @@ html[dir='rtl'] * {
   --disc-2-hi: #ffa3cf;
 }
 
-/* ---------------------------------------------------------------------------
-   Board
-   --------------------------------------------------------------------------- */
+/* Board */
 .board-frame {
   --gap: clamp(0.25rem, 1.4vw, 0.6rem);
   width: 100%;
@@ -286,10 +274,7 @@ button.board-column:focus-visible {
   box-shadow: inset 0 3px 6px rgb(0 0 0 / 0.5);
 }
 
-/* ---------------------------------------------------------------------------
-   Discs. Seat 2 also carries an inner ring, so the two players differ by
-   shape as well as by color.
-   --------------------------------------------------------------------------- */
+/* Discs. Seat 2 also carries an inner ring, so players differ by shape too. */
 .disc {
   --disc: var(--disc-1);
   --disc-hi: var(--disc-1-hi);
@@ -378,9 +363,7 @@ button.board-column:focus-visible {
   }
 }
 
-/* ---------------------------------------------------------------------------
-   Chat: the three bouncing dots of "… is typing".
-   --------------------------------------------------------------------------- */
+/* Chat: the three bouncing dots of "… is typing". */
 .typing-dots {
   display: inline-flex;
   gap: 3px;

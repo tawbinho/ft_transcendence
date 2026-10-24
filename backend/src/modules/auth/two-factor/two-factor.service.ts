@@ -12,11 +12,9 @@ import { SecretCipher } from './secret-cipher.js';
 // Shown in the authenticator app next to the account.
 const ISSUER = 'Connect Four';
 
-// WHY THIS FILE EXISTS
-// All the two-factor rules (TOTP, the 6-digit codes from an authenticator
-// app) live here: starting the setup, turning 2FA on and off, and checking a
-// code at login. A user who lost their phone can use a one-time BACKUP code in
-// place of the 6-digit code (see backup-codes.service.ts).
+// All the two-factor rules (TOTP, the 6-digit codes from an authenticator app)
+// live here: starting the setup, turning 2FA on and off, and checking a code at
+// login.
 @Injectable()
 export class TwoFactorService {
   constructor(
@@ -32,10 +30,7 @@ export class TwoFactorService {
     return row?.enabled === true;
   }
 
-  // Step 1 of turning 2FA on. Creates a fresh secret, stores it ENCRYPTED
-  // with enabled = false, and returns the QR code to scan. 2FA is not active
-  // until the user proves their app works (see enable()). Calling setup again
-  // before enabling simply replaces the unconfirmed secret.
+  // Step 1 of turning 2FA on.
   async setup(
     userId: string,
     accountLabel: string,
@@ -59,15 +54,13 @@ export class TwoFactorService {
 
     const uri = generateURI({ issuer: ISSUER, label: accountLabel, secret });
     // A data URL ("data:image/png;base64,...") the frontend can put in <img>.
-    // The raw secret is returned too, for users who type it in manually
-    // instead of scanning.
+    // The raw secret is returned too, for users who type it in manually instead
+    // of scanning.
     return { qr: await QRCode.toDataURL(uri), secret };
   }
 
   // Step 2: the user sends the first code from their app. If it is valid we
-  // know the app is configured correctly, so 2FA becomes active. This stops
-  // people from locking themselves out with a bad scan. Returns the 10 backup
-  // codes, shown ONCE: the user must keep them somewhere safe.
+  // know the app is configured correctly, so 2FA becomes active.
   async enable(userId: string, code: string): Promise<string[]> {
     const row = await this.twoFactor.findOneBy({ userId });
     if (!row || row.enabled) {
@@ -139,8 +132,7 @@ export class TwoFactorService {
   }
 
   // The one place a code is checked. Throws if it is wrong, expired, or was
-  // already used. The value is either the 6-digit code of the app or, unless
-  // `allowBackup` is false, a one-time backup code (told apart by length).
+  // already used.
   private async checkCode(
     row: TwoFactor,
     code: string,

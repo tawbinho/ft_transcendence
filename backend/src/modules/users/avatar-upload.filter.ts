@@ -7,12 +7,8 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 
-// WHY THIS FILE EXISTS
-// The upload library (multer) refuses a file that is too big, or a body that
-// is not a proper multipart form, BEFORE our code runs, with generic errors.
-// This filter, used only on the avatar upload route, turns them into the
-// error codes of the API design: AVATAR_TOO_LARGE (413) and VALIDATION_ERROR
-// (400).
+// The upload library (multer) refuses a file that is too big, or a body that is
+// not a proper multipart form, BEFORE our code runs, with generic errors.
 @Catch(PayloadTooLargeException, BadRequestException)
 export class AvatarUploadFilter implements ExceptionFilter {
   catch(

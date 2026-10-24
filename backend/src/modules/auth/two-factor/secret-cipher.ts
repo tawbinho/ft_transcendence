@@ -3,19 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../../../config/env.validation.js';
 
-// WHY THIS FILE EXISTS
 // A TOTP secret must be READABLE by the server (it recomputes the user's
-// 6-digit code from it), so unlike a password it cannot be hashed. Instead
-// it is ENCRYPTED before it goes into the database, with a key that lives
-// only in the environment (TWO_FACTOR_KEY). A leaked database then contains
-// only ciphertext.
-//
-// AES-256-GCM: encrypts AND authenticates. If anyone edits the stored value,
-// decrypt() throws instead of returning garbage. A fresh random IV per
-// encryption means the same secret never produces the same ciphertext twice.
-//
-// Stored format: "v1.<iv>.<authTag>.<ciphertext>", each part base64url.
-// "v1" lets us change the scheme later without breaking old rows.
+// 6-digit code from it), so unlike a password it cannot be hashed.
 @Injectable()
 export class SecretCipher {
   private readonly key: Buffer;

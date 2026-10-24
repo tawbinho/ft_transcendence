@@ -6,8 +6,7 @@ import { NotFoundPage } from '@/pages/info/NotFoundPage';
 import { GuestOnly, RequireAuth } from './guards';
 
 // Every page is its own chunk, downloaded when first visited. A page lives in
-// src/pages/<area>/<Name>Page.tsx. Links to pages with a parameter are built in
-// ./paths.ts.
+// src/pages/<area>/<Name>Page.tsx.
 
 /** Open to everyone. */
 const publicRoutes: RouteObject[] = [
@@ -61,7 +60,8 @@ const memberRoutes: RouteObject[] = [
     lazy: () => import('@/pages/profile/ProfilePage').then((m) => ({ Component: m.ProfilePage })),
   },
   {
-    // The optional section is one of profile, security, preferences and blocked.
+    // The optional section is one of profile, security, preferences and
+    // blocked.
     path: 'settings/:section?',
     lazy: () => import('@/pages/settings/SettingsPage').then((m) => ({ Component: m.SettingsPage })),
   },
@@ -77,7 +77,8 @@ const memberRoutes: RouteObject[] = [
   },
   { path: 'friends', lazy: () => import('@/pages/community/FriendsPage').then((m) => ({ Component: m.FriendsPage })) },
   {
-    // One route for the list and a conversation, so the page stays mounted between them.
+    // One route for the list and a conversation, so the page stays mounted
+    // between them.
     path: 'chat/:displayName?',
     lazy: () => import('@/pages/community/ChatPage').then((m) => ({ Component: m.ChatPage })),
   },

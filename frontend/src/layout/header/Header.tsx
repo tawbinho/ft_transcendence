@@ -24,9 +24,8 @@ export function Header() {
   const { data, isPending } = useCurrentUser();
   const session = sessionOf(data, isPending);
   const isMember = session.status === 'member';
-  // Phones show Log in and Sign up in the bar itself instead of one tap away in the menu. To make
-  // room (French and Arabic labels are long, screens go down to 320px) the name beside the logo is
-  // hidden on phones while they are shown; the logo itself stays and the link keeps its name.
+  // Phones show Log in and Sign up in the bar itself instead of one tap away in
+  // the menu.
   const showPhoneAuth = session.status === 'visitor' || session.status === 'failed';
   const counts = { chat: useUnreadCount(isMember), friends: useIncomingRequestCount(isMember) };
 

@@ -36,9 +36,8 @@ import {
   type ProfileMatchPage,
 } from './users.service.js';
 
-// WHY THIS FILE EXISTS
 // The doorway to the players: it declares the routes, validates the input and
-// calls the service. No logic here. Every route needs a logged-in user.
+// calls the service. No logic here.
 @UseGuards(SessionGuard)
 @Controller('users')
 export class UsersController {
@@ -60,9 +59,9 @@ export class UsersController {
     return toPublicUser(await this.users.rename(user.id, dto.displayName));
   }
 
-  // PUT /api/users/me/avatar: upload my picture, as a form file named
-  // "avatar". The upload library keeps the file in memory and refuses
-  // anything over the size limit.
+  // PUT /api/users/me/avatar: upload my picture, as a form file named "avatar".
+  // The upload library keeps the file in memory and refuses anything over the
+  // size limit.
   @Put('me/avatar')
   @Throttle({
     default: { limit: PROFILE_WRITE_LIMIT_PER_MINUTE, ttl: 60_000 },

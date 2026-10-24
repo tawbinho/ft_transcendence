@@ -1,15 +1,7 @@
 /**
- * Error raised for every failed API call.
- *
- * The backend answers failures as `{ error: { code, message } }`. `code` is a
- * stable identifier (for example `EMAIL_TAKEN` or `NOT_YOUR_TURN`) that the UI
- * translates; `message` is the backend's English explanation, used as a
- * fallback when the code has no translation.
- *
- * Two codes are produced on the client side:
- * - `NETWORK_ERROR` when the server could not be reached at all;
- * - `BAD_RESPONSE` when the answer was not the expected JSON envelope
- *   (for example an HTML error page from the proxy).
+ * Error raised for every failed API call. `code` is the stable identifier the
+ * UI translates; `message` is the backend's English text, used as a fallback.
+ * `NETWORK_ERROR` and `BAD_RESPONSE` are produced on the client side.
  */
 export class ApiError extends Error {
   constructor(

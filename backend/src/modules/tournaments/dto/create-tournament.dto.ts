@@ -12,11 +12,8 @@ import {
   TOURNAMENT_SIZES,
 } from '../tournament.constants.js';
 
-// WHY THIS FILE EXISTS
 // The rules for the body of POST /tournaments, enforced by the global
-// ValidationPipe before the controller runs. This is what the "new tournament"
-// form sends: a name, how many places, and optionally the board. Anything
-// else in the body is rejected.
+// ValidationPipe before the controller runs.
 export class CreateTournamentDto {
   // Runs before the validation: "  Friday cup " becomes "Friday cup".
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))

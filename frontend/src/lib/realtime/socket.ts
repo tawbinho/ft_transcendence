@@ -3,9 +3,7 @@ import { emitRealtime, setRealtimeStatus } from './bus';
 import { isRealtimeEvent } from './events';
 
 // The Socket.IO connection to the backend. It is opened after login and closed
-// at logout. The browser sends the session cookie with the handshake, which is
-// how the server knows who is connected. Socket.IO reconnects by itself after
-// a network cut; while it is down the pages keep polling.
+// at logout.
 
 let socket: Socket | null = null;
 

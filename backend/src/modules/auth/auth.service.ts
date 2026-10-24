@@ -27,7 +27,6 @@ export interface TwoFactorRequired {
   session: IssuedSession;
 }
 
-// WHY THIS FILE EXISTS
 // The business rules of authentication live here, not in the controller:
 // signup, login (with the optional 2FA step), logout, and "who am I".
 @Injectable()
@@ -74,9 +73,7 @@ export class AuthService {
     //    a random salt and its own settings, so it can be verified later.
     const passwordHash = await argon2.hash(dto.password);
 
-    // 3. Save. The checks above are not atomic: two simultaneous signups can
-    //    both pass them. The database unique constraints are the real
-    //    guarantee, so a violation is turned into the same friendly error.
+    // 3. Save. The unique constraints, not the checks above, are the real guarantee.
     let user;
     try {
       user = await this.users.create({
@@ -107,9 +104,7 @@ export class AuthService {
     const user = await this.users.findByEmail(dto.email);
 
     // Unknown email and wrong password must be indistinguishable: same error
-    // AND same duration. So when there is no user (or a bot, which has no
-    // password), we still verify against the dummy hash, which can never
-    // match. Otherwise the response time would reveal which emails exist.
+    // AND same duration.
     const hash = user?.passwordHash ?? (await this.dummyHash);
     const passwordOk = await argon2.verify(hash, dto.password);
 
@@ -199,8 +194,7 @@ export class AuthService {
   }
 
   // The emailed code marks the email as verified; it works once, for 15
-  // minutes, and dies after MAX_ATTEMPTS wrong guesses. Every failure gives the
-  // same answer, so it does not reveal which emails exist.
+  // minutes, and dies after MAX_ATTEMPTS wrong guesses.
   async verifyEmail(email: string, code: string): Promise<void> {
     const invalid = new AppError(
       'INVALID_VERIFICATION_CODE',
@@ -244,12 +238,11 @@ export class AuthService {
 
   // Forgot password, step 1: emails a 6-digit code. Always succeeds from the
   // outside, so it cannot be used to find out which emails are registered.
-  // Unverified accounts get nothing (they must verify first), nor do accounts
-  // with no password (the bots).
   async forgotPassword(email: string): Promise<void> {
     const user = await this.users.findByEmail(email);
     if (!user || !user.emailVerifiedAt || !user.passwordHash) {
-      // Silent for the client (no email enumeration), but the operator can see why.
+      // Silent for the client (no email enumeration), but the operator can see
+      // why.
       this.log.log(
         `Password reset skipped: ${!user ? 'no such account' : !user.emailVerifiedAt ? 'email not verified' : 'no password'}`,
       );
@@ -268,8 +261,7 @@ export class AuthService {
   }
 
   // Step 2: the code plus the new password. Same limits as the email
-  // verification code. Afterwards every existing login is ended, so whoever
-  // had access with the old password is out.
+  // verification code.
   async resetPassword(email: string, code: string, password: string): Promise<void> {
     const invalid = new AppError('INVALID_RESET_CODE', 'This code is wrong or expired', 400);
     const user = await this.users.findByEmail(email);
@@ -304,10 +296,8 @@ export class AuthService {
   }
 
   // "Who am I": the user behind the session cookie, or null when nobody is
-  // logged in (no cookie, an unknown or expired session, a pending 2FA
-  // session, a deleted account). Not being logged in is a NORMAL answer here,
-  // not an error: answering 401 would make the browser print an error in its
-  // console on every visit by a logged-out user.
+  // logged in (no cookie, an unknown or expired session, a pending 2FA session,
+  // a deleted account).
   async currentUser(sessionToken: string | undefined): Promise<PublicUser | null> {
     if (!sessionToken) return null;
     const session = await this.sessions.findActive(sessionToken);

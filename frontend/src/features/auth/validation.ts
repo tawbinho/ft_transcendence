@@ -1,9 +1,8 @@
 import type { ValidationKey } from '@/lib/validation';
 
 // Client-side checks that mirror the backend DTOs (SignupDto, LoginDto,
-// TwoFactorCodeDto, TwoFactorOrBackupCodeDto), so most mistakes are caught before a request is sent.
-// The backend still validates everything; these only improve feedback.
-// Each function returns a translation key, or null when the value is valid.
+// TwoFactorCodeDto, TwoFactorOrBackupCodeDto), so most mistakes are caught
+// before a request is sent.
 
 export const DISPLAY_NAME_MIN = 3;
 export const DISPLAY_NAME_MAX = 20;

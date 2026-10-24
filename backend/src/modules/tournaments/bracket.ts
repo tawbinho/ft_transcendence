@@ -1,16 +1,5 @@
-// WHY THIS FILE EXISTS
-// The shape of a single-elimination bracket, as PURE functions: no database,
-// no Nest, so every rule can be tested by hand. The service stores the result.
-//
-// A bracket is a list of "pairings" (slots), grouped in rounds. Round 0 is the
-// first round. The winner of pairing `position` in round `r` moves to pairing
-// `floor(position / 2)` of round `r + 1`, in place `position % 2`.
-//
-//   round 0:  [0] [1] [2] [3]
-//               \ /     \ /
-//   round 1:    [0]     [1]
-//                 \     /
-//   round 2:       [0]       <- the final: its winner wins the tournament
+// The shape of a single-elimination bracket, as PURE functions: no database, no
+// Nest, so every rule can be tested by hand. The service stores the result.
 
 export interface Slot {
   round: number;
@@ -55,8 +44,8 @@ const emptySlot = (round: number, position: number): Slot => ({
 
 // Builds the whole bracket for these players: shuffles them, fills round 0,
 // gives the empty places to byes (at most one per pairing, spread out so two
-// byes do not meet if it can be avoided), and moves the bye players on to
-// round 1. The later rounds are empty, waiting for winners.
+// byes do not meet if it can be avoided), and moves the bye players on to round
+// 1.
 export function buildBracket(
   playerIds: string[],
   random: () => number = Math.random,
@@ -100,9 +89,7 @@ export function buildBracket(
 }
 
 // Records the winner of a pairing and puts them in their place in the next
-// round. Returns the slots that changed (the pairing itself, and the next
-// pairing if there is one), so the caller knows what to save. The winner of
-// the last pairing has no next one: they win the tournament.
+// round.
 export function placeWinner(
   slots: Slot[],
   round: number,

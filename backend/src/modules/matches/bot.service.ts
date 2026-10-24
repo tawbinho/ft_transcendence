@@ -11,8 +11,7 @@ import { Match } from './entities/match.entity.js';
 import { MatchesService } from './matches.service.js';
 
 // The computer opponents. They are ordinary players (so matches, history and
-// stats work for them with no special case) that nobody can log in as. A human
-// plays one by creating a match with `opponentDisplayName` set to its name.
+// stats work for them with no special case) that nobody can log in as.
 export const BOT_ACCOUNTS: ReadonlyArray<{
   difficulty: Difficulty;
   displayName: string;
@@ -28,15 +27,7 @@ export const BOT_ACCOUNTS: ReadonlyArray<{
 const MIN_DELAY_MS = 500;
 const MAX_DELAY_MS = 1200;
 
-// WHY THIS FILE EXISTS
-// It makes the computer opponents PLAY. It listens to every change of a match
-// (see MatchesService.onMatchChanged) and reacts in two cases:
-//  - a match reserved for a bot is waiting: the bot joins it;
-//  - a match is running and it is a bot's turn: after a short delay, the AI
-//    (on its worker thread) picks a column and the bot plays it through the
-//    SAME makeMove a human uses, so every rule, lock, live event and tournament
-//    hook applies to the bot like to anybody.
-// After a server restart it looks for such matches and carries on.
+// It makes the computer opponents PLAY.
 @Injectable()
 export class BotService implements OnModuleInit {
   private readonly logger = new Logger(BotService.name);

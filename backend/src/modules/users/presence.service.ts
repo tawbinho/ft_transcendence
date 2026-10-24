@@ -3,12 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity.js';
 
-// A user is online while they were seen in the last minute. Two things keep
-// them "seen": the live connection (the server refreshes every connected user
-// every 20 seconds) and, for an app that does not use sockets, a request at
-// least every 30 seconds while a tab is visible. When the last socket closes,
-// markOffline() stores a date that is already outside the window, so the user
-// is offline at once everywhere, not only in the `presence` event.
+// A user is online while they were seen in the last minute.
 export const ONLINE_WINDOW_MS = 60_000;
 
 // We write "seen" to the database at most this often per user, so a busy
@@ -20,9 +15,8 @@ export function isOnline(lastSeenAt: Date | null, now = Date.now()): boolean {
   return lastSeenAt !== null && now - lastSeenAt.getTime() < ONLINE_WINDOW_MS;
 }
 
-// WHY THIS FILE EXISTS
-// Presence: who is online. The session guard calls touch() on every request
-// of a logged-in user; views call isOnline() on the stored date.
+// Presence: who is online. The session guard calls touch() on every request of
+// a logged-in user; views call isOnline() on the stored date.
 @Injectable()
 export class PresenceService {
   private readonly logger = new Logger(PresenceService.name);
@@ -105,9 +99,8 @@ export class PresenceService {
   }
 
   // Used when the user's last socket closes (logout, closed tab). Stores a date
-  // one window ago: the user counts as offline immediately, and "last seen"
-  // is only about a minute early. Writing "now" here would keep them online
-  // for another minute in every list and profile.
+  // one window ago: the user counts as offline immediately, and "last seen" is
+  // only about a minute early.
   async markOffline(userId: string): Promise<void> {
     const now = Date.now();
     // Stops a late touch() from making them look online again.

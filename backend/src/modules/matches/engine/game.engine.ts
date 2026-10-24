@@ -9,19 +9,11 @@ import {
   type Seat,
 } from './game.types.js';
 
-// WHY THIS FILE EXISTS
 // The rules of Connect Four, as plain functions over an immutable state. No
 // framework, no database: the match service, the WebSocket gateway and the AI
-// all call these. The server is the judge of every move, so the browser can
-// never decide an outcome.
-//
-// Every function that "changes" the game returns a NEW state and leaves the
-// old one untouched. That makes the AI's search safe (it can try a move and
-// throw the result away) and rules out a whole class of bugs.
+// all call these.
 
-// ---------------------------------------------------------------------------
 // Settings
-// ---------------------------------------------------------------------------
 
 function isWholeNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isInteger(value);
@@ -46,8 +38,7 @@ export function validateSettings(settings: GameSettings): GameSettings {
     );
   }
   // The line must fit along the SMALLER side of the board, so that all four
-  // directions (horizontal, vertical, both diagonals) can complete it. A
-  // longer line would make some directions impossible and the game lopsided.
+  // directions (horizontal, vertical, both diagonals) can complete it.
   const longestLine = Math.min(cols, rows);
   if (
     !isWholeNumber(winLength) ||
@@ -62,9 +53,7 @@ export function validateSettings(settings: GameSettings): GameSettings {
   return { cols, rows, winLength };
 }
 
-// ---------------------------------------------------------------------------
 // Creating and reading a game
-// ---------------------------------------------------------------------------
 
 // A new game with an empty board. Missing settings fall back to the classic
 // 7 x 6, four-in-a-row game. Seat 1 plays first.
@@ -108,9 +97,7 @@ export function legalMoves(state: GameState): number[] {
   return moves;
 }
 
-// ---------------------------------------------------------------------------
 // Playing a move
-// ---------------------------------------------------------------------------
 
 // The current player drops a disc in `col`. It falls to the lowest free square.
 // Returns the NEW state. Throws GameRuleError if the move is not allowed.
@@ -168,7 +155,6 @@ export function drop(state: GameState, col: number): GameState {
 
 // Rebuilds a game from its settings and the list of columns played, in order.
 // Used to restore a match from the saved moves (reconnecting, match history).
-// Throws if the list contains an illegal move.
 export function replay(
   settings: Partial<GameSettings>,
   moves: readonly number[],
@@ -179,9 +165,7 @@ export function replay(
   );
 }
 
-// ---------------------------------------------------------------------------
 // Internals
-// ---------------------------------------------------------------------------
 
 function otherSeat(seat: Seat): Seat {
   return seat === 1 ? 2 : 1;
@@ -198,9 +182,7 @@ const DIRECTIONS: readonly (readonly [number, number])[] = [
 
 // Only the disc that was just dropped can have completed a line, so we only
 // look around it: for each of the four lines, count the connected discs of the
-// same seat on both sides. If the run (including the new disc) is long enough,
-// it is returned in order from one end to the other; otherwise null.
-// If one disc completes two lines at once, the first one found is returned.
+// same seat on both sides.
 function findWinningLine(
   board: readonly (readonly Cell[])[],
   winLength: number,

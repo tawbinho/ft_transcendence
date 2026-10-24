@@ -13,14 +13,8 @@ import { Match } from '../../matches/entities/match.entity.js';
 import { User } from '../../users/entities/user.entity.js';
 import { Tournament } from './tournament.entity.js';
 
-// WHY THIS FILE EXISTS
 // The `tournament_pairings` table: the bracket. One row per pairing ("slot"):
-// who meets whom in which round, which match they play, and who won. The shape
-// of the bracket (which slot feeds which) is in bracket.ts.
-//
-// A slot is identified by (tournament, round, position): round 0 is the first
-// round. Players are empty while a slot waits for the winners of earlier
-// pairings, and the second player stays empty for a bye.
+// who meets whom in which round, which match they play, and who won.
 @Entity('tournament_pairings')
 @Unique(['tournamentId', 'round', 'position'])
 @Check('"round" >= 0 AND "position" >= 0')

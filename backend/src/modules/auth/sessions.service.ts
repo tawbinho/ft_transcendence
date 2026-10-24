@@ -17,10 +17,7 @@ export interface IssuedSession {
 // survive until the user types their code.
 const PENDING_TTL_MS = 5 * 60 * 1000;
 
-// WHY THIS FILE EXISTS
-// All the logic of "who is logged in" lives here. A login is a row in the
-// `sessions` table; the browser holds a random token in an httpOnly cookie
-// and the table holds only the SHA-256 hash of that token.
+// All the logic of "who is logged in" lives here.
 @Injectable()
 export class SessionsService {
   constructor(
@@ -58,7 +55,8 @@ export class SessionsService {
   }
 
   // The session behind a cookie, but ONLY if it is a real login that has not
-  // expired. A pending 2FA session never counts: it must not open normal routes.
+  // expired. A pending 2FA session never counts: it must not open normal
+  // routes.
   findActive(token: string): Promise<Session | null> {
     return this.sessions.findOneBy({
       tokenHash: this.hash(token),
@@ -88,9 +86,6 @@ export class SessionsService {
   }
 
   // 2FA code accepted: replace the pending session by a brand-new full one.
-  // The token CHANGES when privileges change, so a token an attacker may have
-  // seen earlier (session fixation) never becomes a real login. The delete is
-  // atomic, so one pending session can only be promoted once.
   async promote(pendingToken: string): Promise<{ userId: string } & IssuedSession> {
     const pending = await this.findPending(pendingToken);
     if (!pending) throw this.expired();

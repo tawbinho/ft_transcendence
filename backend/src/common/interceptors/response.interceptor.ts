@@ -6,11 +6,9 @@ import {
 } from '@nestjs/common';
 import { map, type Observable } from 'rxjs';
 
-// WHY THIS FILE EXISTS
 // Controllers just `return` their value. This interceptor sits around every
 // route and wraps the result as { "data": <value> }, the success shape the
-// frontend (lib/api.ts) expects. Errors never come through here: they go to
-// the exception filter instead.
+// frontend (lib/api.ts) expects.
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T, { data: T }> {
   intercept(

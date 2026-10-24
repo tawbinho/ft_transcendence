@@ -1,9 +1,8 @@
 import type { ListMatchesParams, MatchStatus } from '@/features/matches/types';
 import { readPage } from '@/lib/pages';
 
-// The history page keeps its filter and page in the address (?status=finished&page=2),
-// so a reload or a shared link shows the same list. These functions turn the address
-// into the page's state and back.
+// The history page keeps its filter and page in the address
+// (?status=finished&page=2), so a reload or a shared link shows the same list.
 
 export const PAGE_SIZE = 10;
 

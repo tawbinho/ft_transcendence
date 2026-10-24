@@ -16,7 +16,6 @@ import {
 // What PUT and DELETE answer: how the viewer relates to the other player now.
 export type FriendshipAnswer = 'none' | 'friends' | 'request_sent';
 
-// WHY THIS FILE EXISTS
 // The rules of friendships: who may ask whom, accepting, declining, removing.
 // There is ONE row per pair of players (see the entity), so the two directions
 // of a request meet in the same row.

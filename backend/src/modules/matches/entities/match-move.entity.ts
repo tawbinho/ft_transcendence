@@ -10,13 +10,8 @@ import {
 } from 'typeorm';
 import { Match } from './match.entity.js';
 
-// WHY THIS FILE EXISTS
 // The `match_moves` table: every move of every match, in order. The board is
-// never stored: the engine rebuilds it by replaying these moves. That is what
-// makes reconnecting and match history simple, and it means the
-// stored game can never disagree with the rules.
-// The primary key is (match, ply): a move number can only exist once, so even
-// two simultaneous requests cannot both store "move 5".
+// never stored: the engine rebuilds it by replaying these moves.
 @Entity('match_moves')
 @Check('"ply" >= 1')
 @Check('"seat" IN (1, 2)')

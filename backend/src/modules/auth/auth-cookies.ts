@@ -1,10 +1,8 @@
 import type { CookieOptions, Response } from 'express';
 import type { IssuedSession } from './sessions.service.js';
 
-// WHY THIS FILE EXISTS
 // The login travels in ONE cookie, and its settings are security critical, so
-// they are defined in exactly one place. The cookie holds a random token; the
-// server stores only its hash (see SessionsService).
+// they are defined in exactly one place.
 export const SESSION_COOKIE = 'session';
 
 const baseOptions = (): CookieOptions => ({
@@ -20,9 +18,9 @@ const baseOptions = (): CookieOptions => ({
   path: '/',
 });
 
-// Used for a real login (lasts SESSION_TTL_DAYS) and for the short-lived
-// "2FA code still needed" state (5 minutes): the expiry comes from the
-// session itself.
+// Used for a real login (lasts SESSION_TTL_DAYS) and for the short-lived "2FA
+// code still needed" state (5 minutes): the expiry comes from the session
+// itself.
 export function setSessionCookie(res: Response, session: IssuedSession): void {
   res.cookie(SESSION_COOKIE, session.token, {
     ...baseOptions(),

@@ -15,7 +15,6 @@ import { SessionGuard } from '../auth/session.guard.js';
 import type { FriendsOverviewView } from './friend-view.js';
 import { FriendsService, type FriendshipAnswer } from './friends.service.js';
 
-// WHY THIS FILE EXISTS
 // The doorway to friendships: routes, input checks, then the service. Every
 // route needs a logged-in user.
 @UseGuards(SessionGuard)

@@ -9,12 +9,9 @@ interface Pending {
   reject: (error: Error) => void;
 }
 
-// WHY THIS FILE EXISTS
 // The server's side of the AI worker (ai.worker.ts): `choose(state, level)`
 // sends the position to the worker thread and gives back a promise of the
-// column. The worker starts on the first request and is restarted if it ever
-// crashes. If a worker cannot be started at all, the AI thinks on the main
-// thread instead, which still works, only it blocks the server while thinking.
+// column.
 @Injectable()
 export class AiThread implements OnModuleDestroy {
   private readonly logger = new Logger(AiThread.name);

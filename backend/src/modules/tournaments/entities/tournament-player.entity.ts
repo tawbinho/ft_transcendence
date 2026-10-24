@@ -10,11 +10,8 @@ import {
 import { User } from '../../users/entities/user.entity.js';
 import { Tournament } from './tournament.entity.js';
 
-// WHY THIS FILE EXISTS
 // The `tournament_players` table: who registered in which tournament. One row
-// per player per tournament. The primary key is (tournament, user), so nobody
-// can register twice, even if two requests arrive at the same instant. The
-// order of registration is `joined_at`.
+// per player per tournament.
 @Entity('tournament_players')
 export class TournamentPlayer {
   @PrimaryColumn({ name: 'tournament_id', type: 'uuid' })

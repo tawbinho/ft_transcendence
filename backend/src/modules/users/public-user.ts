@@ -1,10 +1,6 @@
 import type { User } from './entities/user.entity.js';
 
-// WHY THIS FILE EXISTS
-// A User row holds the password hash. It must never leave the server, so
-// every response that returns a user goes through toPublicUser(), the one
-// place that decides which fields are safe to send to the browser.
-// If a field is not listed here, it is not sent.
+// A User row holds the password hash.
 export interface PublicUser {
   id: string;
   email: string;

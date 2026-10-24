@@ -1,9 +1,8 @@
 import type { MessageKind, SystemEvent } from './chat.constants.js';
 
-// WHY THIS FILE EXISTS
 // Turns database rows into the JSON of the chat routes (Message, Conversation,
 // MessagePage in backend/docs/openapi.yaml). PURE: no database, no Nest, so it
-// is easy to test. The inputs are plain shapes, not entity classes.
+// is easy to test.
 
 export interface MessageData {
   id: string;
@@ -65,8 +64,7 @@ export function toMessage(data: MessageData): MessageView {
 
 // A page of a conversation. The service asks the database for one message MORE
 // than the page size: if it got it, older messages exist (`hasMore`) and the
-// extra one is dropped. `newestFirst` is how the database returned them; the
-// page is sent oldest first, which is how a chat is read.
+// extra one is dropped.
 export function toMessagePage(
   newestFirst: MessageData[],
   limit: number,

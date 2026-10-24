@@ -5,10 +5,7 @@ import { ApiError, isUnauthorized } from '@/lib/api/errors';
 const MAX_RETRIES = 2;
 
 // Most client errors (4xx) will not fix themselves: retrying only delays the
-// message. Three are different: 408 (the request timed out) and 429 (too many
-// requests) pass after a short wait, and a network or server error (5xx) is
-// often a restart. Those are tried two more times, so a member whose
-// `/auth/me` hit a limit does not suddenly look like a visitor.
+// message.
 export function shouldRetry(failureCount: number, error: Error): boolean {
   if (failureCount >= MAX_RETRIES) return false;
   if (!(error instanceof ApiError)) return true;
@@ -23,8 +20,8 @@ export function retryDelay(failureCount: number): number {
 
 export function createQueryClient(): QueryClient {
   // When any request answers UNAUTHORIZED the session has ended (expired, or
-  // logged out in another tab). Forgetting the user sends protected pages
-  // back to the login screen.
+  // logged out in another tab). Forgetting the user sends protected pages back
+  // to the login screen.
   const onError = (error: Error) => {
     if (isUnauthorized(error)) queryClient.setQueryData(authKeys.me, null);
   };

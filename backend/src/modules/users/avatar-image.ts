@@ -1,8 +1,5 @@
-// WHY THIS FILE EXISTS
-// The browser says what a file is ("Content-Type: image/png"), but that is
-// only a claim, and a client can lie. This looks at the first bytes of the
-// file itself (its "magic number") to find out what it REALLY is. Pure: no
-// file system, no Nest, easy to test.
+// The browser says what a file is ("Content-Type: image/png"), but that is only
+// a claim, and a client can lie.
 
 export interface ImageType {
   ext: 'webp' | 'png' | 'jpg';

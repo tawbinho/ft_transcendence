@@ -5,11 +5,9 @@ import { AppError } from '../../common/errors/app-error.js';
 import { AvatarService } from './avatar.service.js';
 import { AVATAR_FILE_PATTERN } from './user.constants.js';
 
-// WHY THIS FILE EXISTS
-// Serves the stored profile pictures at GET /api/avatars/<file>. The proxy
-// only forwards /api and /socket.io to the backend, which is why they live
-// under /api. No login needed: the file names are random and unguessable, and
-// a picture shown in the page must load in a plain <img>.
+// Serves the stored profile pictures at GET /api/avatars/<file>. The proxy only
+// forwards /api and /socket.io to the backend, which is why they live under
+// /api.
 @Controller('avatars')
 export class AvatarsController {
   constructor(private readonly avatars: AvatarService) {}

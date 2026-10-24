@@ -85,13 +85,7 @@ export function withMove(match: Match, col: number): Match | null {
   };
 }
 
-/**
- * How often to ask the server for news, in milliseconds, or false to stop.
- * Without live events (src/app/realtime.ts) this is how moves arrive: often
- * while the opponent may move, less often while only a resignation could
- * change things. Not faster: the backend allows 100 requests a minute per
- * address, and two players testing on one computer share them.
- */
+/** How often to ask the server for news, in milliseconds, or false to stop. */
 export function pollInterval(match: Match | undefined): number | false {
   if (!match || isOver(match)) return false;
   if (match.status === 'waiting') return 2_000;
