@@ -23,14 +23,12 @@ tournaments, and the whole interface is available in English, French and Arabic 
 
 ## Instructions
 
-**Prerequisites:** Docker with the Compose plugin (nothing else is needed to run the project) and `openssl`
-(only to generate a key).
+**Prerequisites:** Docker with the Compose plugin (nothing else is needed to run the project).
 
 ```bash
 # 1. create the local env file (it is ignored by Git)
 cp .env.example .env
-# 2. put a real key in .env: TWO_FACTOR_KEY must be 64 hex characters
-#      openssl rand -hex 32
+# 2. optional: dont forget the 2factor key 
 # 3. optional: to really send the sign-up emails, set SMTP_USER and SMTP_PASSWORD in .env
 #      (a Gmail address and an app password, see Configuration below)
 # 4. one command builds and starts everything (database, backend, frontend, HTTPS proxy)
@@ -227,8 +225,8 @@ mechanism.
 Requirements: Docker with the Compose plugin.
 
 ```bash
-# 1. create your local env file and set TWO_FACTOR_KEY (openssl rand -hex 32),
-#    and SMTP_USER / SMTP_PASSWORD if the emails must really be sent
+# 1. create your local env file (SMTP_USER / SMTP_PASSWORD only if the emails must really be sent;
+#    TWO_FACTOR_KEY: replace the throwaway one with openssl rand -hex 32 for real use)
 cp .env.example .env
 
 # 2. build and start everything
