@@ -6,9 +6,8 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    ports:
-      # 127.0.0.1: only this computer can connect (psql), not the network.
-      - '127.0.0.1:${DB_PORT}:5432'
+    networks:
+      - internal
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -46,6 +45,10 @@ services:
     # containers of this compose network.
     expose:
       - '3000'
+    networks:
+      - internal
+      # Only for outbound SMTP (Gmail); nothing is published from here.
+      - edge
     depends_on:
       db:
         condition: service_healthy
@@ -60,6 +63,8 @@ services:
     restart: unless-stopped
     expose:
       - '80'
+    networks:
+      - internal
 
   # HTTPS entry point: decrypts HTTPS and forwards to the backend over plain
   # HTTP inside the network. See proxy/nginx.conf.
@@ -69,6 +74,10 @@ services:
     ports:
       # Port 8443 and not 443: rootless Docker cannot bind ports below 1024.
       - '${HTTPS_PORT}:443'
+    networks:
+      # edge: a container only on an internal network cannot publish ports.
+      - edge
+      - internal
     depends_on:
       - backend
       - frontend
@@ -80,3 +89,9 @@ volumes:
   db-data:
   avatar-data:
   proxy-certs:
+
+networks:
+  # No gateway: nothing on it can be reached from outside or reach the internet.
+  internal:
+    internal: true
+  edge:

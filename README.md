@@ -29,7 +29,7 @@ tournaments, and the whole interface is available in English, French and Arabic 
 # 1. create the local env file (it is ignored by Git, so no secret is ever committed)
 cp .env.example .env
 # 2. fill in every empty value of .env (see Configuration below):
-#      HTTPS_PORT (e.g. 8443), DB_PORT (e.g. 5433), DB_USER, DB_PASSWORD and DB_NAME of your choice,
+#      HTTPS_PORT (e.g. 8443), DB_USER, DB_PASSWORD and DB_NAME of your choice,
 #      TWO_FACTOR_KEY: the output of `openssl rand -hex 32`
 #    optional: SMTP_USER and SMTP_PASSWORD (a Gmail address and an app password) to really send the emails
 # 3. one command builds and starts everything (database, backend, frontend, HTTPS proxy)
@@ -262,16 +262,17 @@ container, so saving a file reloads the server.
 | Service  | URL / port                                          |
 | -------- | --------------------------------------------------- |
 | backend  | https://localhost:8443/api (`HTTPS_PORT`)           |
-| database | `127.0.0.1:5433` (`DB_PORT`), from this computer only |
+| database | not reachable from the host (internal network only) |
 
 The only way in from outside is the **proxy** container (nginx): it decrypts
 HTTPS (TLS 1.2 and 1.3 only) and forwards to the backend over plain HTTP inside
 the Docker network. The backend's own port 3000 is not published, so there is
 no plain-HTTP door. WebSockets (`wss://`) go through the same proxy. Port
 8443 is used instead of 443 because rootless Docker cannot bind ports below
-1024. Inside Docker the backend reaches the database at `db:5432`. The database
-port is published on `127.0.0.1` only, so other machines on the network cannot
-reach it.
+1024. Inside Docker the backend reaches the database at `db:5432`. The database,
+backend and frontend sit on an `internal` Docker network (no gateway, no
+published port); only the proxy also joins the `edge` network that carries the
+HTTPS port. The backend joins `edge` too, only for outbound SMTP (Gmail).
 
 ### Everyday commands
 
@@ -285,15 +286,18 @@ docker compose up --build -d      # rebuild after changing the Dockerfile
 docker compose up --build -d -V   # rebuild after adding an npm package
 ```
 
-Connect to the database from the host:
+The database is on an internal Docker network and publishes no port, so connect through the container
+(it already knows the user and database):
 
 ```bash
-psql -h localhost -p <DB_PORT> -U <DB_USER> <DB_NAME>    # asks for DB_PASSWORD
-# or without installing psql (the container already knows the user and database):
-docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'   # interactive shell, \q to leave
+# a single query, without entering the shell:
+docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt"'
 ```
 
-The values are `DB_PORT`, `DB_USER`, `DB_PASSWORD` and `DB_NAME` from `.env`. Inside `psql`, `\dt` lists the
+No password is asked: `psql` runs inside the container, where the local connection is trusted.
+
+Inside `psql`, `\dt` lists the
 tables, `\x` switches to one-column-per-line output (easier to read for wide rows), and a query ends with `;`.
 
 ### Configuration
@@ -303,7 +307,6 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 | Variable                 | Default    | Meaning                                                 |
 | ------------------------ | ---------- | ------------------------------------------------------- |
 | `HTTPS_PORT`             | none       | **required**, host port of the HTTPS entry point (e.g. `8443`) |
-| `DB_PORT`                | none       | **required**, host port of PostgreSQL (e.g. `5433`)     |
 | `DB_USER`                | none       | **required**, database user                             |
 | `DB_PASSWORD`            | none       | **required**, database password                         |
 | `DB_NAME`                | none       | **required**, database name                             |
@@ -607,8 +610,8 @@ npm test
 ```
 
 Running `npm run start:dev` on your machine also needs the variables from
-`.env` (with `DB_HOST=localhost`, `DB_PORT=5433`) in your shell, and the
-database from `docker compose up -d db`.
+`.env` in your shell and a reachable PostgreSQL. The compose database publishes no
+port, so add a `ports` entry to the `db` service temporarily (and set `DB_HOST`/`DB_PORT` to match).
 
 ## Frontend
 
