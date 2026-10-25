@@ -83,8 +83,6 @@ export const communityMessages = {
     joinMatch: 'Join the match',
     tournamentMatchReady: 'Your tournament match against {{name}} is ready.',
     tournamentMatchPreview: 'Your tournament match is ready',
-    playMatch: 'Play the match',
-    seeBracket: 'See the bracket',
     unreadCount: 'Unread: {{count}}',
   },
   leaderboard: {

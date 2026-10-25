@@ -84,8 +84,6 @@ export const communityMessages: CommunityMessages = {
     joinMatch: 'الانضمام إلى المباراة',
     tournamentMatchReady: 'مباراتك في البطولة ضد {{name}} جاهزة.',
     tournamentMatchPreview: 'مباراتك في البطولة جاهزة',
-    playMatch: 'العب المباراة',
-    seeBracket: 'عرض الجدول',
     unreadCount: 'غير مقروءة: {{count}}',
   },
   leaderboard: {

@@ -86,8 +86,6 @@ export const communityMessages: CommunityMessages = {
     joinMatch: 'Rejoindre la partie',
     tournamentMatchReady: 'Votre match de tournoi contre {{name}} est prêt.',
     tournamentMatchPreview: 'Votre match de tournoi est prêt',
-    playMatch: 'Jouer le match',
-    seeBracket: 'Voir le tableau',
     unreadCount: 'Non lus : {{count}}',
   },
   leaderboard: {

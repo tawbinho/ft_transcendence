@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { paths } from '@/app/paths';
 import { PlayIcon, TrophyIcon } from '@/components/icons';
-import { buttonClass } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { formatMessageTime } from '@/lib/format';
 import type { Message } from '../types';
@@ -30,21 +29,6 @@ export function MessageItem({
           <TrophyIcon className="text-primary" />
           {t('chat.tournamentMatchReady', { name: peerName })}
         </p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {message.matchId && (
-            <Link to={paths.match(message.matchId)} className={buttonClass({ size: 'sm' })}>
-              {t('chat.playMatch')}
-            </Link>
-          )}
-          {message.tournamentId && (
-            <Link
-              to={paths.tournament(message.tournamentId)}
-              className={buttonClass({ size: 'sm', variant: 'secondary' })}
-            >
-              {t('chat.seeBracket')}
-            </Link>
-          )}
-        </div>
         <span className="text-xs text-muted">{time}</span>
       </li>
     );
