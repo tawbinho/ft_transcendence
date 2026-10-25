@@ -421,7 +421,7 @@ most once every 3 seconds while the viewer types, and hides "is typing" 5 second
 
 ## Tournaments
 
-Online tournaments: a single-elimination bracket with 4 or 8 places.
+Online tournaments: a single-elimination bracket with exactly 4 places (two semi-finals, then the final).
 
 ```ts
 type TournamentStatus = 'registering' | 'running' | 'finished';
@@ -435,7 +435,7 @@ interface TournamentSummary {
   id: string;
   name: string;
   status: TournamentStatus;
-  size: 4 | 8; // places
+  size: 4; // places, always 4
   playerCount: number;
   settings: MatchSettings; // the board of every match of the tournament
   createdBy: PlayerRef;
@@ -446,55 +446,51 @@ interface TournamentSummary {
 
 interface Tournament extends TournamentSummary {
   players: UserSummary[]; // in order of registration
-  rounds: { pairings: Pairing[] }[]; // empty until the start; rounds[0] is the first round
+  rounds: { pairings: Pairing[] }[]; // empty until the start; rounds[0] is the semi-finals, rounds[1] the final
   startedAt: string | null;
   endedAt: string | null;
 }
 
 interface Pairing {
   id: string;
-  players: [UserSummary | null, UserSummary | null]; // null: waiting for an earlier winner, or empty (bye)
+  players: [UserSummary | null, UserSummary | null]; // null: waiting for the winner of a semi-final
   matchId: string | null; // the match of this pairing, once both players are known
   winnerId: string | null;
-  bye: boolean; // one player had no opponent and went through without playing
 }
 ```
 
 | Route                         | Body or query                | Answer                                    |
 | ----------------------------- | ---------------------------- | ----------------------------------------- |
 | `GET /tournaments`            | `status?`, `limit`, `offset` | `Page<TournamentSummary>`, newest first   |
-| `POST /tournaments`           | `{ name, size, settings? }`  | `Tournament`, with the creator registered |
+| `POST /tournaments`           | `{ name, settings? }`        | `Tournament`, with the creator registered |
 | `GET /tournaments/:id`        |                              | `Tournament`                              |
 | `POST /tournaments/:id/join`  |                              | `Tournament`                              |
 | `POST /tournaments/:id/leave` |                              | `Tournament`                              |
-| `POST /tournaments/:id/start` |                              | `Tournament`                              |
 | `DELETE /tournaments/:id`     |                              | `null`                                    |
 
 **Creating.** `name`: trimmed, 3 to 30 characters among letters, numbers, spaces and `- _ ' .`, starting with a letter
-or a number. `size`: 4 or 8. `settings`: as for `POST /matches`, the classic board when left out. Anything else is
-`400 VALIDATION_ERROR`.
+or a number. `settings`: as for `POST /matches`, the classic board when left out. Every tournament has 4 places, so
+there is no size to send. Anything else (a `size` included) is `400 VALIDATION_ERROR`.
 
 **Registration**, while the status is `registering`:
 
-- Join: `409 ALREADY_JOINED`, `409 TOURNAMENT_FULL`. Taking the last place starts the tournament at once.
+- Join: `409 ALREADY_JOINED`, `409 TOURNAMENT_FULL`. Taking the 4th and last place starts the tournament at once;
+  there is no other way to start it.
 - Leave: `409 NOT_JOINED`. The creator cannot leave (`409 CREATOR_CANNOT_LEAVE`): they cancel instead.
-- Start before it is full: creator only (`403 NOT_CREATOR`), with at least 3 players (`409 NOT_ENOUGH_PLAYERS`).
 - Cancel (`DELETE`): creator only (`403 NOT_CREATOR`).
-- Once registration is over, these four answer `409 TOURNAMENT_NOT_OPEN`. An unknown id is `404 TOURNAMENT_NOT_FOUND`.
+- Once registration is over, these three answer `409 TOURNAMENT_NOT_OPEN`. An unknown id is `404 TOURNAMENT_NOT_FOUND`.
 
 **Running the bracket.**
 
-1. At the start, the players are shuffled into a bracket whose size is the next power of two: 4 for 3 or 4 players, 8
-   for 5 to 8.
-2. The empty places are byes. The first pairings get them, one each, so no pairing is left empty, and a player with a
-   bye goes straight to the second round.
-3. As soon as both players of a pairing are known, the server creates their match: both seated, `in_progress` at once,
+1. At the start, the 4 players are shuffled into two semi-finals (round 0). The final (round 1) waits for their
+   winners.
+2. As soon as both players of a pairing are known, the server creates their match: both seated, `in_progress` at once,
    seats drawn at random, the tournament's settings. It sets the pairing's `matchId` and adds a `system` message
    (`event: 'tournament_match'`, with `matchId` and `tournamentId`) to the conversation of the two players.
-4. The players use the normal match routes. When the match ends with a winner (a resignation included), the winner of
-   pairing `i` in round `r` moves to pairing `floor(i / 2)` of round `r + 1`, in place `i % 2`. A draw is replayed: a
-   new match for the same pairing, with a new notice.
-5. When the final has a winner, the tournament gets `status: 'finished'`, its `winner` and `endedAt`.
+3. The players use the normal match routes. When the match ends with a winner (a resignation included), the winner of
+   semi-final `i` moves to the final, in place `i`. A draw is replayed: a new match for the same pairing, with a new
+   notice.
+4. When the final has a winner, the tournament gets `status: 'finished'`, its `winner` and `endedAt`.
 
 Every change (registration, start, a result, a new match, the end, a cancellation) sends `tournament:update`.
 
@@ -611,8 +607,7 @@ one shows the server's English `message`.
 | `ALREADY_JOINED`             | 409      | Join                                                           |
 | `NOT_JOINED`                 | 409      | Leave                                                          |
 | `CREATOR_CANNOT_LEAVE`       | 409      | Leave                                                          |
-| `NOT_CREATOR`                | 403      | Start, cancel                                                  |
-| `NOT_ENOUGH_PLAYERS`         | 409      | Start                                                          |
+| `NOT_CREATOR`                | 403      | Cancel                                                         |
 
 The app makes three more codes itself; the server never sends them:
 

@@ -83,7 +83,6 @@ export const commonMessages = {
     NOT_JOINED: 'You are not registered in this tournament.',
     CREATOR_CANNOT_LEAVE: 'You created this tournament: cancel it instead of leaving.',
     NOT_CREATOR: 'Only the creator of the tournament can do this.',
-    NOT_ENOUGH_PLAYERS: 'At least 3 players are needed to start.',
   },
   presence: {
     online: 'Online',

@@ -81,16 +81,6 @@ export class TournamentsController {
     return this.tournaments.join(user.id, id);
   }
 
-  // POST /api/tournaments/:id/start: the "Start now" button (creator only).
-  @Post(':id/start')
-  @HttpCode(200)
-  start(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<TournamentView> {
-    return this.tournaments.start(user.id, id);
-  }
-
   // POST /api/tournaments/:id/leave: the "Leave" button.
   @Post(':id/leave')
   @HttpCode(200)

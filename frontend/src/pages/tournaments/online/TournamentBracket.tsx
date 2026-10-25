@@ -21,7 +21,6 @@ export function TournamentBracket({ tournament, viewerId }: { tournament: Tourna
           pairing.players[1] && { name: pairing.players[1].displayName, user: pairing.players[1] },
         ],
         winner: pairing.winnerId === null ? null : pairing.players[0]?.id === pairing.winnerId ? 0 : 1,
-        bye: pairing.bye,
         current: live && viewerPlays,
         action:
           live && viewerPlays && pairing.matchId ? (

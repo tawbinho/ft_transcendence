@@ -17,9 +17,6 @@ export const tournamentsApi = {
 
   leave: (id: string) => http.post<Tournament>(`${tournamentPath(id)}/leave`),
 
-  /** Creator only: starts before the tournament is full (at least 3 players). */
-  start: (id: string) => http.post<Tournament>(`${tournamentPath(id)}/start`),
-
   /** Creator only, while registration is open. */
   remove: (id: string) => http.delete<null>(tournamentPath(id)),
 };

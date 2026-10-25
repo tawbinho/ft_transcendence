@@ -43,8 +43,8 @@ export function useCreateTournament() {
   });
 }
 
-/** join, leave and start all answer the updated tournament. */
-export function useTournamentAction(id: string, action: 'join' | 'leave' | 'start') {
+/** join and leave both answer the updated tournament. */
+export function useTournamentAction(id: string, action: 'join' | 'leave') {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => tournamentsApi[action](id),

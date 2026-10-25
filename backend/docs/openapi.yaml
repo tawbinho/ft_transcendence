@@ -47,8 +47,9 @@ tags:
 - name: chat
   description: "Private messages, match invitations, read receipts, typing, and blocking. All implemented. Messages are stored once per conversation; a tournament match start writes a `system` message (event tournament_match) into the two players' conversation."
 - name: tournaments
-  description: 'Online single-elimination tournaments with 4 or 8 places. All implemented: list, create, read, cancel,
-    join, leave, start, the bracket and advancing winners, and the chat message that tells a player their match is ready.'
+  description: 'Online single-elimination tournaments with exactly 4 places. All implemented: list, create, read, cancel,
+    join (the 4th player starts it), leave, the bracket and advancing winners, and the chat message that tells a player
+    their match is ready.'
 security:
 - session: []
 paths:
@@ -1709,7 +1710,7 @@ paths:
       - tournaments
       operationId: createTournament
       summary: Create a tournament
-      description: A single-elimination bracket with 4 or 8 places. The creator is registered at once.
+      description: A single-elimination bracket with 4 places (two semi-finals and a final). The creator is registered at once.
       x-status: implemented
       requestBody:
         required: true
@@ -1834,7 +1835,15 @@ paths:
       - tournaments
       operationId: joinTournament
       summary: Register
-      description: While `registering`. Taking the last place starts the tournament at once (the bracket and the first matches are created).
+      description: 'While `registering`. Taking the 4th and last place starts the tournament at once: the 4 players
+        are shuffled into two semi-finals (round 0) and the final (round 1). As soon as both players of a pairing
+        are known the server creates their match: both seated, `in_progress` at once, seats at random, the
+        tournament''s settings; it sets the pairing''s `matchId`. The winner of semi-final `i` moves to the final, in
+        place `i`. A draw is replayed with a new match. When the final has a winner the tournament is `finished`.
+        Every change sends `tournament:update`. In a tournament match the player whose turn it is loses if no move is
+        made for `TOURNAMENT_TURN_TIMEOUT_SECONDS` (180 by default); the loss is recorded as `endReason: disconnect`.
+        Each match created also writes a `system` chat message (`event: tournament_match`) into the two players''
+        conversation.'
       x-status: implemented
       parameters:
       - $ref: '#/components/parameters/TournamentId'
@@ -1915,71 +1924,6 @@ paths:
               example:
                 error:
                   code: NOT_JOINED
-                  message: See the error code table
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-  /tournaments/{id}/start:
-    post:
-      tags:
-      - tournaments
-      operationId: startTournament
-      summary: Start before it is full
-      description: 'Creator only, with at least 3 players (`NOT_ENOUGH_PLAYERS` otherwise). Taking the last place also starts the
-        tournament, with the same rules. At the start the players are shuffled into a bracket of the next power of two (4 for
-        3 or 4 players, 8 for 5 to 8). The empty places are byes, one per first-round pairing, and a player with a bye
-        goes straight to round 2. As soon as both players of a pairing are known the server creates their match: both
-        seated, `in_progress` at once, seats at random, the tournament''s settings; it sets the pairing''s `matchId`.
-        The winner of pairing `i` in round `r` moves to pairing `floor(i/2)` of round `r+1`, in place `i % 2`. A draw is
-        replayed with a new match. When the final has a winner the tournament is `finished`. Every change sends
-        `tournament:update`. In a tournament match the player whose turn it is loses if no move is made for
-        `TOURNAMENT_TURN_TIMEOUT_SECONDS` (180 by default); the loss is recorded as `endReason: disconnect`.
-        Each match created also writes a `system` chat message (`event: tournament_match`) into the two players'' conversation.'
-      x-status: implemented
-      parameters:
-      - $ref: '#/components/parameters/TournamentId'
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - data
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Tournament'
-        '403':
-          description: 'Codes: `NOT_CREATOR`.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: NOT_CREATOR
-                  message: See the error code table
-        '404':
-          description: 'Codes: `TOURNAMENT_NOT_FOUND`.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: TOURNAMENT_NOT_FOUND
-                  message: See the error code table
-        '409':
-          description: 'Codes: `NOT_ENOUGH_PLAYERS`, `TOURNAMENT_NOT_OPEN`.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: NOT_ENOUGH_PLAYERS
                   message: See the error code table
         '401':
           $ref: '#/components/responses/Unauthorized'
@@ -2133,7 +2077,6 @@ components:
       - NOT_JOINED
       - CREATOR_CANNOT_LEAVE
       - NOT_CREATOR
-      - NOT_ENOUGH_PLAYERS
       description: Stable identifier of a failure. The frontend translates it (English, French, Arabic). Every code
         a route can answer is listed on the route.
     User:
@@ -2993,8 +2936,7 @@ components:
           type: integer
           enum:
           - 4
-          - 8
-          description: Places
+          description: Places (always 4)
         playerCount:
           type: integer
         settings:
@@ -3037,7 +2979,7 @@ components:
             nullable: true
             allOf:
             - $ref: '#/components/schemas/UserSummary'
-          description: 'Exactly two places. null: waiting for the winner of an earlier pairing, or empty (bye)'
+          description: 'Exactly two places. null: waiting for the winner of a semi-final'
         matchId:
           type: string
           format: uuid
@@ -3046,15 +2988,11 @@ components:
           type: string
           format: uuid
           nullable: true
-        bye:
-          type: boolean
-          description: One player had no opponent and went through without playing
       required:
       - id
       - players
       - matchId
       - winnerId
-      - bye
     Round:
       type: object
       properties:
@@ -3078,7 +3016,7 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/Round'
-            description: Empty until the start. `rounds[0]` is the first round
+            description: Empty until the start. `rounds[0]` is the semi-finals, `rounds[1]` the final
           startedAt:
             type: string
             format: date-time
@@ -3100,16 +3038,10 @@ components:
           minLength: 3
           maxLength: 30
           description: Trimmed. Letters, digits, spaces and `- _ ' .`, starting with a letter or a digit
-        size:
-          type: integer
-          enum:
-          - 4
-          - 8
         settings:
           $ref: '#/components/schemas/MatchSettingsInput'
       required:
       - name
-      - size
     RtMatchWatch:
       type: object
       properties:

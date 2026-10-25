@@ -85,7 +85,6 @@ export const commonMessages: CommonMessages = {
     NOT_JOINED: 'أنت غير مسجَّل في هذه البطولة.',
     CREATOR_CANNOT_LEAVE: 'أنت من أنشأ هذه البطولة: ألغِها بدلًا من الانسحاب منها.',
     NOT_CREATOR: 'وحده منشئ البطولة يمكنه فعل ذلك.',
-    NOT_ENOUGH_PLAYERS: 'يلزم 3 لاعبين على الأقل للبدء.',
   },
   presence: {
     online: 'متصل',

@@ -1,26 +1,19 @@
-// The shape of a single-elimination bracket, as PURE functions: no database, no
-// Nest, so every rule can be tested by hand. The service stores the result.
+// The shape of the 4-player single-elimination bracket, as PURE functions: no
+// database, no Nest, so every rule can be tested by hand. The service stores
+// the result.
 
 export interface Slot {
   round: number;
   position: number;
   player1Id: string | null;
   player2Id: string | null;
-  // One player had no opponent and goes through without playing.
-  bye: boolean;
   winnerId: string | null;
   // Set by the service when the match of this pairing is created.
   matchId: string | null;
 }
 
-// 3 or 4 players need a bracket of 4 places, 5 to 8 players one of 8.
-export function bracketSize(playerCount: number): 4 | 8 {
-  return playerCount <= 4 ? 4 : 8;
-}
-
-export function roundCount(size: number): number {
-  return Math.log2(size);
-}
+// Every tournament has 4 players: round 0 is two semi-finals, round 1 the final.
+const PLAYERS = 4;
 
 // A fair shuffle (Fisher-Yates). `random` can be replaced in a test.
 export function shuffle<T>(items: T[], random: () => number = Math.random): T[] {
@@ -37,54 +30,29 @@ const emptySlot = (round: number, position: number): Slot => ({
   position,
   player1Id: null,
   player2Id: null,
-  bye: false,
   winnerId: null,
   matchId: null,
 });
 
-// Builds the whole bracket for these players: shuffles them, fills round 0,
-// gives the empty places to byes (at most one per pairing, spread out so two
-// byes do not meet if it can be avoided), and moves the bye players on to round
-// 1.
+// Builds the whole bracket for these 4 players: shuffles them, seats them in the
+// two semi-finals and leaves the final empty until the semi-finals are played.
 export function buildBracket(
   playerIds: string[],
   random: () => number = Math.random,
 ): Slot[] {
-  const size = bracketSize(playerIds.length);
-  const firstRoundPairings = size / 2;
-  const byes = size - playerIds.length;
-
-  const slots: Slot[] = [];
-  for (let round = 0; round < roundCount(size); round++) {
-    const pairings = size / 2 ** (round + 1);
-    for (let position = 0; position < pairings; position++) {
-      slots.push(emptySlot(round, position));
-    }
+  if (playerIds.length !== PLAYERS) {
+    throw new Error(`A bracket needs exactly ${PLAYERS} players`);
   }
-
-  // Which round-0 pairings get a bye: the even positions first, then the odd
-  // ones, so the byes land in different halves of the next round.
-  const positions = Array.from({ length: firstRoundPairings }, (_, i) => i);
-  const byeOrder = [
-    ...positions.filter((p) => p % 2 === 0),
-    ...positions.filter((p) => p % 2 === 1),
-  ];
-  const byePositions = new Set(byeOrder.slice(0, byes));
-
   const queue = shuffle(playerIds, random);
-  for (const slot of slots.filter((s) => s.round === 0)) {
-    slot.player1Id = queue.shift() ?? null;
-    if (byePositions.has(slot.position)) {
-      slot.bye = true;
-    } else {
-      slot.player2Id = queue.shift() ?? null;
-    }
+  const slots: Slot[] = [];
+  for (let position = 0; position < PLAYERS / 2; position++) {
+    slots.push({
+      ...emptySlot(0, position),
+      player1Id: queue.shift()!,
+      player2Id: queue.shift()!,
+    });
   }
-
-  // A bye player wins their pairing at once and moves on.
-  for (const slot of slots.filter((s) => s.bye)) {
-    placeWinner(slots, slot.round, slot.position, slot.player1Id!);
-  }
+  slots.push(emptySlot(1, 0));
   return slots;
 }
 
@@ -116,13 +84,12 @@ export function isFinal(slots: Slot[], slot: Slot): boolean {
   return slot.round === Math.max(...slots.map((s) => s.round));
 }
 
-// A pairing whose match can be created now: both players known, nobody got a
-// bye, no winner yet and no match yet.
+// A pairing whose match can be created now: both players known, no winner yet
+// and no match yet.
 export function isReady(slot: Slot): boolean {
   return (
     slot.player1Id !== null &&
     slot.player2Id !== null &&
-    !slot.bye &&
     slot.winnerId === null &&
     slot.matchId === null
   );

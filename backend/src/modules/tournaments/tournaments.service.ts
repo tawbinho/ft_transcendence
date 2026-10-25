@@ -26,7 +26,7 @@ import {
 import { TournamentPairing } from './entities/tournament-pairing.entity.js';
 import { TournamentPlayer } from './entities/tournament-player.entity.js';
 import { Tournament } from './entities/tournament.entity.js';
-import { MIN_PLAYERS_TO_START } from './tournament.constants.js';
+import { TOURNAMENT_SIZES } from './tournament.constants.js';
 import {
   toTournament,
   toTournamentSummary,
@@ -46,8 +46,8 @@ export interface TournamentPage {
 }
 
 // The rules of a tournament: who may create, list, read, cancel it, who may
-// join or leave it, starting it (the bracket and its matches) and moving the
-// bracket on when a match ends.
+// join or leave it, starting it when the 4th player joins (the bracket and its
+// matches) and moving the bracket on when a match ends.
 @Injectable()
 export class TournamentsService implements OnModuleInit {
   private readonly logger = new Logger(TournamentsService.name);
@@ -74,6 +74,7 @@ export class TournamentsService implements OnModuleInit {
   // Create
 
   // Creates a tournament in the "registering" state and registers its creator.
+  // Every tournament has 4 places.
   async create(
     userId: string,
     dto: CreateTournamentDto,
@@ -85,7 +86,7 @@ export class TournamentsService implements OnModuleInit {
       const tournament = await manager.save(
         manager.create(Tournament, {
           name: dto.name,
-          size: dto.size,
+          size: TOURNAMENT_SIZES[0],
           ...settings,
           theme,
           createdById: userId,
@@ -259,39 +260,6 @@ export class TournamentsService implements OnModuleInit {
 
   // Start
 
-  // The creator starts the tournament before it is full. Needs at least 3
-  // players: the empty places of the bracket become byes.
-  async start(userId: string, tournamentId: string): Promise<TournamentView> {
-    const notices: MatchNotice[] = [];
-    await this.dataSource.transaction(async (manager) => {
-      const tournament = await this.lockTournament(manager, tournamentId);
-      if (tournament.createdById !== userId) {
-        throw new AppError(
-          'NOT_CREATOR',
-          'Only the creator can start it',
-          403,
-        );
-      }
-      this.requireRegistering(tournament);
-
-      const registered = await manager.countBy(TournamentPlayer, {
-        tournamentId,
-      });
-      if (registered < MIN_PLAYERS_TO_START) {
-        throw new AppError(
-          'NOT_ENOUGH_PLAYERS',
-          `At least ${MIN_PLAYERS_TO_START} players are needed to start`,
-          409,
-        );
-      }
-      await this.startBracket(manager, tournament, notices);
-    });
-
-    this.publishNotices(notices);
-    this.announce(tournamentId);
-    return this.get(userId, tournamentId);
-  }
-
   // Builds the bracket from the registered players, creates the match of every
   // pairing that is ready, and marks the tournament as running.
   private async startBracket(
@@ -305,8 +273,7 @@ export class TournamentsService implements OnModuleInit {
     });
     const slots = buildBracket(registered.map((row) => row.userId));
 
-    // A pairing is ready when both players are known (byes can already fill a
-    // round-1 pairing): its match starts right away.
+    // Both semi-finals have their two players: their matches start right away.
     for (const slot of slots.filter(isReady)) {
       slot.matchId = await this.createMatchFor(
         manager,
@@ -420,7 +387,6 @@ export class TournamentsService implements OnModuleInit {
         position: row.position,
         player1Id: row.player1Id,
         player2Id: row.player2Id,
-        bye: row.bye,
         winnerId: row.winnerId,
         matchId: row.matchId,
       }));

@@ -86,7 +86,6 @@ export const commonMessages: CommonMessages = {
     NOT_JOINED: 'Vous n’êtes pas inscrit à ce tournoi.',
     CREATOR_CANNOT_LEAVE: 'Vous avez créé ce tournoi : annulez-le plutôt que de le quitter.',
     NOT_CREATOR: 'Seul le créateur du tournoi peut faire cela.',
-    NOT_ENOUGH_PLAYERS: 'Il faut au moins 3 joueurs pour commencer.',
   },
   presence: {
     online: 'En ligne',

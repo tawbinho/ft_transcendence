@@ -1,16 +1,7 @@
 import { Transform, Type } from 'class-transformer';
-import {
-  IsIn,
-  IsOptional,
-  IsString,
-  Matches,
-  ValidateNested,
-} from 'class-validator';
+import { IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
 import { MatchSettingsDto } from '../../matches/dto/create-match.dto.js';
-import {
-  TOURNAMENT_NAME_PATTERN,
-  TOURNAMENT_SIZES,
-} from '../tournament.constants.js';
+import { TOURNAMENT_NAME_PATTERN } from '../tournament.constants.js';
 
 // The rules for the body of POST /tournaments, enforced by the global
 // ValidationPipe before the controller runs.
@@ -23,9 +14,6 @@ export class CreateTournamentDto {
       "name must be 3 to 30 characters: letters, digits, spaces and - _ ' . , starting with a letter or a digit",
   })
   name: string;
-
-  @IsIn([...TOURNAMENT_SIZES])
-  size: number;
 
   @IsOptional()
   // Validates the nested object with MatchSettingsDto's rules too (the same

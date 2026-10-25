@@ -19,7 +19,6 @@ export interface BracketPairingView {
   key: string;
   players: [BracketEntrant | null, BracketEntrant | null];
   winner: Slot | null;
-  bye: boolean;
   /** Highlighted: the viewer's pairing. */
   current?: boolean;
   /** A link or button under the pairing, e.g. "Play". */
@@ -55,7 +54,7 @@ export function BracketView({
             return (
               <li key={round} className={cn('flex min-w-56 flex-1 flex-col', !isFinal || champion ? 'me-10' : '')}>
                 <h3 className="mb-3 text-sm font-bold tracking-wide text-muted uppercase">
-                  {t(`tournaments.${roundName(round, rounds.length)}`, { n: round + 1 })}
+                  {t(`tournaments.${roundName(round, rounds.length)}`)}
                 </h3>
                 {/* Every pairing gets a row of the same height, so a pairing sits exactly between the two that feed it. */}
                 <ol className="grid flex-1 auto-rows-fr">
@@ -151,9 +150,7 @@ function PairingCard({ pairing, currentLabel }: { pairing: BracketPairingView; c
                   )}
                 </>
               ) : (
-                <span className="text-sm text-muted italic">
-                  {pairing.bye ? t('tournaments.bye') : t('tournaments.toBeDecided')}
-                </span>
+                <span className="text-sm text-muted italic">{t('tournaments.toBeDecided')}</span>
               )}
             </li>
           );

@@ -16,7 +16,7 @@ tournaments, and the whole interface is available in English, French and Arabic 
 - Accounts with email and password (Argon2), email verification and password reset with a 6-digit code sent by email,
   database sessions, optional two-factor authentication with backup codes.
 - Profiles, avatars, friends with online status, blocking, private chat with invitations and read receipts.
-- Single-elimination tournaments (4 or 8 places, byes, turn timeout).
+- Single-elimination tournaments for 4 players (two semi-finals and a final, starts when the 4th player joins, turn timeout).
 - Statistics, match history, leaderboard, levels and badges.
 - Custom boards (size, win length, theme) and light/dark appearance.
 - Privacy Policy and Terms of Service pages, linked in the footer.
@@ -117,11 +117,11 @@ matches (id, status, end_reason, cols, rows, win_length, theme, invited_user_id 
  ├─ match_players (match_id ⟶ matches, seat [PK pair], user_id ⟶ users, result)
  └─ match_moves   (match_id ⟶ matches, ply [PK pair], seat, col, played_at)
 
-tournaments (id, name, status, size 4|8, cols, rows, win_length, theme,
+tournaments (id, name, status, size (always 4), cols, rows, win_length, theme,
              created_by_id ⟶ users, winner_id ⟶ users, created_at, started_at, ended_at)
  ├─ tournament_players  (tournament_id ⟶ tournaments, user_id ⟶ users [PK pair], joined_at)
  └─ tournament_pairings (id, tournament_id ⟶ tournaments, round, position, player1_id, player2_id,
-                         winner_id ⟶ users, match_id ⟶ matches, bye)
+                         winner_id ⟶ users, match_id ⟶ matches, bye (unused, always false))
 ```
 
 Design notes: the board is never stored, it is rebuilt from `match_moves`; pairs (friendships, messages) store the
@@ -140,7 +140,7 @@ codes are stored only as a SHA-256 hash, like the session tokens.
 | Real-time | Socket.IO: live moves, presence, reconnection with a 30 s grace period, forfeit after a disconnection | atawbi |
 | Computer opponent | 3 levels, minimax with alpha-beta, deliberate mistakes, runs in a worker thread | atawbi |
 | Tournament registration | Create, list, cancel, join and leave; the tournament row is locked so two players cannot take the last place | fel-ghaz |
-| Tournament bracket | Start, single elimination with byes, automatic matches, replayed draws, turn timeout | atawbi |
+| Tournament bracket | Starts when the 4th player joins, two semi-finals and a final, automatic matches, replayed draws, turn timeout | atawbi |
 | Private chat | Messages, match invitations, system notices, typing indicator, read receipts, history | atawbi |
 | Player search and presence | Search, filters, sorting, pagination, online status | fel-ghaz (presence over sockets: atawbi) |
 | API contract | OpenAPI description of every route (`backend/docs/openapi.yaml`), shown with Swagger UI at `/api/docs` in development | fel-ghaz, atawbi |
@@ -188,7 +188,7 @@ consistent. Every module builds on the web game (module 6), which is implemented
 format and the validation pipe), authentication and sessions, email verification and password reset by emailed code
 (backend and frontend pages), 2FA and backup codes, the pure Connect Four engine with its tests, matches (create,
 join, move, resign) with row-locking transactions, the Socket.IO real-time layer and presence over sockets,
-disconnection forfeit, the AI opponent (worker thread), the tournament bracket (start, byes, automatic matches, turn
+disconnection forfeit, the AI opponent (worker thread), the tournament bracket (start, automatic matches, turn
 timeout), chat, Docker Compose, the HTTPS proxy, automatic migrations, rate limiting, and the documentation of these
 routes in the API contract. *Challenges:* concurrent actions (two players taking the same
 seat or racing a move) were solved with transactions that lock the match row; blocking the event loop with the AI
@@ -379,11 +379,10 @@ All `/api/matches` routes need a logged-in user.
 | Route                              | Description                                         |
 | ---------------------------------- | --------------------------------------------------- |
 | `GET  /api/tournaments`            | list tournaments, newest first (`status`, `limit`, `offset`) |
-| `POST /api/tournaments`            | create one: `{ "name", "size": 4 or 8, "settings"? }` |
+| `POST /api/tournaments`            | create one: `{ "name", "settings"? }` (always 4 places) |
 | `GET  /api/tournaments/:id`        | one tournament with its registered players          |
 | `DELETE /api/tournaments/:id`      | cancel it (creator only, while registering)         |
-| `POST /api/tournaments/:id/join`   | take a place                                        |
-| `POST /api/tournaments/:id/start`  | start before it is full (creator only, 3 players or more) |
+| `POST /api/tournaments/:id/join`   | take a place (the 4th player starts the tournament) |
 | `POST /api/tournaments/:id/leave`  | give the place back                                 |
 
 All `/api/tournaments` routes need a logged-in user.
@@ -486,25 +485,23 @@ same seat and a move cannot be stored twice. Common error codes:
 `MATCH_NOT_JOINABLE`, `ALREADY_IN_MATCH`, `NOT_INVITED`, `USER_NOT_FOUND`,
 `TOO_MANY_WAITING_MATCHES`.
 
-**Tournaments.** A single-elimination tournament with 4 or 8 places, created
+**Tournaments.** A single-elimination tournament with exactly 4 places, created
 with a name and an optional board (the same settings as a match). The creator
 takes the first place; others join and leave while it is `registering`.
 Cancelling deletes it. Every change runs in a transaction that locks the
 tournament row, so two players cannot take the last place together. Error
 codes: `TOURNAMENT_NOT_FOUND`, `TOURNAMENT_NOT_OPEN`, `TOURNAMENT_FULL`,
-`ALREADY_JOINED`, `NOT_JOINED`, `CREATOR_CANNOT_LEAVE`, `NOT_CREATOR`,
-`NOT_ENOUGH_PLAYERS`.
+`ALREADY_JOINED`, `NOT_JOINED`, `CREATOR_CANNOT_LEAVE`, `NOT_CREATOR`.
 
-**Tournament bracket.** Taking the last place starts the tournament at once;
-the creator can also start it earlier with at least 3 players. The players are
-shuffled into a bracket of the next power of two (4 places for 3 or 4 players,
-8 for 5 to 8): empty places are byes, one at most per first-round pairing, and
-a player with a bye goes straight to the next round. The bracket is the
-`tournament_pairings` table, and `GET /tournaments/:id` returns it as `rounds`
-(round 0 first). As soon as both players of a pairing are known the server
+**Tournament bracket.** Taking the 4th and last place starts the tournament at
+once; there is no other way to start it, so a bracket never has an empty place.
+The 4 players are shuffled into two semi-finals, and the final waits for their
+winners. The bracket is the `tournament_pairings` table, and
+`GET /tournaments/:id` returns it as `rounds` (round 0 is the semi-finals,
+round 1 the final). As soon as both players of a pairing are known the server
 creates their match (both seated, already `in_progress`, seats at random, the
-tournament's board). The winner of pairing `i` of round `r` takes place `i % 2`
-of pairing `floor(i/2)` of round `r+1`; a **draw is replayed** with a new match
+tournament's board). The winner of semi-final `i` takes place `i` of the
+final; a **draw is replayed** with a new match
 for the same pairing; the final's winner ends the tournament (`finished`).
 Winners advance when a match ends by a win, a resignation or a disconnection,
 and every change sends `tournament:update`. In a tournament match the player

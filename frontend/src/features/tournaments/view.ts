@@ -1,6 +1,4 @@
-import { isApiError } from '@/lib/api/errors';
 import {
-  MIN_TOURNAMENT_PLAYERS,
   TOURNAMENT_STATUSES,
   type Pairing,
   type Tournament,
@@ -14,15 +12,11 @@ import {
 // ---- Rounds -------------------------------------------------------------------
 
 /** Which heading a round gets; the page looks the words up as `tournaments.<name>`. */
-export type RoundName = 'final' | 'semiFinals' | 'quarterFinals' | 'round';
+export type RoundName = 'final' | 'semiFinals';
 
-/** The last round is the final, the one before it the semi-finals, then the quarter-finals. */
+/** The last round is the final, the one before it the semi-finals. */
 export function roundName(round: number, rounds: number): RoundName {
-  const fromEnd = rounds - 1 - round;
-  if (fromEnd === 0) return 'final';
-  if (fromEnd === 1) return 'semiFinals';
-  if (fromEnd === 2) return 'quarterFinals';
-  return 'round';
+  return round === rounds - 1 ? 'final' : 'semiFinals';
 }
 
 // ---- Online tournament buttons --------------------------------------------------
@@ -37,31 +31,9 @@ export function canLeave(tournament: TournamentSummary, viewerId: string | undef
   return tournament.status === 'registering' && tournament.joined && tournament.createdBy.id !== viewerId;
 }
 
-/** Only the creator starts it early, and only with enough players. */
-export function canStart(tournament: TournamentSummary, viewerId: string | undefined): boolean {
-  return (
-    tournament.status === 'registering' &&
-    tournament.createdBy.id === viewerId &&
-    tournament.playerCount >= MIN_TOURNAMENT_PLAYERS
-  );
-}
-
 /** Only the creator cancels, and only while registration is open. */
 export function canCancel(tournament: TournamentSummary, viewerId: string | undefined): boolean {
   return tournament.status === 'registering' && tournament.createdBy.id === viewerId;
-}
-
-/** Every place is taken. */
-export function isFull(tournament: TournamentSummary): boolean {
-  return tournament.playerCount >= tournament.size;
-}
-
-/**
- * The server answered "no such route" to Start: it cannot start tournaments yet.
- * A missing tournament has its own code (TOURNAMENT_NOT_FOUND), so it is not mistaken for this.
- */
-export function isStartUnavailable(error: unknown): boolean {
-  return isApiError(error) && error.status === 404 && error.code !== 'TOURNAMENT_NOT_FOUND';
 }
 
 /** The pairing the viewer has to play now (its match exists and has no winner), if any. */

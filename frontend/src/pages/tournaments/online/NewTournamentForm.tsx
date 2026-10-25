@@ -2,12 +2,11 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { paths } from '@/app/paths';
-import { Alert, Button, Card, OptionGroup, TextField } from '@/components/ui';
+import { Alert, Button, Card, TextField } from '@/components/ui';
 import { BoardSettingsFields } from '@/features/game/components/BoardSettingsFields';
 import { loadLastSettings, saveLastSettings } from '@/features/game/lastSettings';
 import type { BoardSettings } from '@/features/game/settings';
 import { useCreateTournament } from '@/features/tournaments/hooks';
-import { TOURNAMENT_SIZES, type TournamentSize } from '@/features/tournaments/types';
 import { TOURNAMENT_NAME_MAX, validateTournamentName } from '@/features/tournaments/validation';
 import { useErrorMessage } from '@/lib/errorMessage';
 
@@ -19,7 +18,6 @@ export function NewTournamentForm() {
   const create = useCreateTournament();
 
   const [name, setName] = useState('');
-  const [size, setSize] = useState<TournamentSize>(4);
   const [settings, setSettings] = useState<BoardSettings>(loadLastSettings);
   const [submitted, setSubmitted] = useState(false);
   const nameError = submitted ? validateTournamentName(name) : null;
@@ -30,7 +28,7 @@ export function NewTournamentForm() {
     if (validateTournamentName(name)) return;
     saveLastSettings(settings);
     create.mutate(
-      { name: name.trim(), size, settings },
+      { name: name.trim(), settings },
       { onSuccess: (tournament) => navigate(paths.tournament(tournament.id)) },
     );
   }
@@ -48,15 +46,6 @@ export function NewTournamentForm() {
           required
           onChange={(event) => setName(event.target.value)}
           error={nameError ? t(nameError) : null}
-        />
-        <OptionGroup
-          legend={t('tournaments.size')}
-          value={String(size)}
-          onChange={(value) => setSize(Number(value) as TournamentSize)}
-          options={TOURNAMENT_SIZES.map((value) => ({
-            value: String(value),
-            label: t('tournaments.sizeOption', { count: value }),
-          }))}
         />
         <BoardSettingsFields value={settings} onChange={setSettings} />
         <Button type="submit" size="lg" className="self-start" loading={create.isPending}>

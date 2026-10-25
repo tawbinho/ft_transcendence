@@ -1,42 +1,39 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PlayIcon, TrashIcon } from '@/components/icons';
+import { TrashIcon } from '@/components/icons';
 import { Alert, Button, Card, ConfirmDialog } from '@/components/ui';
 import { useUser } from '@/features/auth/hooks';
 import { useDeleteTournament, useTournamentAction } from '@/features/tournaments/hooks';
-import { MIN_TOURNAMENT_PLAYERS, type Tournament } from '@/features/tournaments/types';
-import { canCancel, canJoin, canLeave, canStart, isFull, isStartUnavailable } from '@/features/tournaments/view';
+import type { Tournament } from '@/features/tournaments/types';
+import { canCancel, canJoin, canLeave } from '@/features/tournaments/view';
 import { useErrorMessage } from '@/lib/errorMessage';
 
-/** Join, leave, start early or cancel, while players register. Each button shows only when it can be used. */
+/**
+ * Join, leave or cancel, while players register. Each button shows only when it can be used. The server starts the
+ * tournament by itself when the last place is taken.
+ */
 export function Registration({ tournament }: { tournament: Tournament }) {
   const { t } = useTranslation();
   const errorMessage = useErrorMessage();
   const viewerId = useUser()?.id;
   const join = useTournamentAction(tournament.id, 'join');
   const leave = useTournamentAction(tournament.id, 'leave');
-  const start = useTournamentAction(tournament.id, 'start');
   const remove = useDeleteTournament(tournament.id);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  const error = join.error ?? leave.error ?? start.error ?? remove.error;
+  const error = join.error ?? leave.error ?? remove.error;
   const isCreator = canCancel(tournament, viewerId);
 
   return (
     <Card className="flex flex-col gap-4">
       <div>
         <h2 className="text-lg font-bold">{t('tournaments.registrationOpen')}</h2>
-        <p className="text-muted">
-          {t('tournaments.registrationBody', { size: tournament.size, min: MIN_TOURNAMENT_PLAYERS })}
+        <p className="text-muted">{t('tournaments.registrationBody')}</p>
+        <p className="text-sm text-muted" role="status">
+          {t('tournaments.waitingForPlayers', { count: tournament.playerCount, size: tournament.size })}
         </p>
       </div>
-      {/* Both warnings are for a server that cannot start tournaments. The real backend can, and starts a full one at
-          once, so they do not show with it. */}
-      {isStartUnavailable(start.error) && !isFull(tournament) && (
-        <Alert tone="warning">{t('tournaments.startUnavailable')}</Alert>
-      )}
-      {isFull(tournament) && <Alert tone="warning">{t('tournaments.fullWaiting')}</Alert>}
-      {error && !isStartUnavailable(error) && <Alert tone="danger">{errorMessage(error)}</Alert>}
+      {error && <Alert tone="danger">{errorMessage(error)}</Alert>}
       <div className="flex flex-wrap gap-2">
         {canJoin(tournament) && (
           <Button loading={join.isPending} onClick={() => join.mutate()}>
@@ -49,21 +46,12 @@ export function Registration({ tournament }: { tournament: Tournament }) {
           </Button>
         )}
         {isCreator && (
-          <>
-            <Button loading={start.isPending} disabled={!canStart(tournament, viewerId)} onClick={() => start.mutate()}>
-              <PlayIcon />
-              {t('tournaments.startNow')}
-            </Button>
-            <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
-              <TrashIcon />
-              {t('tournaments.delete')}
-            </Button>
-          </>
+          <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
+            <TrashIcon />
+            {t('tournaments.delete')}
+          </Button>
         )}
       </div>
-      {isCreator && !canStart(tournament, viewerId) && (
-        <p className="text-sm text-muted">{t('tournaments.needMorePlayers', { min: MIN_TOURNAMENT_PLAYERS })}</p>
-      )}
       <ConfirmDialog
         open={confirmingDelete}
         title={t('tournaments.deleteTitle')}

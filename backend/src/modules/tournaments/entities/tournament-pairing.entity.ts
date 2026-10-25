@@ -70,7 +70,8 @@ export class TournamentPairing {
   @JoinColumn({ name: 'winner_id' })
   winner: Relation<User> | null;
 
-  // One player had no opponent and went through without playing.
+  // Unused: a tournament always has 4 players, so nobody goes through without
+  // playing. Kept (always false) so the table needs no migration.
   @Column({ type: 'boolean', default: false })
   bye: boolean;
 }

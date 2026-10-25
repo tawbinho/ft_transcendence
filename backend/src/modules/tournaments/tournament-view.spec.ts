@@ -143,7 +143,6 @@ describe('toTournament rounds', () => {
     player2Id: BOB,
     matchId: null,
     winnerId: null,
-    bye: false,
     ...overrides,
   });
 
@@ -161,12 +160,12 @@ describe('toTournament rounds', () => {
 
   it('shows the players of a pairing, and null for an empty place', () => {
     const view = toTournament(tournament(), players, ALICE, [
-      pairing({ player2Id: null, bye: true, winnerId: ALICE }),
+      pairing({ player2Id: null, winnerId: ALICE }),
     ]);
     const first = view.rounds[0]!.pairings[0]!;
     expect(first.players[0]).toMatchObject({ id: ALICE, displayName: 'alice' });
     expect(first.players[1]).toBeNull();
-    expect(first).toMatchObject({ bye: true, winnerId: ALICE });
+    expect(first).toMatchObject({ winnerId: ALICE });
   });
 
   it('carries the match of a pairing', () => {
@@ -174,5 +173,64 @@ describe('toTournament rounds', () => {
       pairing({ matchId: 'match-9' }),
     ]);
     expect(view.rounds[0]!.pairings[0]!.matchId).toBe('match-9');
+  });
+});
+
+describe('toTournament with a 4-player bracket', () => {
+  const semi = (id: string, position: number, p1: string, p2: string) => ({
+    id,
+    round: 0,
+    position,
+    player1Id: p1,
+    player2Id: p2,
+    matchId: `match-${id}`,
+    winnerId: null,
+  });
+  const final: PairingData = {
+    id: 'final',
+    round: 1,
+    position: 0,
+    player1Id: null,
+    player2Id: null,
+    matchId: null,
+    winnerId: null,
+  };
+  const four: RegisteredPlayer[] = [
+    ...players,
+    { userId: CAROL, displayName: 'carol', avatarUrl: null, lastSeenAt: null },
+    { userId: 'user-dan', displayName: 'dan', avatarUrl: null, lastSeenAt: null },
+  ];
+
+  it('shows 2 semi-finals with their matches, then an empty final', () => {
+    const view = toTournament(tournament({ status: 'running' }), four, ALICE, [
+      final,
+      semi('b', 1, CAROL, 'user-dan'),
+      semi('a', 0, ALICE, BOB),
+    ]);
+    expect(view.rounds.map((r) => r.pairings.length)).toEqual([2, 1]);
+    expect(view.rounds[0]!.pairings.every((p) => p.matchId)).toBe(true);
+    expect(view.rounds[1]!.pairings[0]!.players).toEqual([null, null]);
+  });
+
+  it('shows the winners in the final and the tournament winner at the end', () => {
+    const view = toTournament(
+      tournament({
+        status: 'finished',
+        winner: { id: ALICE, displayName: 'alice' },
+      }),
+      four,
+      ALICE,
+      [
+        { ...semi('a', 0, ALICE, BOB), winnerId: ALICE },
+        { ...semi('b', 1, CAROL, 'user-dan'), winnerId: CAROL },
+        { ...final, player1Id: ALICE, player2Id: CAROL, winnerId: ALICE },
+      ],
+    );
+    expect(view.rounds[1]!.pairings[0]!.players.map((p) => p!.id)).toEqual([
+      ALICE,
+      CAROL,
+    ]);
+    expect(view.rounds[1]!.pairings[0]!.winnerId).toBe(ALICE);
+    expect(view.winner).toEqual({ id: ALICE, displayName: 'alice' });
   });
 });

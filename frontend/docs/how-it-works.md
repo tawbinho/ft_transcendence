@@ -201,14 +201,12 @@ The computer opponent is not written here: the server plays it (section 6).
 
 - Three short route files: `TournamentsPage`, `TournamentPage`, `NewTournamentPage`. Their pieces are in `online/`
   next to them. Tournaments are online only: the backend builds the bracket and creates the matches.
-- Decisions are plain functions in `features/tournaments/view.ts`: `roundName` (Final, Semi-finals...), `canJoin`,
-  `canLeave`, `canStart`, `canCancel` (which buttons show), `pairingToPlay`.
-- Online tournaments (list, create, join, leave, cancel, start, the bracket and its matches) all talk to the real
-  backend, which also writes "your match is ready" in the chat of the two players. The two warnings in
-  `Registration.tsx` (`startUnavailable` when Start now finds no route, and `fullWaiting` when a full tournament is
-  still open) date from before the backend could start a tournament. This backend starts one at once when the last
-  place is taken, so neither shows. `TournamentPage` checks the address with `isUuid` (`lib/ids.ts`) before asking the
-  server.
+- Decisions are plain functions in `features/tournaments/view.ts`: `roundName` (Semi-finals or Final), `canJoin`,
+  `canLeave`, `canCancel` (which buttons show), `pairingToPlay`.
+- Online tournaments (list, create, join, leave, cancel, the bracket and its matches) all talk to the real backend,
+  which also writes "your match is ready" in the chat of the two players. Every tournament has 4 places and nobody
+  starts it by hand: the backend starts it when the 4th player joins, and `Registration.tsx` shows "Waiting for 4
+  players" until then. `TournamentPage` checks the address with `isUuid` (`lib/ids.ts`) before asking the server.
 - Each registered player's name links to their profile.
 - `features/tournaments/components/BracketView.tsx` draws the bracket from one simple list of pairings, which
   `online/TournamentBracket.tsx` makes from the server's rounds. On a phone the bracket scrolls sideways inside its own

@@ -37,7 +37,6 @@ export interface PairingData {
   player2Id: string | null;
   matchId: string | null;
   winnerId: string | null;
-  bye: boolean;
 }
 
 // ---- What the API returns -------------------------------------------------
@@ -57,12 +56,10 @@ export interface PlayerView {
 
 export interface PairingView {
   id: string;
-  // Two places. null: waiting for the winner of an earlier pairing, or empty
-  // (bye).
+  // Two places. null: waiting for the winner of an earlier pairing.
   players: [PlayerView | null, PlayerView | null];
   matchId: string | null;
   winnerId: string | null;
-  bye: boolean;
 }
 
 export interface RoundView {
@@ -172,7 +169,6 @@ function toRounds(
       players: [view(pairing.player1Id), view(pairing.player2Id)],
       matchId: pairing.matchId,
       winnerId: pairing.winnerId,
-      bye: pairing.bye,
     });
   }
   return rounds;
