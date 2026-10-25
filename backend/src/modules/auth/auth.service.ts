@@ -9,6 +9,7 @@ import type { LoginDto } from './dto/login.dto.js';
 import type { SignupDto } from './dto/signup.dto.js';
 import { MailService } from './email/mail.service.js';
 import { checkCode, newVerificationCode } from './email/verification-code.js';
+import { looksLikeBackupCode } from './two-factor/backup-code.js';
 import { SessionsService, type IssuedSession } from './sessions.service.js';
 import { TwoFactorService } from './two-factor/two-factor.service.js';
 
@@ -128,10 +129,9 @@ export class AuthService {
     // Password correct. With 2FA on, that is NOT enough to log in: create a
     // short-lived PENDING session and wait for the code (verifyTwoFactor).
     if (await this.twoFactor.isEnabled(user.id)) {
-      return {
-        twoFactorRequired: true,
-        session: await this.sessions.create(user.id, { pendingTwoFactor: true }),
-      };
+      const session = await this.sessions.create(user.id, { pendingTwoFactor: true });
+      await this.mail.sendTwoFactorAuth(user.email, session.twoFactorCode!);
+      return { twoFactorRequired: true, session };
     }
 
     return { user: toPublicUser(user), session: await this.sessions.create(user.id) };
@@ -148,7 +148,12 @@ export class AuthService {
         401,
       );
     }
-    await this.twoFactor.verifyLoginCode(pending.userId, code);
+    // A backup code still works; anything else is the code we emailed.
+    if (looksLikeBackupCode(code)) {
+      await this.twoFactor.verifyLoginCode(pending.userId, code);
+    } else {
+      await this.sessions.verifyPendingCode(pending, code);
+    }
 
     // Replaces the pending session by a real one with a NEW token.
     const { userId, ...session } = await this.sessions.promote(pendingToken);
@@ -157,11 +162,11 @@ export class AuthService {
     return { user: toPublicUser(user), session };
   }
 
-  // Start turning 2FA on: returns the QR code to scan.
-  async setupTwoFactor(userId: string): Promise<{ qr: string; secret: string }> {
+  // Emails a 2FA code (to turn 2FA on, or to confirm turning it off).
+  async sendTwoFactorCode(userId: string): Promise<void> {
     const user = await this.users.findById(userId);
     if (!user) throw new AppError('UNAUTHORIZED', 'Please log in', 401);
-    return this.twoFactor.setup(userId, user.email);
+    await this.twoFactor.sendCode(userId, user.email);
   }
 
   enableTwoFactor(userId: string, code: string): Promise<string[]> {

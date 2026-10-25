@@ -95,19 +95,17 @@ export class AuthController {
     );
   }
 
-  // POST /api/auth/2fa/setup: step 1 of turning 2FA on. Returns the QR code
-  // to scan with an authenticator app. 2FA is NOT active yet.
-  @Post('2fa/setup')
-  @Throttle(strict(10))
+  // POST /api/auth/2fa/code: emails a 6-digit code. It is the first step of
+  // turning 2FA on, and the proof needed to turn it off.
+  @Post('2fa/code')
+  @Throttle(strict(5))
   @HttpCode(200)
   @UseGuards(SessionGuard)
-  setupTwoFactor(
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<{ qr: string; secret: string }> {
-    return this.auth.setupTwoFactor(user.id);
+  sendTwoFactorCode(@CurrentUser() user: AuthenticatedUser): Promise<void> {
+    return this.auth.sendTwoFactorCode(user.id);
   }
 
-  // POST /api/auth/2fa/enable: step 2. The first valid code turns 2FA on.
+  // POST /api/auth/2fa/enable: step 2. The emailed code turns 2FA on.
   @Post('2fa/enable')
   @Throttle(strict(5))
   @HttpCode(200)

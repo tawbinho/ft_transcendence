@@ -410,18 +410,17 @@ paths:
                     - $ref: '#/components/schemas/User'
         '429':
           $ref: '#/components/responses/RateLimited'
-  /auth/2fa/setup:
+  /auth/2fa/code:
     post:
       tags:
       - auth
-      operationId: setupTwoFactor
-      summary: Start the 2FA setup
-      description: Creates a secret (stored encrypted, not active yet) and returns the QR code. Call again before
-        enabling to replace it.
+      operationId: sendTwoFactorCode
+      summary: Email a 2FA code
+      description: Emails a 6-digit code to the account (valid 15 minutes, 5 wrong guesses). It is the first step of turning 2FA on, and the proof needed to turn it off.
       x-status: implemented
       responses:
         '200':
-          description: Scan the QR code
+          description: The code was sent
           content:
             application/json:
               schema:
@@ -430,17 +429,7 @@ paths:
                 - data
                 properties:
                   data:
-                    $ref: '#/components/schemas/TwoFactorSetup'
-        '409':
-          description: 'Codes: `TWO_FACTOR_ALREADY_ENABLED`.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: TWO_FACTOR_ALREADY_ENABLED
-                  message: See the error code table
+                    type: 'null'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '429':
@@ -451,7 +440,7 @@ paths:
       - auth
       operationId: enableTwoFactor
       summary: Turn 2FA on
-      description: The first valid code from the authenticator app activates 2FA, and the answer holds the 10 backup codes (shown ONLY this once, so the app must tell the user to keep them safe). Only the 6-digit code works here.
+      description: The emailed code (see `/auth/2fa/code`) activates 2FA, and the answer holds the 10 backup codes (shown ONLY this once, so the app must tell the user to keep them safe). Only the 6-digit code works here.
       x-status: implemented
       requestBody:
         required: true
@@ -2273,7 +2262,7 @@ components:
         code:
           type: string
           pattern: ^(\d{6}|[0-9A-Za-z]{5}-?[0-9A-Za-z]{5})$
-          description: The 6 digits of the authenticator app, or a one-time backup code such as `ABCDE-FGHJK` (spaces and case are ignored)
+          description: The 6 digits emailed to the user, or a one-time backup code such as `ABCDE-FGHJK` (spaces and case are ignored)
       required:
       - code
     BackupCodes:
@@ -2323,18 +2312,6 @@ components:
         - user
         - twoFactorRequired
         description: The password was right but a 2FA code is needed. The user is NOT logged in yet.
-    TwoFactorSetup:
-      type: object
-      properties:
-        qr:
-          type: string
-          description: QR code image as a data URL, for an <img>
-        secret:
-          type: string
-          description: The same secret as text, for manual entry in an authenticator app
-      required:
-      - qr
-      - secret
     MatchSettings:
       type: object
       properties:

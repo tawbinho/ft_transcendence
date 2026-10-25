@@ -5,12 +5,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, MoreThan, Repository } from 'typeorm';
 import { AppError } from '../../common/errors/app-error.js';
 import type { Env } from '../../config/env.validation.js';
+import { checkCode, newVerificationCode } from './email/verification-code.js';
 import { Session } from './entities/session.entity.js';
 
 // What the controller needs to build the cookie.
 export interface IssuedSession {
   token: string; // the random value that goes in the cookie (never stored)
   expiresAt: Date;
+  twoFactorCode?: string; // only for a pending session: the code to email
 }
 
 // A pending session (password right, 2FA code not given yet) only has to
@@ -43,15 +45,40 @@ export class SessionsService {
 
     // 32 random bytes = 256 bits: impossible to guess.
     const token = randomBytes(32).toString('base64url');
+    // A pending session also gets the 6-digit code the user must type; the
+    // caller emails it.
+    const twoFactor = pendingTwoFactor ? newVerificationCode(userId) : null;
     await this.sessions.save(
       this.sessions.create({
         userId,
         tokenHash: this.hash(token),
         pendingTwoFactor,
+        twoFactorHash: twoFactor?.hash ?? null,
         expiresAt,
       }),
     );
-    return { token, expiresAt };
+    return { token, expiresAt, twoFactorCode: twoFactor?.code };
+  }
+
+  // Checks the emailed code of a pending session. Wrong guesses are counted
+  // and the code dies after MAX_ATTEMPTS (the user must log in again).
+  async verifyPendingCode(pending: Session, code: string): Promise<void> {
+    const result = checkCode(
+      {
+        hash: pending.twoFactorHash,
+        expiresAt: pending.expiresAt,
+        attempts: pending.twoFactorAttempts,
+      },
+      pending.userId,
+      code,
+    );
+    if (result === 'ok') return;
+    if (result === 'wrong') {
+      await this.sessions.update(pending.id, {
+        twoFactorAttempts: pending.twoFactorAttempts + 1,
+      });
+    }
+    throw new AppError('INVALID_TWO_FACTOR_CODE', 'This code is wrong or expired', 401);
   }
 
   // The session behind a cookie, but ONLY if it is a real login that has not

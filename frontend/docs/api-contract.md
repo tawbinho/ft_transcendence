@@ -122,7 +122,7 @@ Nothing to change. What the app uses:
 | `POST /auth/2fa/verify`          | `{ code }`                         | `{ user: User }`                                                |
 | `POST /auth/logout`              |                                    | `null`                                                          |
 | `GET /auth/me`                   |                                    | `User`, or `null` (status 200) when nobody is logged in         |
-| `POST /auth/2fa/setup`           |                                    | `{ qr, secret }`: the QR code as a data URL, the secret as text |
+| `POST /auth/2fa/code`            |                                    | `null`: a 6-digit code is emailed (turn 2FA on, or confirm turning it off) |
 | `POST /auth/2fa/enable`          | `{ code }`                         | `null`                                                          |
 | `POST /auth/2fa/disable`         | `{ code }`                         | `null`                                                          |
 

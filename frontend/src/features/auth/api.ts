@@ -1,6 +1,6 @@
 import { isApiError } from '@/lib/api/errors';
 import { http } from '@/lib/api/http';
-import type { LoginInput, LoginResult, SignupInput, TwoFactorSetup, User } from './types';
+import type { LoginInput, LoginResult, SignupInput, User } from './types';
 
 export const authApi = {
   /** The logged-in user, or null when nobody is logged in. */
@@ -24,9 +24,10 @@ export const authApi = {
 
   logout: () => http.post<null>('/auth/logout'),
 
-  setupTwoFactor: () => http.post<TwoFactorSetup>('/auth/2fa/setup'),
+  /** Emails a 6-digit code: the first step of turning 2FA on, and the proof needed to turn it off. */
+  sendTwoFactorCode: () => http.post<null>('/auth/2fa/code'),
 
-  /** The first code from the app turns 2FA on; the answer holds the 10 backup codes, sent only this once. */
+  /** The emailed code turns 2FA on; the answer holds the 10 backup codes, sent only this once. */
   enableTwoFactor: (code: string) => http.post<{ backupCodes: string[] }>('/auth/2fa/enable', { code }),
 
   disableTwoFactor: (code: string) => http.post<null>('/auth/2fa/disable', { code }),

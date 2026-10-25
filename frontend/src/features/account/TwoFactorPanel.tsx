@@ -1,8 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Badge, Button, Card, Skeleton, TextField } from '@/components/ui';
-import { useDisableTwoFactor, useEnableTwoFactor, useSetupTwoFactor, useTwoFactorStatus } from '@/features/auth/hooks';
-import type { TwoFactorSetup } from '@/features/auth/types';
+import { useDisableTwoFactor, useEnableTwoFactor, useSendTwoFactorCode, useTwoFactorStatus } from '@/features/auth/hooks';
 import { normalizeCode, validateCode, validateCodeOrBackupCode } from '@/features/auth/validation';
 import { isApiError } from '@/lib/api/errors';
 import { useErrorMessage } from '@/lib/errorMessage';
@@ -10,18 +9,18 @@ import { BackupCodes } from './BackupCodes';
 
 type Step =
   | { kind: 'idle' }
-  | { kind: 'setup'; setup: TwoFactorSetup }
+  | { kind: 'setup' }
   | { kind: 'codes'; codes: string[] }
   | { kind: 'disable' };
 
 /**
- * Turns two-factor authentication on (QR code, then a first code, then the backup codes are shown
- * once) or off (a code from the app or a backup code).
+ * Turns two-factor authentication on (a code is emailed, then the backup codes are shown once) or
+ * off (an emailed code or a backup code).
  */
 export function TwoFactorPanel() {
   const { t } = useTranslation();
   const errorMessage = useErrorMessage();
-  const setup = useSetupTwoFactor();
+  const sendCode = useSendTwoFactorCode();
   const enable = useEnableTwoFactor();
   const disable = useDisableTwoFactor();
   const statusQuery = useTwoFactorStatus();
@@ -32,7 +31,7 @@ export function TwoFactorPanel() {
   const [submitted, setSubmitted] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  // Turning 2FA on needs a code from the app: no backup code exists yet.
+  // Turning 2FA on needs the emailed code: no backup code exists yet.
   const checkCode = step.kind === 'setup' ? validateCode : validateCodeOrBackupCode;
   const codeError = submitted ? checkCode(code) : null;
 
@@ -44,16 +43,10 @@ export function TwoFactorPanel() {
     disable.reset();
   }
 
-  function startSetup() {
+  // Emails a code, then shows the form to type it.
+  function askForCode(next: 'setup' | 'disable') {
     setNotice(null);
-    setup.mutate(undefined, {
-      onSuccess: (data) => reset({ kind: 'setup', setup: data }),
-      onError: (error) => {
-        if (isApiError(error, 'TWO_FACTOR_ALREADY_ENABLED')) {
-          setNotice(t('twoFactor.enabled'));
-        }
-      },
-    });
+    sendCode.mutate(undefined, { onSuccess: () => reset({ kind: next }) });
   }
 
   function submit(event: FormEvent) {
@@ -84,7 +77,6 @@ export function TwoFactorPanel() {
   }
 
   const pending = step.kind === 'setup' ? enable : disable;
-  const setupError = setup.error && !isApiError(setup.error, 'TWO_FACTOR_ALREADY_ENABLED') ? setup.error : null;
 
   return (
     <Card className="flex flex-col gap-4">
@@ -97,7 +89,7 @@ export function TwoFactorPanel() {
       <p className="text-muted">{t('twoFactor.body')}</p>
 
       {notice && <Alert tone="success">{notice}</Alert>}
-      {setupError && <Alert tone="danger">{errorMessage(setupError)}</Alert>}
+      {sendCode.error && <Alert tone="danger">{errorMessage(sendCode.error)}</Alert>}
 
       {/* The server has not answered yet: a placeholder, or a retry if it could not be asked. */}
       {step.kind === 'idle' && status === undefined && statusQuery.isError && (
@@ -121,17 +113,11 @@ export function TwoFactorPanel() {
       {step.kind === 'idle' && status !== undefined && (
         <div className="flex flex-wrap gap-2">
           {status ? (
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setNotice(null);
-                reset({ kind: 'disable' });
-              }}
-            >
+            <Button variant="secondary" loading={sendCode.isPending} onClick={() => askForCode('disable')}>
               {t('twoFactor.turnOff')}
             </Button>
           ) : (
-            <Button loading={setup.isPending} onClick={startSetup}>
+            <Button loading={sendCode.isPending} onClick={() => askForCode('setup')}>
               {t('twoFactor.turnOn')}
             </Button>
           )}
@@ -142,26 +128,7 @@ export function TwoFactorPanel() {
 
       {(step.kind === 'setup' || step.kind === 'disable') && (
         <form onSubmit={submit} noValidate className="flex flex-col gap-4">
-          {step.kind === 'setup' ? (
-            <>
-              <p>{t('twoFactor.scan')}</p>
-              <img
-                src={step.setup.qr}
-                alt={t('twoFactor.qrAlt')}
-                width={200}
-                height={200}
-                className="rounded-xl border border-border bg-white p-2"
-              />
-              <div className="text-sm">
-                <p className="text-muted">{t('twoFactor.manualKey')}</p>
-                <code dir="ltr" className="mt-1 inline-block rounded-lg bg-surface-2 px-2 py-1 font-mono break-all">
-                  {step.setup.secret}
-                </code>
-              </div>
-            </>
-          ) : (
-            <p>{t('twoFactor.offBody')}</p>
-          )}
+          <p>{step.kind === 'setup' ? t('twoFactor.emailed') : t('twoFactor.offBody')}</p>
           {pending.error && !isApiError(pending.error, 'TWO_FACTOR_NOT_ENABLED') && (
             <Alert tone="danger">{errorMessage(pending.error)}</Alert>
           )}

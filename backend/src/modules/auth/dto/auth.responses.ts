@@ -4,7 +4,7 @@ import { PublicUserResponse } from '../../users/dto/public-user.response.js';
 // auth routes put inside `data` in their responses. They do not change what the
 // API returns.
 
-// signup and 2fa/verify
+// 2fa/verify
 export class SessionResponse {
   user: PublicUserResponse;
 }
@@ -15,12 +15,6 @@ export class LoginResponse {
   user: PublicUserResponse | null;
 
   twoFactorRequired?: true;
-}
-
-export class TwoFactorSetupResponse {
-  qr: string;
-
-  secret: string;
 }
 
 export class BackupCodesResponse {

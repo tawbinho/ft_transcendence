@@ -112,16 +112,8 @@ export function useTwoFactorStatus() {
   });
 }
 
-export function useSetupTwoFactor() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: authApi.setupTwoFactor,
-    onError: (error) => {
-      if (isApiError(error, 'TWO_FACTOR_ALREADY_ENABLED')) {
-        rememberTwoFactor(queryClient, true);
-      }
-    },
-  });
+export function useSendTwoFactorCode() {
+  return useMutation({ mutationFn: authApi.sendTwoFactorCode });
 }
 
 export function useEnableTwoFactor() {

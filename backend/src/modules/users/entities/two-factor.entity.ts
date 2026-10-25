@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { User } from './user.entity.js';
 
-// The `two_factor` table: the authenticator-app (TOTP) setup of a user. At most
+// The `two_factor` table: the email-code 2FA state of a user. At most
 // one row per user, so the user id is the primary key as well as the foreign
 // key.
 @Entity('two_factor')
@@ -21,18 +21,20 @@ export class TwoFactor {
   @JoinColumn({ name: 'user_id' })
   user: Relation<User>;
 
-  // The shared secret behind the QR code. It must be stored ENCRYPTED by the
-  // service before it reaches this column; this class does not do it.
-  @Column({ type: 'text' })
-  secret: string;
-
-  // false after setup, true once the user proved their app works with a
-  // valid code. Login only asks for a code when this is true.
+  // false after the first code was asked for, true once the user proved they
+  // can read their email with a valid code. Login only asks for a code when
+  // this is true.
   @Column({ type: 'boolean', default: false })
   enabled: boolean;
 
-  // Replay protection. A TOTP code is valid for a 30-second slot; this stores
-  // the number of the last slot whose code was accepted.
-  @Column({ name: 'last_used_step', type: 'integer', nullable: true })
-  lastUsedStep: number | null;
+  // The emailed code, like the email verification code: only its hash is
+  // stored, it expires, and it dies after MAX_ATTEMPTS wrong guesses.
+  @Column({ name: 'code_hash', type: 'text', nullable: true })
+  codeHash: string | null;
+
+  @Column({ name: 'code_expires_at', type: 'timestamptz', nullable: true })
+  codeExpiresAt: Date | null;
+
+  @Column({ name: 'code_attempts', type: 'int', default: 0 })
+  codeAttempts: number;
 }

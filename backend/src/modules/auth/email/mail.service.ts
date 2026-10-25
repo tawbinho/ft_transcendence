@@ -47,6 +47,13 @@ export class MailService {
     });
   }
 
+  sendTwoFactorAuth(to: string, code: string): Promise<void> {
+    return this.sendCode(to, code, {
+      subject: `${code} is your Connect Four login code`,
+      intro: 'Enter this code to finish logging in to your account.',
+    });
+  }
+
   private async sendCode(
     to: string,
     code: string,

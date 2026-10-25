@@ -1,26 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { generateSecret, generateURI, verify } from 'otplib';
-import QRCode from 'qrcode';
-import { IsNull, LessThan, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { AppError } from '../../../common/errors/app-error.js';
 import { TwoFactor } from '../../users/entities/two-factor.entity.js';
 import { looksLikeBackupCode } from './backup-code.js';
 import { BackupCodesService } from './backup-codes.service.js';
-import { SecretCipher } from './secret-cipher.js';
+import { MailService } from '../email/mail.service.js';
+import { checkCode, newVerificationCode } from '../email/verification-code.js';
 
-// Shown in the authenticator app next to the account.
-const ISSUER = 'Connect Four';
-
-// All the two-factor rules (TOTP, the 6-digit codes from an authenticator app)
-// live here: starting the setup, turning 2FA on and off, and checking a code at
-// login.
+// All the two-factor rules live here: sending the emailed 6-digit code, turning
+// 2FA on and off, and checking a code (emailed or backup).
 @Injectable()
 export class TwoFactorService {
   constructor(
     @InjectRepository(TwoFactor)
     private readonly twoFactor: Repository<TwoFactor>,
-    private readonly cipher: SecretCipher,
+    private readonly mail: MailService,
     private readonly backupCodes: BackupCodesService,
   ) {}
 
@@ -30,47 +25,32 @@ export class TwoFactorService {
     return row?.enabled === true;
   }
 
-  // Step 1 of turning 2FA on.
-  async setup(
-    userId: string,
-    accountLabel: string,
-  ): Promise<{ qr: string; secret: string }> {
+  // Emails a fresh 6-digit code to the user. Used to turn 2FA on and to prove
+  // it is really them before turning it off or resetting the backup codes.
+  async sendCode(userId: string, email: string): Promise<void> {
     const existing = await this.twoFactor.findOneBy({ userId });
-    if (existing?.enabled) {
-      throw new AppError(
-        'TWO_FACTOR_ALREADY_ENABLED',
-        'Two-factor authentication is already enabled',
-        409,
-      );
-    }
-
-    const secret = generateSecret(); // base32, what authenticator apps expect
+    const { code, hash, expiresAt } = newVerificationCode(userId);
     await this.twoFactor.save({
       userId,
-      secret: this.cipher.encrypt(secret),
-      enabled: false,
-      lastUsedStep: null,
+      enabled: existing?.enabled ?? false,
+      codeHash: hash,
+      codeExpiresAt: expiresAt,
+      codeAttempts: 0,
     });
-
-    const uri = generateURI({ issuer: ISSUER, label: accountLabel, secret });
-    // A data URL ("data:image/png;base64,...") the frontend can put in <img>.
-    // The raw secret is returned too, for users who type it in manually instead
-    // of scanning.
-    return { qr: await QRCode.toDataURL(uri), secret };
+    await this.mail.sendTwoFactorAuth(email, code);
   }
 
-  // Step 2: the user sends the first code from their app. If it is valid we
-  // know the app is configured correctly, so 2FA becomes active.
+  // The user sends the code we emailed. If it is valid, 2FA becomes active.
   async enable(userId: string, code: string): Promise<string[]> {
     const row = await this.twoFactor.findOneBy({ userId });
     if (!row || row.enabled) {
       throw new AppError(
         'TWO_FACTOR_NOT_PENDING',
-        'Start the setup first, or two-factor is already enabled',
+        'Ask for a code first, or two-factor is already enabled',
         409,
       );
     }
-    // Only an app code here: no backup codes exist before 2FA is on.
+    // Only the emailed code here: no backup codes exist before 2FA is on.
     await this.checkCode(row, code, { allowBackup: false });
     await this.twoFactor.update({ userId }, { enabled: true });
     return this.backupCodes.replaceAll(userId);
@@ -92,7 +72,7 @@ export class TwoFactorService {
   }
 
   // A new list of backup codes; the old ones stop working. Needs a valid code
-  // (app or backup), so a stolen session cannot read or reset them.
+  // (emailed or backup), so a stolen session cannot read or reset them.
   async regenerateBackupCodes(userId: string, code: string): Promise<string[]> {
     const row = await this.requireEnabled(userId);
     await this.checkCode(row, code);
@@ -131,8 +111,8 @@ export class TwoFactorService {
     await this.checkCode(row, code);
   }
 
-  // The one place a code is checked. Throws if it is wrong, expired, or was
-  // already used.
+  // The one place a code is checked. Throws if it is wrong, expired, locked
+  // after too many guesses, or was already used.
   private async checkCode(
     row: TwoFactor,
     code: string,
@@ -145,31 +125,24 @@ export class TwoFactorService {
       throw this.invalidCode();
     }
 
-    const result = await verify({
-      secret: this.cipher.decrypt(row.secret),
-      token: code,
-      // Accept the previous and next 30-second slot too, for clock drift
-      // between the phone and the server.
-      epochTolerance: 30,
-      // Replay protection: reject any slot at or before the last accepted one.
-      afterTimeStep: row.lastUsedStep ?? undefined,
-    });
-    // The library's result type covers both TOTP and HOTP; only a TOTP
-    // result has `timeStep`, which is the slot number we need below.
-    if (!result.valid || !('timeStep' in result)) throw this.invalidCode();
-    const step = result.timeStep;
-
-    // Record the slot atomically. The WHERE clause only matches while the
-    // stored step is older, so two simultaneous requests using the same code
-    // cannot both succeed: the second one updates nothing.
-    const recorded = await this.twoFactor.update(
-      [
-        { userId: row.userId, lastUsedStep: IsNull() },
-        { userId: row.userId, lastUsedStep: LessThan(step) },
-      ],
-      { lastUsedStep: step },
+    const result = checkCode(
+      { hash: row.codeHash, expiresAt: row.codeExpiresAt, attempts: row.codeAttempts },
+      row.userId,
+      code,
     );
-    if (recorded.affected === 0) throw this.invalidCode();
+    if (result !== 'ok') {
+      if (result === 'wrong') {
+        await this.twoFactor.update({ userId: row.userId }, { codeAttempts: row.codeAttempts + 1 });
+      }
+      throw this.invalidCode();
+    }
+    // Single use. The WHERE clause only matches while the code is still there,
+    // so two simultaneous requests cannot both succeed.
+    const used = await this.twoFactor.update(
+      { userId: row.userId, codeHash: row.codeHash! },
+      { codeHash: null, codeExpiresAt: null, codeAttempts: 0 },
+    );
+    if (used.affected === 0) throw this.invalidCode();
   }
 
   private invalidCode(): AppError {

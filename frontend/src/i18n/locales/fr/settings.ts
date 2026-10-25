@@ -34,23 +34,20 @@ export const settingsMessages: SettingsMessages = {
   },
   twoFactor: {
     title: 'Authentification à deux facteurs',
-    body: 'Demander un code d’une application d’authentification, en plus du mot de passe, à chaque connexion.',
+    body: 'Demander un code envoyé par e-mail, en plus du mot de passe, à chaque connexion.',
     on: 'Activée',
     off: 'Désactivée',
     turnOn: 'Activer',
     turnOff: 'Désactiver',
-    scan: 'Scannez ce QR code avec votre application d’authentification, puis saisissez le code affiché.',
-    qrAlt: 'QR code pour votre application d’authentification',
-    manualKey: 'Impossible de scanner ? Saisissez plutôt cette clé :',
+    emailed: 'Nous vous avons envoyé un code à 6 chiffres par e-mail. Saisissez-le pour activer l’authentification à deux facteurs.',
     confirmOn: 'Confirmer et activer',
-    offBody:
-      'Saisissez un code de votre application d’authentification, ou un code de secours, pour désactiver l’authentification à deux facteurs.',
+    offBody: 'Nous vous avons envoyé un code à 6 chiffres par e-mail. Saisissez-le, ou un code de secours, pour désactiver l’authentification à deux facteurs.',
     confirmOff: 'Désactiver',
     enabled: 'L’authentification à deux facteurs est activée.',
     disabled: 'L’authentification à deux facteurs est désactivée.',
     backupTitle: 'Gardez vos codes de secours',
     backupBody:
-      'Si vous perdez votre téléphone, chaque code permet de vous connecter une fois à la place d’un code de l’application. Gardez-les en lieu sûr : ils ne sont affichés que maintenant.',
+      'Si vous n’avez plus accès à votre e-mail, chaque code permet de vous connecter une fois à la place du code reçu par e-mail. Gardez-les en lieu sûr : ils ne sont affichés que maintenant.',
     backupDone: 'Je les ai gardés',
   },
 };

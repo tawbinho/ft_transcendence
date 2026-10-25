@@ -18,7 +18,7 @@ export const authMessages: AuthMessages = {
     haveAccount: 'Vous avez déjà un compte ?',
     twoFactorTitle: 'Authentification à deux facteurs',
     twoFactorBody:
-      'Saisissez le code à 6 chiffres de votre application d’authentification, ou l’un de vos codes de secours.',
+      'Saisissez le code à 6 chiffres reçu par e-mail, ou l’un de vos codes de secours.',
     code: 'Code d’authentification',
     verify: 'Vérifier',
     backToLogin: 'Utiliser un autre compte',

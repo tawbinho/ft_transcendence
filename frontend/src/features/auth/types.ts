@@ -20,10 +20,3 @@ export interface LoginInput {
 
 /** Login either logs in, or asks for a two-factor code first. */
 export type LoginResult = { user: User } | { user: null; twoFactorRequired: true };
-
-export interface TwoFactorSetup {
-  /** QR code image as a data URL, for an <img>. */
-  qr: string;
-  /** The same secret as text, for manual entry in an authenticator app. */
-  secret: string;
-}

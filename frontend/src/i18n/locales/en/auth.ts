@@ -15,7 +15,7 @@ export const authMessages = {
     noAccount: 'No account yet?',
     haveAccount: 'Already have an account?',
     twoFactorTitle: 'Two-factor authentication',
-    twoFactorBody: 'Enter the 6-digit code from your authenticator app, or one of your backup codes.',
+    twoFactorBody: 'Enter the 6-digit code we emailed you, or one of your backup codes.',
     code: 'Authentication code',
     verify: 'Verify',
     backToLogin: 'Use a different account',

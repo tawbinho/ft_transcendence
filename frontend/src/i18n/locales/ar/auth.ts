@@ -17,7 +17,7 @@ export const authMessages: AuthMessages = {
     noAccount: 'ليس لديك حساب بعد؟',
     haveAccount: 'لديك حساب بالفعل؟',
     twoFactorTitle: 'المصادقة الثنائية',
-    twoFactorBody: 'أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة، أو أحد رموزك الاحتياطية.',
+    twoFactorBody: 'أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه إلى بريدك الإلكتروني، أو أحد رموزك الاحتياطية.',
     code: 'رمز المصادقة',
     verify: 'تحقّق',
     backToLogin: 'استخدم حسابًا آخر',

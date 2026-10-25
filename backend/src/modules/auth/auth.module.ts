@@ -10,7 +10,6 @@ import { MailService } from './email/mail.service.js';
 import { SessionGuard } from './session.guard.js';
 import { SessionsService } from './sessions.service.js';
 import { BackupCodesService } from './two-factor/backup-codes.service.js';
-import { SecretCipher } from './two-factor/secret-cipher.js';
 import { TwoFactorService } from './two-factor/two-factor.service.js';
 
 // The auth module: signup, login (with the optional 2FA step), logout and "me",
@@ -29,7 +28,6 @@ import { TwoFactorService } from './two-factor/two-factor.service.js';
     SessionsService,
     TwoFactorService,
     BackupCodesService,
-    SecretCipher,
     SessionGuard,
     MailService,
   ],

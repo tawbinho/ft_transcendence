@@ -36,6 +36,14 @@ export class Session {
   @Column({ name: 'pending_two_factor', type: 'boolean', default: false })
   pendingTwoFactor: boolean;
 
+  // The emailed 2FA code of a pending session: only its hash is stored, and
+  // the code dies with the session.
+  @Column({ name: 'two_factor_hash', type: 'text', nullable: true })
+  twoFactorHash: string | null;
+
+  @Column({ name: 'two_factor_attempts', type: 'int', default: 0 })
+  twoFactorAttempts: number;
+
   // Indexed so expired rows can be deleted quickly.
   @Index()
   @Column({ name: 'expires_at', type: 'timestamptz' })

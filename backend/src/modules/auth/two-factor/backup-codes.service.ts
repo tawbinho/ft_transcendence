@@ -16,7 +16,7 @@ import {
 // once, counting what is left.
 @Injectable()
 export class BackupCodesService {
-  // The same secret key that encrypts the TOTP secrets: it lives only in the
+  // The secret key behind the stored hashes: it lives only in the
   // environment, never in the database.
   private readonly key: Buffer;
 
