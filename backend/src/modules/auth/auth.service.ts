@@ -9,7 +9,6 @@ import type { LoginDto } from './dto/login.dto.js';
 import type { SignupDto } from './dto/signup.dto.js';
 import { MailService } from './email/mail.service.js';
 import { checkCode, newVerificationCode } from './email/verification-code.js';
-import { looksLikeBackupCode } from './two-factor/backup-code.js';
 import { SessionsService, type IssuedSession } from './sessions.service.js';
 import { TwoFactorService } from './two-factor/two-factor.service.js';
 
@@ -148,12 +147,7 @@ export class AuthService {
         401,
       );
     }
-    // A backup code still works; anything else is the code we emailed.
-    if (looksLikeBackupCode(code)) {
-      await this.twoFactor.verifyLoginCode(pending.userId, code);
-    } else {
-      await this.sessions.verifyPendingCode(pending, code);
-    }
+    await this.sessions.verifyPendingCode(pending, code);
 
     // Replaces the pending session by a real one with a NEW token.
     const { userId, ...session } = await this.sessions.promote(pendingToken);
@@ -169,16 +163,12 @@ export class AuthService {
     await this.twoFactor.sendCode(userId, user.email);
   }
 
-  enableTwoFactor(userId: string, code: string): Promise<string[]> {
+  enableTwoFactor(userId: string, code: string): Promise<void> {
     return this.twoFactor.enable(userId, code);
   }
 
-  regenerateBackupCodes(userId: string, code: string): Promise<string[]> {
-    return this.twoFactor.regenerateBackupCodes(userId, code);
-  }
-
-  backupCodesRemaining(userId: string): Promise<number> {
-    return this.twoFactor.backupCodesRemaining(userId);
+  isTwoFactorEnabled(userId: string): Promise<boolean> {
+    return this.twoFactor.isEnabled(userId);
   }
 
   disableTwoFactor(userId: string, code: string): Promise<void> {

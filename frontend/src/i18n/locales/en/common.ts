@@ -25,7 +25,6 @@ export const commonMessages = {
     passwordTooLong: 'Use at most 128 characters.',
     passwordMismatch: 'The passwords do not match.',
     code: 'Enter the 6 digits of the code.',
-    codeOrBackupCode: 'Enter the 6 digits from the app, or a backup code like ABCDE-FGHJK.',
     tournamentNameLength: 'Use 3 to 30 characters.',
     tournamentNameChars: "Use letters, numbers, spaces and - _ ' . (starting with a letter or a number).",
     aliasLength: 'Use at most 20 characters.',

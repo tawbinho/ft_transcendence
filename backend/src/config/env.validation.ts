@@ -12,7 +12,6 @@ export interface Env {
   DB_PASSWORD: string;
   DB_NAME: string;
   SESSION_TTL_DAYS: number; // how long a login lasts before the user must log in again
-  TWO_FACTOR_KEY: string; // 64 hex chars: key that signs (HMAC) the 2FA backup codes stored in the database
   DISCONNECT_GRACE_SECONDS: number; // how long a player may stay disconnected from a running match
   TOURNAMENT_TURN_TIMEOUT_SECONDS: number; // a tournament player who does not move in this time loses
   AVATAR_DIR: string; // folder where uploaded profile pictures are stored
@@ -60,15 +59,6 @@ function positiveInt(
 // `config` is the raw environment (process.env). Nest's ConfigModule calls
 // this function and keeps the returned, checked object as the app settings.
 export function validateEnv(config: Record<string, unknown>): Env {
-  // A key of exactly 32 bytes, written as 64 hex characters. Changing this key
-  // makes every stored 2FA backup code stop working.
-  const twoFactorKey = requiredString(config, 'TWO_FACTOR_KEY');
-  if (!/^[0-9a-fA-F]{64}$/.test(twoFactorKey)) {
-    throw new Error(
-      'TWO_FACTOR_KEY must be 64 hex characters (generate with: openssl rand -hex 32)',
-    );
-  }
-
   return {
     PORT: port(config, 'PORT', 3000), // optional, defaults to 3000
     DB_HOST: requiredString(config, 'DB_HOST'),
@@ -77,7 +67,6 @@ export function validateEnv(config: Record<string, unknown>): Env {
     DB_PASSWORD: requiredString(config, 'DB_PASSWORD'),
     DB_NAME: requiredString(config, 'DB_NAME'),
     SESSION_TTL_DAYS: positiveInt(config, 'SESSION_TTL_DAYS', 7),
-    TWO_FACTOR_KEY: twoFactorKey,
     TOURNAMENT_TURN_TIMEOUT_SECONDS: positiveInt(
       config,
       'TOURNAMENT_TURN_TIMEOUT_SECONDS',

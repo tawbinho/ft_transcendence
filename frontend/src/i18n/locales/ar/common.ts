@@ -27,7 +27,6 @@ export const commonMessages: CommonMessages = {
     passwordTooLong: 'استخدم 128 حرفًا على الأكثر.',
     passwordMismatch: 'كلمتا المرور غير متطابقتين.',
     code: 'أدخل أرقام الرمز الستة.',
-    codeOrBackupCode: 'أدخل الأرقام الستة من التطبيق، أو رمزًا احتياطيًا مثل ABCDE-FGHJK.',
     tournamentNameLength: 'استخدم من 3 إلى 30 حرفًا.',
     tournamentNameChars: "استخدم الحروف والأرقام والمسافات و - _ ' . (على أن يبدأ الاسم بحرف أو رقم).",
     aliasLength: 'استخدم 20 حرفًا على الأكثر.',

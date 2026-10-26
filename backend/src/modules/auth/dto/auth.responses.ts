@@ -17,10 +17,6 @@ export class LoginResponse {
   twoFactorRequired?: true;
 }
 
-export class BackupCodesResponse {
-  backupCodes: string[];
-}
-
-export class BackupCodesRemainingResponse {
-  remaining: number;
+export class TwoFactorStatusResponse {
+  enabled: boolean;
 }

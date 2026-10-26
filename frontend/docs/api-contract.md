@@ -111,20 +111,20 @@ visible tab of a logged-in player sends one at least every 30 seconds (the menu 
 
 Nothing to change. What the app uses:
 
-| Route                            | Body                               | Answer                                                          |
-| -------------------------------- | ---------------------------------- | --------------------------------------------------------------- |
-| `POST /auth/signup`              | `{ email, displayName, password }` | `{ verificationSent: true }`, no cookie: nobody is logged in    |
-| `POST /auth/verify-email`        | `{ email, code }`                  | `null`: the email is verified, the user can log in now          |
-| `POST /auth/resend-verification` | `{ email }`                        | `null`, always (it never says whether the email exists)         |
-| `POST /auth/forgot-password`     | `{ email }`                        | `null`, always; a verified account gets a reset code            |
-| `POST /auth/reset-password`      | `{ email, code, password }`        | `null`: new password set, every login of the user ended         |
-| `POST /auth/login`               | `{ email, password }`              | `{ user: User }` or `{ user: null, twoFactorRequired: true }`   |
-| `POST /auth/2fa/verify`          | `{ code }`                         | `{ user: User }`                                                |
-| `POST /auth/logout`              |                                    | `null`                                                          |
-| `GET /auth/me`                   |                                    | `User`, or `null` (status 200) when nobody is logged in         |
+| Route                            | Body                               | Answer                                                                     |
+| -------------------------------- | ---------------------------------- | -------------------------------------------------------------------------- |
+| `POST /auth/signup`              | `{ email, displayName, password }` | `{ verificationSent: true }`, no cookie: nobody is logged in               |
+| `POST /auth/verify-email`        | `{ email, code }`                  | `null`: the email is verified, the user can log in now                     |
+| `POST /auth/resend-verification` | `{ email }`                        | `null`, always (it never says whether the email exists)                    |
+| `POST /auth/forgot-password`     | `{ email }`                        | `null`, always; a verified account gets a reset code                       |
+| `POST /auth/reset-password`      | `{ email, code, password }`        | `null`: new password set, every login of the user ended                    |
+| `POST /auth/login`               | `{ email, password }`              | `{ user: User }` or `{ user: null, twoFactorRequired: true }`              |
+| `POST /auth/2fa/verify`          | `{ code }`                         | `{ user: User }`                                                           |
+| `POST /auth/logout`              |                                    | `null`                                                                     |
+| `GET /auth/me`                   |                                    | `User`, or `null` (status 200) when nobody is logged in                    |
 | `POST /auth/2fa/code`            |                                    | `null`: a 6-digit code is emailed (turn 2FA on, or confirm turning it off) |
-| `POST /auth/2fa/enable`          | `{ code }`                         | `null`                                                          |
-| `POST /auth/2fa/disable`         | `{ code }`                         | `null`                                                          |
+| `POST /auth/2fa/enable`          | `{ code }`                         | `null`                                                                     |
+| `POST /auth/2fa/disable`         | `{ code }`                         | `null`                                                                     |
 
 The forms check the backend's rules before sending: a display name has 3 to 20 letters, numbers, `_` or `-`; a
 password has 8 to 128 characters; a code has 6 digits (spaces are removed).
@@ -136,15 +136,9 @@ a new code replaces the old one. `/forgot-password` works the same way for a new
 Gmail only when `SMTP_USER` and `SMTP_PASSWORD` are set in the root `.env`; without them the backend prints the code in
 its log (`docker compose logs backend | grep "Code for"`).
 
-**Backup codes.** The backend also answers `{ backupCodes }` (10 codes like `ABCDE-FGHJK`, shown once) when 2FA is
-turned on, and accepts one of them instead of the 6 digits at login and to turn 2FA off
-(`GET` and `POST /auth/2fa/backup-codes` count and renew them). The app shows them once after turning 2FA on and
-accepts one at login and to turn 2FA off; it does not count or renew them.
-
-**Is it on?** `GET /auth/me` does not say. Settings asks `GET /auth/2fa/backup-codes` (`useTwoFactorStatus`): the
-answer `{ remaining }` means two-factor is on, `409 TWO_FACTOR_NOT_ENABLED` means it is off. The page shows only the
-button that applies, also after a reload. Adding `twoFactorEnabled: boolean` to `User` on the backend would save that one request,
-but the app does not need it.
+**Is it on?** `GET /auth/me` does not say. Settings asks `GET /auth/2fa/status` (`useTwoFactorStatus`): the answer
+`{ enabled }` tells whether two-factor is on. The page shows only the button that applies, also after a reload.
+Adding `twoFactorEnabled: boolean` to `User` on the backend would save that one request, but the app does not need it.
 
 ## Matches
 
@@ -582,7 +576,7 @@ one shows the server's English `message`.
 | `DISPLAY_NAME_TAKEN`         | 409      | Signup, and `PATCH /users/me`                                  |
 | `INVALID_2FA_CODE`           | 400      | 2FA verify, enable and disable                                 |
 | `TWO_FACTOR_ALREADY_ENABLED` | 409      | 2FA setup                                                      |
-| `TWO_FACTOR_NOT_ENABLED`     | 409      | 2FA disable, backup codes (read as "2FA is off")               |
+| `TWO_FACTOR_NOT_ENABLED`     | 409      | 2FA disable                                                    |
 | `TWO_FACTOR_NOT_PENDING`     | 409      | 2FA enable without a setup first                               |
 | `USER_NOT_FOUND`             | 404      | `POST /matches`, and the players, friends and chat routes      |
 | `CANNOT_INVITE_SELF`         | 400      | `POST /matches`                                                |

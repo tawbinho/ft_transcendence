@@ -26,7 +26,7 @@ export const privacy: Record<Language, LegalDocument> = {
         paragraphs: [
           'Your account: email address, display name and password. The password is never stored as typed: only a salted hash (Argon2) is kept. Your email address is never shown to other players.',
           'The 6-digit codes we email you to confirm your address or to reset your password. Only a hash of each code is kept, and a code stops working after 15 minutes or 5 wrong tries.',
-          'Two-factor authentication, if you turn it on: the shared secret used to check your codes, stored encrypted, and your 10 one-time backup codes, of which only a hash is kept.',
+          'Two-factor authentication, if you turn it on: the fact that it is on, and a hash of the 6-digit code we email you at each login (the code stops working after 15 minutes or 5 wrong tries).',
           'Your login sessions: a random identifier kept in a secure, httpOnly cookie named "session", valid for 7 days or until you log out.',
           'Your profile picture, if you add one. It is cropped and reduced to 256 × 256 pixels in your browser before being sent. Other players can see it.',
           'Your online games, games against the computer included: who played, every move, the result and the dates. Logged-in players can see the results: on your profile (with the statistics, level and badges computed from them) and in the leaderboard. Only the two players of a match can open the game itself.',
@@ -71,7 +71,7 @@ export const privacy: Record<Language, LegalDocument> = {
         paragraphs: [
           'Votre compte : adresse e-mail, pseudo et mot de passe. Le mot de passe n’est jamais conservé tel quel : seule une empreinte salée (Argon2) est gardée. Votre adresse e-mail n’est jamais montrée aux autres joueurs.',
           'Les codes à 6 chiffres que nous vous envoyons par e-mail pour confirmer votre adresse ou réinitialiser votre mot de passe. Seule une empreinte de chaque code est gardée, et un code ne fonctionne plus après 15 minutes ou 5 essais erronés.',
-          'L’authentification à deux facteurs, si vous l’activez : le secret partagé servant à vérifier vos codes, stocké chiffré, et vos 10 codes de secours à usage unique, dont seule une empreinte est gardée.',
+          'L’authentification à deux facteurs, si vous l’activez : le fait qu’elle soit activée, et une empreinte du code à 6 chiffres envoyé par e-mail à chaque connexion (le code cesse de fonctionner après 15 minutes ou 5 essais erronés).',
           'Vos sessions de connexion : un identifiant aléatoire dans un cookie sécurisé et httpOnly nommé « session », valable 7 jours ou jusqu’à la déconnexion.',
           'Votre photo de profil, si vous en ajoutez une. Elle est recadrée et réduite à 256 × 256 pixels dans votre navigateur avant l’envoi. Les autres joueurs peuvent la voir.',
           'Vos parties en ligne, parties contre l’ordinateur comprises : les joueurs, chaque coup, le résultat et les dates. Les joueurs connectés peuvent voir les résultats : sur votre profil (avec les statistiques, le niveau et les badges qui en sont calculés) et dans le classement. Seuls les deux joueurs d’une partie peuvent ouvrir la partie elle-même.',
@@ -116,7 +116,7 @@ export const privacy: Record<Language, LegalDocument> = {
         paragraphs: [
           'حسابك: البريد الإلكتروني والاسم الظاهر وكلمة المرور. لا تُحفظ كلمة المرور كما كتبتها أبدًا، بل تُحفظ بصمة مملّحة منها فقط (Argon2). لا يظهر بريدك الإلكتروني للاعبين الآخرين أبدًا.',
           'الرموز المكوّنة من 6 أرقام التي نرسلها إلى بريدك لتأكيد عنوانك أو لإعادة تعيين كلمة المرور. لا تُحفظ إلا بصمة كل رمز، ويتوقف الرمز عن العمل بعد 15 دقيقة أو بعد 5 محاولات خاطئة.',
-          'المصادقة الثنائية إن فعّلتها: السر المشترك المستخدم للتحقق من رموزك، محفوظًا بشكل مشفّر، ورموزك الاحتياطية العشرة التي يُستخدم كل منها مرة واحدة، ولا تُحفظ إلا بصمتها.',
+          'المصادقة الثنائية إن فعّلتها: كونها مفعّلة، وبصمة الرمز المكوّن من 6 أرقام الذي نرسله إلى بريدك عند كل تسجيل دخول (يتوقف الرمز عن العمل بعد 15 دقيقة أو 5 محاولات خاطئة).',
           'جلسات تسجيل الدخول: معرّف عشوائي في ملف تعريف ارتباط آمن من نوع httpOnly اسمه «session»، صالح لمدة 7 أيام أو حتى تسجيل الخروج.',
           'صورتك الشخصية إن أضفتها. تُقصّ وتُصغَّر إلى 256 × 256 بكسل في متصفحك قبل إرسالها. يمكن للاعبين الآخرين رؤيتها.',
           'مبارياتك عبر الإنترنت، ومنها مبارياتك ضد الحاسوب: اللاعبون وكل حركة والنتيجة والتواريخ. يمكن للاعبين المسجّلين رؤية النتائج: في ملفك الشخصي (مع الإحصاءات والمستوى والإنجازات المحسوبة منها) وفي قائمة المتصدرين. ولا يستطيع فتح المباراة نفسها إلا لاعباها.',

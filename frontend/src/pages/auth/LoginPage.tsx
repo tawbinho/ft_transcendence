@@ -7,12 +7,7 @@ import { LoginHint } from '@/features/auth/components/LoginHint';
 import { PasswordField } from '@/features/auth/components/PasswordField';
 import { useLogin, useVerifyTwoFactor } from '@/features/auth/hooks';
 import { useFocusFirstInvalid } from '@/features/auth/useFocusFirstInvalid';
-import {
-  normalizeCode,
-  validateCodeOrBackupCode,
-  validateEmail,
-  validateLoginPassword,
-} from '@/features/auth/validation';
+import { normalizeCode, validateCode, validateEmail, validateLoginPassword } from '@/features/auth/validation';
 import { isApiError } from '@/lib/api/errors';
 import { useErrorMessage } from '@/lib/errorMessage';
 import { AuthLayout } from '@/layout/AuthLayout';
@@ -39,7 +34,7 @@ export function LoginPage() {
 
   const emailError = submitted ? validateEmail(email) : null;
   const passwordError = submitted ? validateLoginPassword(password) : null;
-  const codeError = submitted ? validateCodeOrBackupCode(code) : null;
+  const codeError = submitted ? validateCode(code) : null;
 
   function submitCredentials(event: FormEvent) {
     event.preventDefault();
@@ -64,7 +59,7 @@ export function LoginPage() {
   function submitCode(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
-    if (validateCodeOrBackupCode(code)) {
+    if (validateCode(code)) {
       setFailedSubmits((count) => count + 1);
       return;
     }
@@ -90,9 +85,9 @@ export function LoginPage() {
             value={code}
             onChange={(event) => setCode(event.target.value)}
             error={codeError && t(codeError)}
-            // A code from the app ("123 456") or a backup code ("ABCDE-FGHJK"), so letters are allowed.
+            inputMode="numeric"
             autoComplete="one-time-code"
-            maxLength={11}
+            maxLength={7}
             autoFocus
             required
           />

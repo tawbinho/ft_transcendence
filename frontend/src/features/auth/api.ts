@@ -1,4 +1,3 @@
-import { isApiError } from '@/lib/api/errors';
 import { http } from '@/lib/api/http';
 import type { LoginInput, LoginResult, SignupInput, User } from './types';
 
@@ -27,23 +26,14 @@ export const authApi = {
   /** Emails a 6-digit code: the first step of turning 2FA on, and the proof needed to turn it off. */
   sendTwoFactorCode: () => http.post<null>('/auth/2fa/code'),
 
-  /** The emailed code turns 2FA on; the answer holds the 10 backup codes, sent only this once. */
-  enableTwoFactor: (code: string) => http.post<{ backupCodes: string[] }>('/auth/2fa/enable', { code }),
+  /** The emailed code turns 2FA on. */
+  enableTwoFactor: (code: string) => http.post<null>('/auth/2fa/enable', { code }),
 
   disableTwoFactor: (code: string) => http.post<null>('/auth/2fa/disable', { code }),
 
-  /**
-   * Is two-factor turned on? `GET /auth/me` does not say, so this asks for the
-   * number of backup codes left: the server answers when 2FA is on and with
-   * TWO_FACTOR_NOT_ENABLED when it is off. Nothing is changed by asking.
-   */
+  /** Is two-factor turned on? `GET /auth/me` does not say, so Settings asks. */
   twoFactorEnabled: async (signal?: AbortSignal): Promise<boolean> => {
-    try {
-      await http.get<{ remaining: number }>('/auth/2fa/backup-codes', { signal });
-      return true;
-    } catch (error) {
-      if (isApiError(error, 'TWO_FACTOR_NOT_ENABLED')) return false;
-      throw error;
-    }
+    const { enabled } = await http.get<{ enabled: boolean }>('/auth/2fa/status', { signal });
+    return enabled;
   },
 };

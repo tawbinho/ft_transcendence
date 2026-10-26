@@ -1,21 +1,20 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Badge, Button, Card, Skeleton, TextField } from '@/components/ui';
-import { useDisableTwoFactor, useEnableTwoFactor, useSendTwoFactorCode, useTwoFactorStatus } from '@/features/auth/hooks';
-import { normalizeCode, validateCode, validateCodeOrBackupCode } from '@/features/auth/validation';
+import {
+  useDisableTwoFactor,
+  useEnableTwoFactor,
+  useSendTwoFactorCode,
+  useTwoFactorStatus,
+} from '@/features/auth/hooks';
+import { normalizeCode, validateCode } from '@/features/auth/validation';
 import { isApiError } from '@/lib/api/errors';
 import { useErrorMessage } from '@/lib/errorMessage';
-import { BackupCodes } from './BackupCodes';
 
-type Step =
-  | { kind: 'idle' }
-  | { kind: 'setup' }
-  | { kind: 'codes'; codes: string[] }
-  | { kind: 'disable' };
+type Step = { kind: 'idle' } | { kind: 'setup' } | { kind: 'disable' };
 
 /**
- * Turns two-factor authentication on (a code is emailed, then the backup codes are shown once) or
- * off (an emailed code or a backup code).
+ * Turns two-factor authentication on or off: a code is emailed each time, and typing it confirms.
  */
 export function TwoFactorPanel() {
   const { t } = useTranslation();
@@ -31,9 +30,7 @@ export function TwoFactorPanel() {
   const [submitted, setSubmitted] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  // Turning 2FA on needs the emailed code: no backup code exists yet.
-  const checkCode = step.kind === 'setup' ? validateCode : validateCodeOrBackupCode;
-  const codeError = submitted ? checkCode(code) : null;
+  const codeError = submitted ? validateCode(code) : null;
 
   function reset(next: Step = { kind: 'idle' }) {
     setStep(next);
@@ -52,12 +49,12 @@ export function TwoFactorPanel() {
   function submit(event: FormEvent) {
     event.preventDefault();
     setSubmitted(true);
-    if (checkCode(code)) return;
+    if (validateCode(code)) return;
     if (step.kind === 'setup') {
       enable.mutate(normalizeCode(code), {
-        onSuccess: ({ backupCodes }) => {
+        onSuccess: () => {
           setNotice(t('twoFactor.enabled'));
-          reset({ kind: 'codes', codes: backupCodes });
+          reset();
         },
       });
       return;
@@ -124,8 +121,6 @@ export function TwoFactorPanel() {
         </div>
       )}
 
-      {step.kind === 'codes' && <BackupCodes codes={step.codes} onDone={() => reset()} />}
-
       {(step.kind === 'setup' || step.kind === 'disable') && (
         <form onSubmit={submit} noValidate className="flex flex-col gap-4">
           <p>{step.kind === 'setup' ? t('twoFactor.emailed') : t('twoFactor.offBody')}</p>
@@ -137,10 +132,9 @@ export function TwoFactorPanel() {
             value={code}
             onChange={(event) => setCode(event.target.value)}
             error={codeError && t(codeError)}
-            // A backup code has letters: the number keypad only while turning 2FA on.
-            inputMode={step.kind === 'setup' ? 'numeric' : 'text'}
+            inputMode="numeric"
             autoComplete="one-time-code"
-            maxLength={step.kind === 'setup' ? 7 : 11}
+            maxLength={7}
             autoFocus
             className="max-w-xs"
           />

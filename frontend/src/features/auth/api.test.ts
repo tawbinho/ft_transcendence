@@ -12,18 +12,18 @@ describe('authApi.twoFactorEnabled', () => {
     get.mockReset();
   });
 
-  it('is true when the server counts the backup codes', async () => {
-    get.mockResolvedValue({ remaining: 10 });
+  it('is true when the server says two-factor is on', async () => {
+    get.mockResolvedValue({ enabled: true });
     await expect(authApi.twoFactorEnabled()).resolves.toBe(true);
-    expect(get).toHaveBeenCalledWith('/auth/2fa/backup-codes', { signal: undefined });
+    expect(get).toHaveBeenCalledWith('/auth/2fa/status', { signal: undefined });
   });
 
-  it('is false when the server says two-factor is not enabled', async () => {
-    get.mockRejectedValue(new ApiError('TWO_FACTOR_NOT_ENABLED', 'not enabled', 409));
+  it('is false when the server says two-factor is off', async () => {
+    get.mockResolvedValue({ enabled: false });
     await expect(authApi.twoFactorEnabled()).resolves.toBe(false);
   });
 
-  it('does not guess when the answer is another error', async () => {
+  it('does not guess when the request fails', async () => {
     get.mockRejectedValue(new ApiError('NETWORK_ERROR', 'down', 0));
     await expect(authApi.twoFactorEnabled()).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
   });

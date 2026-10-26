@@ -3,20 +3,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AppError } from '../../../common/errors/app-error.js';
 import { TwoFactor } from '../../users/entities/two-factor.entity.js';
-import { looksLikeBackupCode } from './backup-code.js';
-import { BackupCodesService } from './backup-codes.service.js';
 import { MailService } from '../email/mail.service.js';
 import { checkCode, newVerificationCode } from '../email/verification-code.js';
 
 // All the two-factor rules live here: sending the emailed 6-digit code, turning
-// 2FA on and off, and checking a code (emailed or backup).
+// 2FA on and off, and checking the code.
 @Injectable()
 export class TwoFactorService {
   constructor(
     @InjectRepository(TwoFactor)
     private readonly twoFactor: Repository<TwoFactor>,
     private readonly mail: MailService,
-    private readonly backupCodes: BackupCodesService,
   ) {}
 
   // Used at login: does this user have to give a code?
@@ -26,7 +23,7 @@ export class TwoFactorService {
   }
 
   // Emails a fresh 6-digit code to the user. Used to turn 2FA on and to prove
-  // it is really them before turning it off or resetting the backup codes.
+  // it is really them before turning it off.
   async sendCode(userId: string, email: string): Promise<void> {
     const existing = await this.twoFactor.findOneBy({ userId });
     const { code, hash, expiresAt } = newVerificationCode(userId);
@@ -41,7 +38,7 @@ export class TwoFactorService {
   }
 
   // The user sends the code we emailed. If it is valid, 2FA becomes active.
-  async enable(userId: string, code: string): Promise<string[]> {
+  async enable(userId: string, code: string): Promise<void> {
     const row = await this.twoFactor.findOneBy({ userId });
     if (!row || row.enabled) {
       throw new AppError(
@@ -50,10 +47,8 @@ export class TwoFactorService {
         409,
       );
     }
-    // Only the emailed code here: no backup codes exist before 2FA is on.
-    await this.checkCode(row, code, { allowBackup: false });
+    await this.checkCode(row, code);
     await this.twoFactor.update({ userId }, { enabled: true });
-    return this.backupCodes.replaceAll(userId);
   }
 
   // Needs a valid code, so a stolen session cannot silently switch 2FA off.
@@ -68,63 +63,11 @@ export class TwoFactorService {
     }
     await this.checkCode(row, code);
     await this.twoFactor.delete({ userId });
-    await this.backupCodes.removeAll(userId); // 2FA is off: the codes are useless
-  }
-
-  // A new list of backup codes; the old ones stop working. Needs a valid code
-  // (emailed or backup), so a stolen session cannot read or reset them.
-  async regenerateBackupCodes(userId: string, code: string): Promise<string[]> {
-    const row = await this.requireEnabled(userId);
-    await this.checkCode(row, code);
-    return this.backupCodes.replaceAll(userId);
-  }
-
-  // How many backup codes are left, so the app can tell the user to make new
-  // ones before they run out.
-  async backupCodesRemaining(userId: string): Promise<number> {
-    await this.requireEnabled(userId);
-    return this.backupCodes.remaining(userId);
-  }
-
-  private async requireEnabled(userId: string): Promise<TwoFactor> {
-    const row = await this.twoFactor.findOneBy({ userId });
-    if (!row?.enabled) {
-      throw new AppError(
-        'TWO_FACTOR_NOT_ENABLED',
-        'Two-factor authentication is not enabled',
-        409,
-      );
-    }
-    return row;
-  }
-
-  // Second stage of login: the password was already correct, now the code.
-  async verifyLoginCode(userId: string, code: string): Promise<void> {
-    const row = await this.twoFactor.findOneBy({ userId });
-    if (!row?.enabled) {
-      throw new AppError(
-        'TWO_FACTOR_NOT_ENABLED',
-        'Two-factor authentication is not enabled',
-        409,
-      );
-    }
-    await this.checkCode(row, code);
   }
 
   // The one place a code is checked. Throws if it is wrong, expired, locked
   // after too many guesses, or was already used.
-  private async checkCode(
-    row: TwoFactor,
-    code: string,
-    options: { allowBackup?: boolean } = {},
-  ): Promise<void> {
-    if (looksLikeBackupCode(code)) {
-      if (options.allowBackup !== false && (await this.backupCodes.consume(row.userId, code))) {
-        return;
-      }
-      throw this.invalidCode();
-    }
-
+  private async checkCode(row: TwoFactor, code: string): Promise<void> {
     const result = checkCode(
       { hash: row.codeHash, expiresAt: row.codeExpiresAt, attempts: row.codeAttempts },
       row.userId,

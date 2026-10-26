@@ -1,8 +1,7 @@
 import type { ValidationKey } from '@/lib/validation';
 
 // Client-side checks that mirror the backend DTOs (SignupDto, LoginDto,
-// TwoFactorCodeDto, TwoFactorOrBackupCodeDto), so most mistakes are caught
-// before a request is sent.
+// TwoFactorCodeDto), so most mistakes are caught before a request is sent.
 
 export const DISPLAY_NAME_MIN = 3;
 export const DISPLAY_NAME_MAX = 20;
@@ -89,14 +88,4 @@ export function validateCode(value: string): ValidationKey | null {
   const code = normalizeCode(value);
   if (!code) return 'validation.required';
   return /^\d{6}$/.test(code) ? null : 'validation.code';
-}
-
-/** A one-time backup code, like "ABCDE-FGHJK": the backend accepts small letters and no dash too. */
-const BACKUP_CODE_PATTERN = /^[0-9a-z]{5}-?[0-9a-z]{5}$/i;
-
-/** To log in or to turn 2FA off: the 6 digits from the app, or one of the backup codes (TwoFactorOrBackupCodeDto). */
-export function validateCodeOrBackupCode(value: string): ValidationKey | null {
-  const code = normalizeCode(value);
-  if (!code) return 'validation.required';
-  return /^\d{6}$/.test(code) || BACKUP_CODE_PATTERN.test(code) ? null : 'validation.codeOrBackupCode';
 }

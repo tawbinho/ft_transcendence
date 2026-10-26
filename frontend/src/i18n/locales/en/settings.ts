@@ -39,14 +39,10 @@ export const settingsMessages = {
     turnOff: 'Turn off',
     emailed: 'We emailed you a 6-digit code. Enter it to turn on two-factor authentication.',
     confirmOn: 'Confirm and turn on',
-    offBody: 'We emailed you a 6-digit code. Enter it, or a backup code, to turn two-factor authentication off.',
+    offBody: 'We emailed you a 6-digit code. Enter it to turn two-factor authentication off.',
     confirmOff: 'Turn off',
     enabled: 'Two-factor authentication is on.',
     disabled: 'Two-factor authentication is off.',
-    backupTitle: 'Save your backup codes',
-    backupBody:
-      'If you can’t get your email, each code lets you log in once instead of the emailed code. Keep them somewhere safe: they are shown only now.',
-    backupDone: 'I saved them',
   },
 };
 

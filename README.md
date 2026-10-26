@@ -14,7 +14,7 @@ tournaments, and the whole interface is available in English, French and Arabic 
   server judges every move).
 - Computer opponents (3 levels) that run on the server and can be beaten.
 - Accounts with email and password (Argon2), email verification and password reset with a 6-digit code sent by email,
-  database sessions, optional two-factor authentication with backup codes.
+  database sessions, optional two-factor authentication by emailed code.
 - Profiles, avatars, friends with online status, blocking, private chat with invitations and read receipts.
 - Single-elimination tournaments for 4 players (two semi-finals and a final, starts when the 4th player joins, turn timeout).
 - Statistics, match history, leaderboard, levels and badges.
@@ -29,8 +29,7 @@ tournaments, and the whole interface is available in English, French and Arabic 
 # 1. create the local env file (it is ignored by Git, so no secret is ever committed)
 cp .env.example .env
 # 2. fill in every empty value of .env (see Configuration below):
-#      HTTPS_PORT (e.g. 8443), DB_USER, DB_PASSWORD and DB_NAME of your choice,
-#      TWO_FACTOR_KEY: the output of `openssl rand -hex 32`
+#      HTTPS_PORT (e.g. 8443), DB_USER, DB_PASSWORD and DB_NAME of your choice
 #    optional: SMTP_USER and SMTP_PASSWORD (a Gmail address and an app password) to really send the emails
 # 3. one command builds and starts everything (database, backend, frontend, HTTPS proxy)
 docker compose up --build -d
@@ -105,7 +104,6 @@ users (id, email UNIQUE, display_name UNIQUE, password_hash, avatar_url, locale,
        password_reset_hash, password_reset_expires_at, password_reset_attempts, created_at, updated_at)
  ├─ sessions            (id, user_id ⟶ users, token_hash UNIQUE, pending_two_factor, two_factor_hash, two_factor_attempts, expires_at)
  ├─ two_factor          (user_id ⟶ users [PK], enabled, code_hash, code_expires_at, code_attempts)
- ├─ two_factor_backup_codes (id, user_id ⟶ users, code_hash [HMAC-SHA256], used_at)
  ├─ friendships         (user_low_id ⟶ users, user_high_id ⟶ users [PK pair], requester_id, status, accepted_at)
  ├─ blocks              (blocker_id ⟶ users, blocked_id ⟶ users [PK pair])
  ├─ messages            (id, user_low_id, user_high_id, sender_id ⟶ users, kind text|invite|system, body,
@@ -135,7 +133,7 @@ codes are stored only as a SHA-256 hash, like the session tokens.
 | ------- | ----------- | --- |
 | Signup, login, logout | Email and password (Argon2), database session in an httpOnly cookie, rate limited | atawbi |
 | Email verification and forgot password | 6-digit code sent by email (Gmail), 15 minutes, locked after 5 wrong tries; a reset ends every login | atawbi |
-| Two-factor authentication | 6-digit code sent by email at each login (15 minutes, locked after 5 wrong tries), 10 one-time backup codes | atawbi |
+| Two-factor authentication | 6-digit code sent by email at each login (15 minutes, locked after 5 wrong tries) | atawbi |
 | Game engine and matches | Connect Four rules on any board size, server-side validation, concurrency-safe transactions | atawbi |
 | Real-time | Socket.IO: live moves, presence, reconnection with a 30 s grace period, forfeit after a disconnection | atawbi |
 | Computer opponent | 3 levels, minimax with alpha-beta, deliberate mistakes, runs in a worker thread | atawbi |
@@ -165,7 +163,7 @@ codes are stored only as a SHA-256 hash, like the session tokens.
 | 6 | Gaming: complete web game | Major | 2 | atawbi, rnehme | Connect Four with clear win/draw/resign rules, live matches, 2D board |
 | 7 | Gaming: remote players | Major | 2 | atawbi, rnehme | Two players on different computers, server-authoritative moves, reconnection logic, forfeit after the grace period |
 | 8 | AI: opponent for games | Major | 2 | atawbi | Server-side bots (Easy, Medium, Hard): win/block rules, minimax with alpha-beta and iterative deepening, deliberate mistakes; works with every board size and win length |
-| 9 | User management: 2FA | Minor | 1 | atawbi, rnehme | Emailed 6-digit code (single use, expires, limited tries), one-time backup codes |
+| 9 | User management: 2FA | Minor | 1 | atawbi, rnehme | Emailed 6-digit code (single use, expires, limited tries) |
 | 10 | User management: game statistics and match history | Minor | 1 | fel-ghaz, rnehme | Wins/losses/draws, win rate, history with opponents and dates, leaderboard |
 | 11 | Gaming: tournament system | Minor | 1 | atawbi, fel-ghaz, rnehme | Registration (fel-ghaz), bracket, matchups tracked, automatic match creation (atawbi) |
 | 12 | Gaming: game customization | Minor | 1 | atawbi, rnehme | Board size (5-10 x 5-9), win length (3-5), themes; defaults available; the AI uses them |
@@ -186,7 +184,7 @@ consistent. Every module builds on the web game (module 6), which is implemented
 
 **atawbi** — The backend skeleton (NestJS, database connection, environment checks, the `{ data }` / `{ error }`
 format and the validation pipe), authentication and sessions, email verification and password reset by emailed code
-(backend and frontend pages), 2FA and backup codes, the pure Connect Four engine with its tests, matches (create,
+(backend and frontend pages), 2FA by emailed code, the pure Connect Four engine with its tests, matches (create,
 join, move, resign) with row-locking transactions, the Socket.IO real-time layer and presence over sockets,
 disconnection forfeit, the AI opponent (worker thread), the tournament bracket (start, automatic matches, turn
 timeout), chat, Docker Compose, the HTTPS proxy, automatic migrations, rate limiting, and the documentation of these
@@ -237,7 +235,7 @@ Requirements: Docker with the Compose plugin.
 
 ```bash
 # 1. create your local env file and fill in every empty value (SMTP_USER / SMTP_PASSWORD only if the
-#    emails must really be sent; TWO_FACTOR_KEY: the output of openssl rand -hex 32)
+#    emails must really be sent)
 cp .env.example .env
 
 # 2. build and start everything
@@ -253,8 +251,7 @@ browser shows a "connection not private" warning: click *Advanced*, then
 *Proceed to localhost*. `curl` needs `-k` for the same reason. The certificate
 is kept in a Docker volume, so the warning choice stays valid across restarts.
 
-The backend refuses to start if a required variable is missing or if
-`TWO_FACTOR_KEY` is not 64 hex characters, and says which one.
+The backend refuses to start if a required variable is missing, and says which one.
 
 The backend runs in dev mode: the `backend/` folder is mounted into the
 container, so saving a file reloads the server.
@@ -310,7 +307,6 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 | `DB_USER`                | none       | **required**, database user                             |
 | `DB_PASSWORD`            | none       | **required**, database password                         |
 | `DB_NAME`                | none       | **required**, database name                             |
-| `TWO_FACTOR_KEY`         | none       | **required**, 64 hex chars, keys the 2FA backup codes   |
 | `SESSION_TTL_DAYS`       | `7`        | how long a login lasts, optional                        |
 | `TOURNAMENT_TURN_TIMEOUT_SECONDS` | `180` | how long a tournament player may take to move before losing, optional |
 | `DISCONNECT_GRACE_SECONDS` | `30`     | how long a player may be disconnected from a running match before losing, optional |
@@ -319,8 +315,6 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 | `SMTP_PASSWORD`          | empty      | a Gmail **app password** (Google account > Security > 2-Step Verification > App passwords), not the normal password |
 
 If a port is already used on your machine, change it in `.env`.
-Do not change `TWO_FACTOR_KEY` once users have enabled 2FA: their stored
-backup codes stop working.
 `SESSION_TTL_DAYS` counts from the moment of login: using the app does not
 extend it, so after that many days the user logs in again.
 
@@ -362,11 +356,10 @@ must send requests with `credentials: "include"` so the cookies travel.
 | `POST /api/auth/logout`  | end the session on the server and clear the cookie |
 | `GET  /api/auth/me`      | the logged-in user, or `data: null` if not logged in (status 200, never 401) |
 | `POST /api/auth/2fa/code`    | email a 6-digit code: first step of turning 2FA on, and the proof needed to turn it off (logged in) |
-| `POST /api/auth/2fa/enable`  | turn 2FA on with the emailed code; returns the 10 backup codes, once (logged in) |
-| `POST /api/auth/2fa/disable` | turn 2FA off, needs the emailed code or a backup code (logged in) |
-| `POST /api/auth/2fa/verify`  | finish a 2FA login with the 6-digit code or a backup code |
-| `GET  /api/auth/2fa/backup-codes` | how many backup codes are left (logged in)     |
-| `POST /api/auth/2fa/backup-codes` | make 10 new backup codes, the old ones stop working (needs a valid code) |
+| `POST /api/auth/2fa/enable`  | turn 2FA on with the emailed code (logged in) |
+| `POST /api/auth/2fa/disable` | turn 2FA off, needs the emailed code (logged in) |
+| `POST /api/auth/2fa/verify`  | finish a 2FA login with the emailed 6-digit code |
+| `GET  /api/auth/2fa/status`  | is 2FA on for the logged-in user |
 | `POST /api/matches`           | create a match (optional settings, optional invited player) |
 | `GET  /api/matches/mine`      | my matches, newest first (`status`, `limit`, `offset`) |
 | `GET  /api/matches/:id`       | the full state of a match (anyone with the link while it waits, then its players only; anyone else gets `MATCH_NOT_FOUND`) |
@@ -459,7 +452,7 @@ has 2FA enabled, `login` does not log them in: it answers
 `{ "user": null, "twoFactorRequired": true }`. The `session` cookie it sets is
 only a *pending* session that lasts 5 minutes and is refused by every route
 except `/api/auth/2fa/verify`; the user must call that route with the 6-digit
-code we emailed (or a backup code), which replaces the cookie with a full session.
+code we emailed, which replaces the cookie with a full session.
 The code is created with the pending session, only its hash is stored (on the
 session row), and it dies with the session after 5 wrong tries or when the session
 ends, so it cannot be used twice.
@@ -510,18 +503,6 @@ whose turn it is **loses if no move is made for
 each move; ordinary matches have no clock). A sweep every 15 seconds checks
 the database, so a restart cannot lose a clock. That loss is recorded as
 `endReason: "disconnect"`.
-
-**2FA backup codes.** Turning 2FA on returns 10 one-time backup codes (like
-`ABCDE-FGHJK`, from an alphabet without 0, 1, I, L and O so they are easy to
-copy from paper), shown ONLY that once. A user who lost their phone types one in
-the same `code` field instead of the 6 digits, to log in, to turn 2FA off or to
-make new codes. Each code works once: it is spent atomically, so five requests
-racing with the same code produce one login. The server stores only an
-HMAC-SHA256 of each code, keyed with `TWO_FACTOR_KEY` (a code has about 50 bits,
-so a plain hash could be brute-forced offline from a stolen database, a keyed one
-cannot; for the same reason, changing `TWO_FACTOR_KEY` also invalidates the
-codes). Making new codes replaces the whole list. Turning 2FA off deletes them.
-Only the emailed 6-digit code can turn 2FA on.
 
 **Presence.** A player is online if they were seen during the last minute,
 which is stored in `users.last_seen_at`. Two things keep it fresh: the session
@@ -592,8 +573,7 @@ development the backend serves that file with Swagger UI at
 https://localhost:8443/api/docs, to read the routes and try them from the browser.
 
 **Rate limits** (per IP, per minute, counted separately for each route): 100 by
-default; login 10; signup 5; 2FA setup 10; 2FA verify, enable, disable and new
-backup codes 5; verify-email and reset-password 10; resend-verification and
+default; login 10; signup 5; 2FA setup 10; 2FA verify, enable and disable 5; verify-email and reset-password 10; resend-verification and
 forgot-password 3; creating a match or a tournament 20; renaming and uploading
 a picture 10; sending a chat message 30. Beyond that the API answers `429` with the
 code `RATE_LIMITED`. The counters are kept in memory and reset when the

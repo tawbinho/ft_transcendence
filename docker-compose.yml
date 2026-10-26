@@ -28,7 +28,6 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
-      TWO_FACTOR_KEY: ${TWO_FACTOR_KEY}
       AVATAR_DIR: /data/avatars
       # Gmail sending of verification emails; empty SMTP_USER = link only in the log.
       SMTP_USER: ${SMTP_USER:-}

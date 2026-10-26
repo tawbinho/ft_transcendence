@@ -29,7 +29,6 @@ import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto.js
 import { SignupDto } from './dto/signup.dto.js';
 import {
   TwoFactorCodeDto,
-  TwoFactorOrBackupCodeDto,
 } from './dto/two-factor-code.dto.js';
 import { SessionGuard } from './session.guard.js';
 
@@ -81,7 +80,7 @@ export class AuthController {
   @Throttle(strict(5))
   @HttpCode(200)
   async verifyTwoFactor(
-    @Body() dto: TwoFactorOrBackupCodeDto,
+    @Body() dto: TwoFactorCodeDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ user: PublicUser }> {
@@ -113,8 +112,8 @@ export class AuthController {
   async enableTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: TwoFactorCodeDto,
-  ): Promise<{ backupCodes: string[] }> {
-    return { backupCodes: await this.auth.enableTwoFactor(user.id, dto.code) };
+  ): Promise<void> {
+    await this.auth.enableTwoFactor(user.id, dto.code);
   }
 
   // POST /api/auth/2fa/disable: needs a valid code, so a stolen session
@@ -125,34 +124,18 @@ export class AuthController {
   @UseGuards(SessionGuard)
   async disableTwoFactor(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: TwoFactorOrBackupCodeDto,
+    @Body() dto: TwoFactorCodeDto,
   ): Promise<void> {
     await this.auth.disableTwoFactor(user.id, dto.code);
   }
 
-  // POST /api/auth/2fa/backup-codes: a NEW list of 10 backup codes; the old
-  // ones stop working. Needs a valid code, so a stolen session cannot reset
-  // them.
-  @Post('2fa/backup-codes')
-  @Throttle(strict(5))
-  @HttpCode(200)
+  // GET /api/auth/2fa/status: is 2FA turned on for the logged-in user?
+  @Get('2fa/status')
   @UseGuards(SessionGuard)
-  async regenerateBackupCodes(
+  async twoFactorStatus(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: TwoFactorOrBackupCodeDto,
-  ): Promise<{ backupCodes: string[] }> {
-    return {
-      backupCodes: await this.auth.regenerateBackupCodes(user.id, dto.code),
-    };
-  }
-
-  // GET /api/auth/2fa/backup-codes: how many are left (never the codes).
-  @Get('2fa/backup-codes')
-  @UseGuards(SessionGuard)
-  async backupCodesRemaining(
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<{ remaining: number }> {
-    return { remaining: await this.auth.backupCodesRemaining(user.id) };
+  ): Promise<{ enabled: boolean }> {
+    return { enabled: await this.auth.isTwoFactorEnabled(user.id) };
   }
 
   // POST /api/auth/verify-email: the 6-digit code from the email.

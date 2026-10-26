@@ -39,15 +39,13 @@ export const settingsMessages: SettingsMessages = {
     off: 'Désactivée',
     turnOn: 'Activer',
     turnOff: 'Désactiver',
-    emailed: 'Nous vous avons envoyé un code à 6 chiffres par e-mail. Saisissez-le pour activer l’authentification à deux facteurs.',
+    emailed:
+      'Nous vous avons envoyé un code à 6 chiffres par e-mail. Saisissez-le pour activer l’authentification à deux facteurs.',
     confirmOn: 'Confirmer et activer',
-    offBody: 'Nous vous avons envoyé un code à 6 chiffres par e-mail. Saisissez-le, ou un code de secours, pour désactiver l’authentification à deux facteurs.',
+    offBody:
+      'Nous vous avons envoyé un code à 6 chiffres par e-mail. Saisissez-le pour désactiver l’authentification à deux facteurs.',
     confirmOff: 'Désactiver',
     enabled: 'L’authentification à deux facteurs est activée.',
     disabled: 'L’authentification à deux facteurs est désactivée.',
-    backupTitle: 'Gardez vos codes de secours',
-    backupBody:
-      'Si vous n’avez plus accès à votre e-mail, chaque code permet de vous connecter une fois à la place du code reçu par e-mail. Gardez-les en lieu sûr : ils ne sont affichés que maintenant.',
-    backupDone: 'Je les ai gardés',
   },
 };

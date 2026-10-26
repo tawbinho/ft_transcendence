@@ -224,10 +224,8 @@ The computer opponent is not written here: the server plays it (section 6).
   (language, light or dark, board colors for new games) and Blocked (the players you blocked). `resolveSection` in
   `settings/sections.ts` reads the tab from the address; an unknown tab goes back to `/settings`. On a phone the tabs
   are smaller, so the four fit at 360 px in the three languages.
-- Two-factor shows only the button that fits when the backend says whether it is on; it does not send that yet, so
-  "Turn on" is the main button and a quiet "Already on? Turn it off" sits under it (section 10). Right after turning it
-  on, the 10 backup codes are shown once (`features/account/BackupCodes.tsx`, with a copy button); the login code field
-  and "Turn off" accept one of them instead of the 6 digits (`validateCodeOrBackupCode`).
+- Two-factor shows only the button that fits: Settings asks `GET /auth/2fa/status` (`useTwoFactorStatus`). Turning it
+  on or off, and the login code field, all use the 6-digit code that is emailed.
 
 ### Community (`pages/community/`, `features/chat/`, `features/friends/`)
 
@@ -395,10 +393,8 @@ After a change: `npm run typecheck && npm run format:check && npm test`.
 
 ## 10. Known limits
 
-- The backend does not send `twoFactorEnabled` with the user, so Settings asks `GET /auth/2fa/backup-codes` once
-  (`useTwoFactorStatus`): an answer means two-factor is on, `TWO_FACTOR_NOT_ENABLED` means it is off.
-- The app does not count or renew the backup codes (`GET` and `POST /auth/2fa/backup-codes`): turning two-factor off
-  and on again gives 10 new ones.
+- The backend does not send `twoFactorEnabled` with the user, so Settings asks `GET /auth/2fa/status` once
+  (`useTwoFactorStatus`).
 - The backend allows 100 requests a minute per route and per address. A minute of chat between two windows on one
   computer uses about 40 of them, but many busy tabs or fast reloads on one computer can still reach it. The app
   retries and keeps the logged-in user when it happens.
