@@ -77,7 +77,6 @@ below. The frontend has its own README in [frontend/README.md](frontend/README.m
 | Backend | NestJS (Node 22), TypeScript, TypeORM, Socket.IO, Argon2, class-validator, Nodemailer (Gmail SMTP) |
 | Database | PostgreSQL 17 |
 | Deployment | Docker Compose: `db`, `backend`, `frontend` (nginx), `proxy` (nginx, HTTPS) |
-| Tests | Vitest (backend) |
 
 **Justification of the main choices**
 
@@ -217,8 +216,8 @@ user could follow a running match over the socket while the REST route refused t
 - Minimax and alpha-beta pruning: https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
 - WCAG 2.1: https://www.w3.org/TR/WCAG21/
 
-**How AI was used.** We used an AI assistant (Claude Code) as a helper, never as a replacement for understanding.
-It was used to: explain concepts (sessions, transactions and locks, minimax), draft and review parts of the
+**How AI was used.** We used an AI assistant (Claude Code).
+It was used to: explain concepts (sessions, transactions , ...), draft and review parts of the
 backend code and the documentation, suggest test cases, and review code for bugs. Every generated piece was read,
 tested and corrected by the team member responsible, and each member can explain their own part.
 
@@ -304,6 +303,7 @@ All settings are in `.env` (copied from `.env.example`, never committed):
 | Variable                 | Default    | Meaning                                                 |
 | ------------------------ | ---------- | ------------------------------------------------------- |
 | `HTTPS_PORT`             | none       | **required**, host port of the HTTPS entry point (e.g. `8443`) |
+| `DB_PORT`                | `5432`     | port the backend uses to reach PostgreSQL, optional; Docker always uses `5432` inside its network |
 | `DB_USER`                | none       | **required**, database user                             |
 | `DB_PASSWORD`            | none       | **required**, database password                         |
 | `DB_NAME`                | none       | **required**, database name                             |
