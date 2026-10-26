@@ -6,7 +6,6 @@ import { PageHeader } from '@/components/PageHeader';
 import { buttonClass } from '@/components/ui';
 import { useCurrentUser } from '@/features/auth/hooks';
 import { HowToPlay } from './components/HowToPlay';
-import { PlayAgain } from './components/PlayAgain';
 import { OpenMatchNotice } from './online/OpenMatchNotice';
 
 /** A card's button: a visitor sees a plain "Log in" on the pages that need an account, then goes on to the page they chose. */
@@ -63,7 +62,6 @@ export function PlayPage() {
             <ActionLink to="/tournaments" needsLogin={!user} label={t('play.tournament.action')} />
           </ModeCard>
         </div>
-        <PlayAgain />
         <HowToPlay />
       </div>
     </>

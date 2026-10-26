@@ -22,11 +22,6 @@ export const playMessages: PlayMessages = {
       body: 'Un tableau à élimination directe, joué en ligne. Il faut un compte.',
       action: 'Voir les tournois',
     },
-    again: {
-      title: 'Rejouer',
-      body: 'Commencez tout de suite avec le plateau de votre dernière partie ({{cols}} × {{rows}}, aligner {{n}}).',
-      local: 'Même écran',
-    },
     help: {
       title: 'Comment jouer',
       rule1: 'Chacun son tour, lâchez un jeton dans une colonne. Il tombe à la place libre la plus basse.',

@@ -195,7 +195,7 @@ The computer opponent is not written here: the server plays it (section 6).
   who asked their system for less motion, and none for a game that was already won when the page opened
   (`useJustWon.ts`, next to it).
 - The setup forms start from the board of the last game on this device (`features/game/lastSettings.ts`, key
-  `board-settings`). "Play again" on the hub starts a same-screen game at once with those settings.
+  `board-settings`).
 
 ### Tournaments (`pages/tournaments/`, `features/tournaments/`)
 

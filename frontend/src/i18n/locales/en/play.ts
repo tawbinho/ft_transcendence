@@ -20,11 +20,6 @@ export const playMessages = {
       body: 'A knockout bracket, played online. You need an account.',
       action: 'See tournaments',
     },
-    again: {
-      title: 'Play again',
-      body: 'Start at once with the board of your last game ({{cols}} × {{rows}}, connect {{n}}).',
-      local: 'Same screen',
-    },
     help: {
       title: 'How to play',
       rule1: 'Take turns dropping a disc into a column. It falls to the lowest free spot.',
